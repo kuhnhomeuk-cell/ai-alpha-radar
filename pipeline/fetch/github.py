@@ -137,6 +137,9 @@ if __name__ == "__main__":
     import os
     import sys
 
+    from dotenv import load_dotenv
+
+    load_dotenv(".env.local")  # repo-local secrets, gitignored
     pat = os.environ.get("GH_PAT", "").strip()
     if not pat:
         print(
