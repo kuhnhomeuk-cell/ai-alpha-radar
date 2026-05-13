@@ -563,6 +563,45 @@ body::after {
 .angle .tag.hook { background: rgba(0, 240, 255, 0.12); color: var(--stage-whisper); }
 .angle .tag.cont { background: rgba(255, 138, 61, 0.15); color: var(--stage-hype); }
 .angle .tag.tut  { background: rgba(0, 255, 157, 0.12); color: var(--stage-builder); }
+
+.gem-pred {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.gem-pred .eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.gem-pred .text {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-2);
+  font-style: italic;
+  line-height: 1.5;
+  flex: 1;
+  min-width: 200px;
+}
+.gem-pred .verdict-badge {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
 .gems-empty {
   margin: var(--sp-5);
   padding: 48px;
@@ -2141,6 +2180,13 @@ function renderGems() {
             <div class="angle"><span class="tag cont">CONTRARIAN</span><span>${escapeHtml(a.contrarian || '—')}</span></div>
             <div class="angle"><span class="tag tut">TUTORIAL</span><span>${escapeHtml(a.tutorial || '—')}</span></div>
           </div>
+          ${t.prediction ? `
+            <div class="gem-pred">
+              <span class="eyebrow">We said</span>
+              <span class="text">"${escapeHtml(t.prediction.text || '—')}"</span>
+              <span class="verdict-badge ${t.prediction.verdict || 'pending'}">${VERDICT_LABEL[t.prediction.verdict] || t.prediction.verdict || 'Pending'}</span>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('')
