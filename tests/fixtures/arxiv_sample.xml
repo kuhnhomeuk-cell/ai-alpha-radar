@@ -1,0 +1,766 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/odljsQ3YDYHrOiOFc2fn3WpXspw</id>
+  <title>arXiv Query: search_query=cat:cs.AI OR cat:cs.LG OR cat:cs.CL&amp;id_list=&amp;start=0&amp;max_results=25</title>
+  <updated>2026-05-13T18:06:49Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=cat:cs.AI+OR+(cat:cs.LG+OR+cat:cs.CL)&amp;start=0&amp;max_results=25&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>25</opensearch:itemsPerPage>
+  <opensearch:totalResults>424441</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12495v1</id>
+    <title>AlphaGRPO: Unlocking Self-Reflective Multimodal Generation in UMMs via Decompositional Verifiable Reward</title>
+    <updated>2026-05-12T17:59:47Z</updated>
+    <link href="https://arxiv.org/abs/2605.12495v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12495v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In this paper, we propose AlphaGRPO, a novel framework that applies Group Relative Policy Optimization (GRPO) to AR-Diffusion Unified Multimodal Models (UMMs) to enhance multimodal generation capabilities without an additional cold-start stage. Our approach unlocks the model's intrinsic potential to perform advanced reasoning tasks: Reasoning Text-to-Image Generation, where the model actively infers implicit user intents, and Self-Reflective Refinement, where it autonomously diagnoses and corrects misalignments in generated outputs. To address the challenge of providing stable supervision for real-world multimodal generation, we introduce the Decompositional Verifiable Reward (DVReward). Unlike holistic scalar rewards, DVReward utilizes an LLM to decompose complex user requests into atomic, verifiable semantic and quality questions, which are then evaluated by a general MLLM to provide reliable and interpretable feedback. Extensive experiments demonstrate that AlphaGRPO yields robust improvements across multimodal generation benchmarks, including GenEval, TIIF-Bench, DPG-Bench and WISE, while also achieving significant gains in editing tasks on GEdit without training on editing tasks. These results validate that our self-reflective reinforcement approach effectively leverages inherent understanding to guide high-fidelity generation. Project page: https://huangrh99.github.io/AlphaGRPO/</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:59:47Z</published>
+    <arxiv:comment>ICML2026</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Runhui Huang</name>
+    </author>
+    <author>
+      <name>Jie Wu</name>
+    </author>
+    <author>
+      <name>Rui Yang</name>
+    </author>
+    <author>
+      <name>Zhe Liu</name>
+    </author>
+    <author>
+      <name>Hengshuang Zhao</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12493v1</id>
+    <title>LongMemEval-V2: Evaluating Long-Term Agent Memory Toward Experienced Colleagues</title>
+    <updated>2026-05-12T17:59:34Z</updated>
+    <link href="https://arxiv.org/abs/2605.12493v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12493v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Long-term memory is crucial for agents in specialized web environments, where success depends on recalling interface affordances, state dynamics, workflows, and recurring failure modes. However, existing memory benchmarks for agents mostly focus on user histories, short traces, or downstream task success, leaving open how to directly evaluate whether memory systems effectively internalize environment-specific experience. To address this gap, we introduce LongMemEval-V2 (LME-V2), a benchmark for evaluating whether memory systems can help agents acquire the experience needed to become knowledgeable colleagues in customized environments. LME-V2 contains 451 manually curated questions covering five core memory abilities for web agents: static state recall, dynamic state tracking, workflow knowledge, environment gotchas, and premise awareness. Questions are paired with history trajectories containing up to 500 trajectories and 115M tokens. We use a context gathering formulation: memory systems consume history trajectories and return compact evidence for downstream question answering. We propose a suite of two memory methods: AgentRunbook-R, an efficient RAG-based memory with knowledge pools for raw state observations, events, and strategy notes, and AgentRunbook-C, which stores trajectories as files and invokes a coding agent to gather evidence in an augmented sandbox. Experiments show that AgentRunbook-C achieves the best performance with 72.5% average accuracy, outperforming the strongest RAG baseline (48.5%) and the off-the-shelf coding agent baseline (69.3%). Despite the strong performance gains, coding agent based methods have high latency costs. While AgentRunbook-C advances the accuracy-latency Pareto frontier, substantial room for improvement remains. Together, these results establish LME-V2 as a challenging testbed for developing long-term memory systems for environment experience.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:59:34Z</published>
+    <arxiv:comment>Work in Progress</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Di Wu</name>
+    </author>
+    <author>
+      <name>Zixiang Ji</name>
+    </author>
+    <author>
+      <name>Asmi Kawatkar</name>
+    </author>
+    <author>
+      <name>Bryan Kwan</name>
+    </author>
+    <author>
+      <name>Jia-Chen Gu</name>
+    </author>
+    <author>
+      <name>Nanyun Peng</name>
+    </author>
+    <author>
+      <name>Kai-Wei Chang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12492v1</id>
+    <title>Pion: A Spectrum-Preserving Optimizer via Orthogonal Equivalence Transformation</title>
+    <updated>2026-05-12T17:59:34Z</updated>
+    <link href="https://arxiv.org/abs/2605.12492v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12492v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce Pion, a spectrum-preserving optimizer for large language model (LLM) training based on orthogonal equivalence transformation. Unlike additive optimizers such as Adam and Muon, Pion updates each weight matrix through left and right orthogonal transformations, preserving its singular values throughout training. This yields an optimization mechanism that modulates the geometry of weight matrices while keeping their spectral norm fixed. We derive the Pion update rule, systematically examine its design choices, and analyze its convergence behavior along with several key properties. Empirical results show that Pion offers a stable and competitive alternative to standard optimizers for both LLM pretraining and finetuning.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:59:34Z</published>
+    <arxiv:comment>Technical report v1 (30 pages, 19 figures, project page: https://spherelab.ai/pion/)</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Kexuan Shi</name>
+    </author>
+    <author>
+      <name>Hanxuan Li</name>
+    </author>
+    <author>
+      <name>Zeju Qiu</name>
+    </author>
+    <author>
+      <name>Yandong Wen</name>
+    </author>
+    <author>
+      <name>Simon Buchholz</name>
+    </author>
+    <author>
+      <name>Weiyang Liu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12491v1</id>
+    <title>Elastic Attention Cores for Scalable Vision Transformers</title>
+    <updated>2026-05-12T17:59:26Z</updated>
+    <link href="https://arxiv.org/abs/2605.12491v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12491v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision Transformers (ViTs) achieve strong data-driven scaling by leveraging all-to-all self-attention. However, this flexibility incurs a computational cost that scales quadratically with image resolution, limiting ViTs in high-resolution domains. Underlying this approach is the assumption that pairwise token interactions are necessary for learning rich visual-semantic representations. In this work, we challenge this assumption, demonstrating that effective visual representations can be learned without any direct patch-to-patch interaction. We propose VECA (Visual Elastic Core Attention), a vision transformer architecture that uses efficient linear-time core-periphery structured attention enabled by a small set of learned cores. In VECA, these cores act as a communication interface: patch tokens exchange information exclusively through the core tokens, which are initialized from scratch and propagated across layers. Because the $N$ image patches only directly interact with a resolution invariant set of $C$ learned "core" embeddings, this yields linear complexity $O(N)$ for predetermined $C$, which bypasses quadratic scaling. Compared to prior cross-attention architectures, VECA maintains and iteratively updates the full set of $N$ input tokens, avoiding a small $C$-way bottleneck. Combined with nested training along the core axis, our model can elastically trade off compute and accuracy during inference. Across classification and dense tasks, VECA achieves performance competitive with the latest vision foundation models while reducing computational cost. Our results establish elastic core-periphery attention as a scalable alternative building block for Vision Transformers.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:59:26Z</published>
+    <arxiv:comment>Project repository here: https://github.com/alansong1322/VECA</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Alan Z. Song</name>
+    </author>
+    <author>
+      <name>Yinjie Chen</name>
+    </author>
+    <author>
+      <name>Mu Nan</name>
+    </author>
+    <author>
+      <name>Rui Zhang</name>
+    </author>
+    <author>
+      <name>Jiahang Cao</name>
+    </author>
+    <author>
+      <name>Weijian Mai</name>
+    </author>
+    <author>
+      <name>Muquan Yu</name>
+    </author>
+    <author>
+      <name>Hossein Adeli</name>
+    </author>
+    <author>
+      <name>Deva Ramanan</name>
+    </author>
+    <author>
+      <name>Michael J. Tarr</name>
+    </author>
+    <author>
+      <name>Andrew F. Luo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12487v1</id>
+    <title>Task-Adaptive Embedding Refinement via Test-time LLM Guidance</title>
+    <updated>2026-05-12T17:58:27Z</updated>
+    <link href="https://arxiv.org/abs/2605.12487v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12487v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We explore the effectiveness of an LLM-guided query refinement paradigm for extending the usability of embedding models to challenging zero-shot search and classification tasks. Our approach refines the embedding representation of a user query using feedback from a generative LLM on a small set of documents, enabling embeddings to adapt in real time to the target task. We conduct extensive experiments with state-of-the-art text embedding models across a diverse set of challenging search and classification benchmarks. Empirical results indicate that LLM-guided query refinement yields consistent gains across all models and datasets, with relative improvements of up to +25% in literature search, intent detection, key-point matching, and nuanced query-instruction following. The refined queries improve ranking quality and induce clearer binary separation across the corpus, enabling the embedding space to better reflect the nuanced, task-specific constraints of each ad-hoc user query. Importantly, this expands the range of practical settings in which embedding models can be effectively deployed, making them a compelling alternative when costly LLM pipelines are not viable at corpus-scale. We release our experimental code for reproducibility, at https://github.com/IBM/task-aware-embedding-refinement.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:58:27Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Ariel Gera</name>
+    </author>
+    <author>
+      <name>Shir Ashury-Tahan</name>
+    </author>
+    <author>
+      <name>Gal Bloch</name>
+    </author>
+    <author>
+      <name>Ohad Eytan</name>
+    </author>
+    <author>
+      <name>Assaf Toledo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12484v1</id>
+    <title>Learning, Fast and Slow: Towards LLMs That Adapt Continually</title>
+    <updated>2026-05-12T17:58:20Z</updated>
+    <link href="https://arxiv.org/abs/2605.12484v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12484v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) are trained for downstream tasks by updating their parameters (e.g., via RL). However, updating parameters forces them to absorb task-specific information, which can result in catastrophic forgetting and loss of plasticity. In contrast, in-context learning with fixed LLM parameters can cheaply and rapidly adapt to task-specific requirements (e.g., prompt optimization), but cannot by itself typically match the performance gains available through updating LLM parameters. There is no good reason for restricting learning to being in-context or in-weights. Moreover, humans also likely learn at different time scales (e.g., System 1 vs 2). To this end, we introduce a fast-slow learning framework for LLMs, with model parameters as "slow" weights and optimized context as "fast" weights. These fast "weights" can learn from textual feedback to absorb the task-specific information, while allowing slow weights to stay closer to the base model and persist general reasoning behaviors. Fast-Slow Training (FST) is up to 3x more sample-efficient than only slow learning (RL) across reasoning tasks, while consistently reaching a higher performance asymptote. Moreover, FST-trained models remain closer to the base LLM (up to 70% less KL divergence), resulting in less catastrophic forgetting than RL-training. This reduced drift also preserves plasticity: after training on one task, FST trained models adapt more effectively to a subsequent task than parameter-only trained models. In continual learning scenarios, where task domains change on the fly, FST continues to acquire each new task while parameter-only RL stalls.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:58:20Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Rishabh Tiwari</name>
+    </author>
+    <author>
+      <name>Kusha Sareen</name>
+    </author>
+    <author>
+      <name>Lakshya A Agrawal</name>
+    </author>
+    <author>
+      <name>Joseph E. Gonzalez</name>
+    </author>
+    <author>
+      <name>Matei Zaharia</name>
+    </author>
+    <author>
+      <name>Kurt Keutzer</name>
+    </author>
+    <author>
+      <name>Inderjit S Dhillon</name>
+    </author>
+    <author>
+      <name>Rishabh Agarwal</name>
+    </author>
+    <author>
+      <name>Devvrit Khatri</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12483v1</id>
+    <title>Beyond GRPO and On-Policy Distillation: An Empirical Sparse-to-Dense Reward Principle for Language-Model Post-Training</title>
+    <updated>2026-05-12T17:57:48Z</updated>
+    <link href="https://arxiv.org/abs/2605.12483v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12483v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In settings where labeled verifiable training data is the binding constraint, each checked example should be allocated carefully. The standard practice is to use this data directly on the model that will be deployed, for example by running GRPO on the deployment student. We argue that this is often an inefficient allocation because it overlooks a reward-density principle: sparse sequence-level reward should train models where exploration is productive, while dense token-level teacher reward should be used where the aim is to compress behavior into a smaller model. In this view, GRPO-style sparse RL and OPD-style dense teacher supervision are not separate recipes; they are different reward-density regimes. The allocation rule is simple: use scarce labeled training data upstream on the strongest model that can turn it into reward-shaped behavior, then transfer that behavior downstream as dense supervision. We evaluate this rule on verifiable math with Qwen3 and Llama models. At fixed Qwen3-1.7B deployment-student size, an RL-improved 8B teacher distilled through the dense bridge outperforms direct GRPO on the same student, while transfer from the same teacher before RL underperforms. The bridge is important: a forward-KL warmup on teacher rollouts followed by OPD on student rollouts is consistently strongest on MATH before any post-bridge student-side sparse RL, and also gives the best pre-Stage~3 AIME endpoints for the canonical 8B/14B teachers. The bridge also makes later student-side sparse RL effective: GRPO that is weak on a cold student lifts MATH from $75.4\%$ to $78.5\%$ after the bridge and outperforms a matched replay control by $2.8$ points. The operational principal is to avoid using scarce labeled data on the least prepared policy: use sparse reward for teacher-side discovery, dense transfer for student compression, and student-side sparse reward only after the bridge.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:57:48Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Yuanda Xu</name>
+    </author>
+    <author>
+      <name>Hejian Sang</name>
+    </author>
+    <author>
+      <name>Zhengze Zhou</name>
+    </author>
+    <author>
+      <name>Ran He</name>
+    </author>
+    <author>
+      <name>Zhipeng Wang</name>
+    </author>
+    <author>
+      <name>Alborz Geramifard</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12481v1</id>
+    <title>ToolCUA: Towards Optimal GUI-Tool Path Orchestration for Computer Use Agents</title>
+    <updated>2026-05-12T17:57:04Z</updated>
+    <link href="https://arxiv.org/abs/2605.12481v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12481v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Computer Use Agents (CUAs) can act through both atomic GUI actions, such as click and type, and high-level tool calls, such as API-based file operations, but this hybrid action space often leaves them uncertain about when to continue with GUI actions or switch to tools, leading to suboptimal execution paths. This difficulty stems from the scarcity of high-quality interleaved GUI-Tool trajectories, the cost and brittleness of collecting real tool trajectories, and the lack of trajectory-level supervision for GUI-Tool path selection. In this paper, we propose ToolCUA, an end-to-end agent designed to learn optimal GUI-Tool path selection through a staged training paradigm. We first introduce an Interleaved GUI-Tool Trajectory Scaling Pipeline that repurposes abundant static GUI trajectories and synthesizes a grounded tool library, enabling diverse GUI-Tool trajectories without manual engineering or real tool-trajectory collection. We then perform Tool-Bootstrapped GUI RFT, combining warmup SFT with single-turn RL to improve decisions at critical GUI-Tool switching points. Finally, we optimize ToolCUA with Online Agentic RL in a high-fidelity GUI-Tool environment, guided by a Tool-Efficient Path Reward that encourages appropriate tool use and shorter execution paths. Experiments on OSWorld-MCP show that ToolCUA achieves 46.85% accuracy, a relative improvement of approximately 66% over the baseline, establishing a new state of the art among models of comparable scale. It also improves by 3.9% over GUI-only settings, demonstrating effective GUI-Tool orchestration. The results further suggest that training in a hybrid action space is a promising paradigm for real-world digital agents. Open-sourced here: https://x-plug.github.io/ToolCUA/</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:57:04Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Xuhao Hu</name>
+    </author>
+    <author>
+      <name>Xi Zhang</name>
+    </author>
+    <author>
+      <name>Haiyang Xu</name>
+    </author>
+    <author>
+      <name>Kyle Qiao</name>
+    </author>
+    <author>
+      <name>Jingyi Yang</name>
+    </author>
+    <author>
+      <name>Xuanjing Huang</name>
+    </author>
+    <author>
+      <name>Jing Shao</name>
+    </author>
+    <author>
+      <name>Ming Yan</name>
+    </author>
+    <author>
+      <name>Jieping Ye</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12480v1</id>
+    <title>OmniNFT: Modality-wise Omni Diffusion Reinforcement for Joint Audio-Video Generation</title>
+    <updated>2026-05-12T17:56:59Z</updated>
+    <link href="https://arxiv.org/abs/2605.12480v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12480v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent advances in joint audio-video generation have been remarkable, yet real-world applications demand strong per-modality fidelity, cross-modal alignment, and fine-grained synchronization. Reinforcement Learning (RL) offers a promising paradigm, but its extension to multi-objective and multi-modal joint audio-video generation remains unexplored. Notably, our in-depth analysis first reveals that the primary obstacles to applying RL in this stem from: (i) multi-objective advantages inconsistency, where the advantages of multimodal outputs are not always consistent within a group; (ii) multi-modal gradients imbalance, where video-branch gradients leak into shallow audio layers responsible for intra-modal generation; (iii) uniform credit assignment, where fine-grained cross-modal alignment regions fail to get efficient exploration. These shortcomings suggest that vanilla RL fine-tuning strategy with a single global advantage often leads to suboptimal results. To address these challenges, we propose OmniNFT, a novel modality-aware online diffusion RL framework with three key innovations: (1) Modality-wise advantage routing, which routes independent per-reward advantages to their respective modality generation branches. (2) Layer-wise gradient surgery, which selectively detaches video-branch gradients on shallow audio layers while retaining those for cross-modal interaction layers. (3) Region-wise loss reweighting, which modulates policy optimization toward critical regions related to audio-video synchronization and fine-grained alignment. Extensive experiments on JavisBench and VBench with the LTX-2 backbone demonstrate that OmniNFT achieves comprehensive improvements in audio and video perceptual quality, cross-modal alignment, and audio-video synchronization.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:56:59Z</published>
+    <arxiv:comment>Project page: https://zghhui.github.io/OmniNFT/</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Guohui Zhang</name>
+    </author>
+    <author>
+      <name>XiaoXiao Ma</name>
+    </author>
+    <author>
+      <name>Jie Huang</name>
+    </author>
+    <author>
+      <name>Hang Xu</name>
+    </author>
+    <author>
+      <name>Hu Yu</name>
+    </author>
+    <author>
+      <name>Siming Fu</name>
+    </author>
+    <author>
+      <name>Yuming Li</name>
+    </author>
+    <author>
+      <name>Zeyue Xue</name>
+    </author>
+    <author>
+      <name>Lin Song</name>
+    </author>
+    <author>
+      <name>Haoyang Huang</name>
+    </author>
+    <author>
+      <name>Nan Duan</name>
+    </author>
+    <author>
+      <name>Feng Zhao</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12477v1</id>
+    <title>MEME: Multi-entity &amp; Evolving Memory Evaluation</title>
+    <updated>2026-05-12T17:55:10Z</updated>
+    <link href="https://arxiv.org/abs/2605.12477v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12477v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>LLM-based agents increasingly operate in persistent environments where they must store, update, and reason over information across many sessions. While prior benchmarks evaluate only single-entity updates, MEME defines six tasks spanning the full space defined by the multi-entity and evolving axes, including three not scored by prior work: Cascade and Absence (dependency reasoning) and Deletion (post-removal state). Evaluating six memory systems spanning three memory paradigms on 100 controlled episodes, we find that all systems collapse on dependency reasoning under the default configuration (Cascade: 3%, Absence: 1% in average accuracy) despite adequate static retrieval performance. Prompt optimization, deeper retrieval, reduced filler noise, and most stronger LLMs fail to close this gap. Only a file-based agent paired with Claude Opus 4.7 as its internal LLM partially closes the gap, but at ~70x the baseline cost, indicating closure currently depends on configurations that are not practical at scale. Code and data are available on the project page: https://seokwonjung-jay.github.io/meme-eval/.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:55:10Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Seokwon Jung</name>
+    </author>
+    <author>
+      <name>Alexander Rubinstein</name>
+    </author>
+    <author>
+      <name>Arnas Uselis</name>
+    </author>
+    <author>
+      <name>Sangdoo Yun</name>
+    </author>
+    <author>
+      <name>Seong Joon Oh</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12476v1</id>
+    <title>Routers Learn the Geometry of Their Experts: Geometric Coupling in Sparse Mixture-of-Experts</title>
+    <updated>2026-05-12T17:55:02Z</updated>
+    <link href="https://arxiv.org/abs/2605.12476v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12476v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Sparse Mixture-of-Experts (SMoE) models enable scaling language models efficiently, but training them remains challenging, as routing can collapse onto few experts and auxiliary load-balancing losses can reduce specialization. Motivated by these hurdles, we study how routing decisions in SMoEs are formed mechanistically. First, we reveal a geometric coupling between routers and their corresponding experts. For a given token, the router weights for the selected expert and the expert weights processing it receive gradients along the same input direction, differing only in scalar coefficients. Thus, matched router--expert directions accumulate the same routed token history. This theoretical coupling also appears empirically in routing dynamics. In a $1$B SMoE trained from scratch, higher router scores predict stronger expert neuron activations, showing that routing decisions are mirrored inside the selected expert. Next, we analyze the effects of auxiliary load balancing on the router--expert geometric coupling, showing that such losses break this structure by spreading input-directed gradients across router weights, making distinct router directions nearly three times more similar to each other. Last, we demonstrate the centrality of geometric coupling for effective routing with a parameter-free online K-Means router, in which each expert maintains a running average of the hidden states routed to it and tokens are assigned based on cosine similarity. Compared with auxiliary-loss and loss-free balancing, this router achieves the lowest load imbalance with only a modest perplexity increase, indicating that geometric coupling captures a substantial part of what the router learns. Overall, our results explain how routers form assignment geometry that supports an effective division of labor.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:55:02Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Sagi Ahrac</name>
+    </author>
+    <author>
+      <name>Noya Hochwald</name>
+    </author>
+    <author>
+      <name>Mor Geva</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12474v1</id>
+    <title>Reward Hacking in Rubric-Based Reinforcement Learning</title>
+    <updated>2026-05-12T17:54:25Z</updated>
+    <link href="https://arxiv.org/abs/2605.12474v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12474v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Reinforcement learning with verifiable rewards has enabled strong post-training gains in domains such as math and coding, though many open-ended settings rely on rubric-based rewards. We study reward hacking in rubric-based RL, where a policy is optimized against a training verifier but evaluated against a cross-family panel of three frontier judges, reducing dependence on any single evaluator. Our framework separates two sources of divergence: verifier failure, where the training verifier credits rubric criteria that reference verifiers reject, and rubric-design limitations, where even strong rubric-based verifiers favor responses that rubric-free judges rate worse overall. Across medical and science domains, weak verifiers produce large proxy-reward gains that do not transfer to the reference verifiers; exploitation grows over training and concentrates in recurring failures such as partial satisfaction of compound criteria, treating implicit content as explicit, and imprecise topical matching. Stronger verifiers substantially reduce, but do not eliminate, verifier exploitation. We also introduce a self-internalization gap, a verifier-free diagnostic based on policy log-probabilities, which tracks reference-verifier quality, detecting when the policy trained using the weak verifier stops improving. Finally, in our setting, stronger verification does not prevent reward hacking when the rubric leaves important failure modes unspecified: rubric-based verifiers prefer the RL checkpoint, while rubric-free judges prefer the base model. These disagreements coincide with gains concentrated in completeness and presence-based criteria, alongside declines in factual correctness, conciseness, relevance, and overall quality. Together, these results suggest that stronger verification reduces reward hacking, but does not by itself ensure that rubric gains correspond to broader quality gains.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:54:25Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Anas Mahmoud</name>
+    </author>
+    <author>
+      <name>MohammadHossein Rezaei</name>
+    </author>
+    <author>
+      <name>Zihao Wang</name>
+    </author>
+    <author>
+      <name>Anisha Gunjal</name>
+    </author>
+    <author>
+      <name>Bing Liu</name>
+    </author>
+    <author>
+      <name>Yunzhong He</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12471v1</id>
+    <title>KV-Fold: One-Step KV-Cache Recurrence for Long-Context Inference</title>
+    <updated>2026-05-12T17:53:47Z</updated>
+    <link href="https://arxiv.org/abs/2605.12471v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12471v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce KV-Fold, a simple, training-free long-context inference protocol that treats the key-value (KV) cache as the accumulator in a left fold over sequence chunks. At each step, the model processes the next chunk conditioned on the accumulated cache, appends the newly produced keys and values, and passes the enlarged cache forward; the same one-step update is applied repeatedly, analogous to foldl in functional programming. Building on the KV cache concatenation primitive introduced for latent multi-agent communication, we repurpose it as a chunk-to-chunk recurrence for long-context inference. When processing chunk t, the model attends to the KV cache carried from earlier chunks as a prefix, reusing its internal state across segments without modifying or retraining the model. Despite its simplicity, the induced recurrence is stable: per-step drift rises briefly and then saturates into a flat plateau that persists across deep chains. This plateau is insensitive to a 10,000x change in numerical precision, robust across chunk sizes, and consistent across model families. At the task level, KV-Fold preserves exact information over long distances. On a needle-in-a-haystack benchmark, it achieves 100% exact-match retrieval across 152 trials spanning contexts from 16K to 128K tokens and chain depths up to 511 on Llama-3.1-8B, while remaining within the memory limits of a single 40GB GPU. Compared to streaming methods, which trade fidelity for bounded memory, KV-Fold maintains long-range retrieval while operating as a sequence of tractable forward passes. Overall, our results show that frozen pretrained transformers already support a stable form of KV-cache recurrence, providing a practical route to long-context inference without architectural changes or training.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:53:47Z</published>
+    <arxiv:comment>12 pages, 3 figures, 6 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Alireza Nadali</name>
+    </author>
+    <author>
+      <name>Patrick Cooper</name>
+    </author>
+    <author>
+      <name>Ashutosh Trivedi</name>
+    </author>
+    <author>
+      <name>Alvaro Velasquez</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12466v1</id>
+    <title>Solve the Loop: Attractor Models for Language and Reasoning</title>
+    <updated>2026-05-12T17:51:26Z</updated>
+    <link href="https://arxiv.org/abs/2605.12466v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12466v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Looped Transformers offer a promising alternative to purely feed-forward computation by iteratively refining latent representations, improving language modeling and reasoning. Yet recurrent architectures remain unstable to train, costly to optimize and deploy, and constrained to small, fixed recurrence depths. We introduce Attractor Models, in which a backbone module first proposes output embeddings, then an attractor module refines them by solving for the fixed point, with gradients obtained through implicit differentiation. Thus, training memory remains constant in effective depth, and iterations are chosen adaptively by convergence. Empirically, Attractor Models outperform existing models across two regimes, large-scale language-model pretraining and reasoning with tiny models. In language modeling, Attractor Models deliver a Pareto improvement over standard Transformers and stable looped models across sizes, improving perplexity by up to 46.6% and downstream accuracy by up to 19.7% while reducing training cost. Notably, a 770M Attractor Model outperforms a 1.3B Transformer trained on twice as many tokens. On challenging reasoning tasks, we show that our model with only 27M parameters and approximately 1000 examples achieves 91.4% accuracy on Sudoku-Extreme and 93.1% on Maze-Hard, scaling favorably where frontier models like Claude and GPT o3, fail completely, and specialized recursive reasoners collapse at larger sizes. Lastly, we show that Attractor Models exhibit a novel phenomenon, which we call equilibrium internalization: fixed-point training places the model's initial output embedding near equilibrium, allowing the solver to be removed at inference time with little degradation. Together, these results suggest that Attractor Models make iterative refinement scalable by turning recurrence into a computation the model can learn to internalize.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.NE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:51:26Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Jacob Fein-Ashley</name>
+    </author>
+    <author>
+      <name>Paria Rashidinejad</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12465v1</id>
+    <title>High-arity Sample Compression</title>
+    <updated>2026-05-12T17:50:14Z</updated>
+    <link href="https://arxiv.org/abs/2605.12465v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12465v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recently, a series of works have started studying variations of concepts from learning theory for product spaces, which can be collected under the name high-arity learning theory. In this work, we consider a high-arity variant of sample compression schemes and we prove that the existence of a high-arity sample compression scheme of non-trivial quality implies high-arity PAC learnability.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:50:14Z</published>
+    <arxiv:comment>29 pages</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Leonardo N. Coregliano</name>
+    </author>
+    <author>
+      <name>William Opich</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12464v1</id>
+    <title>Search Your Block Floating Point Scales!</title>
+    <updated>2026-05-12T17:50:08Z</updated>
+    <link href="https://arxiv.org/abs/2605.12464v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12464v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Quantization has emerged as a standard technique for accelerating inference for generative models by enabling faster low-precision computations and reduced memory transfers. Recently, GPU accelerators have added first-class support for microscaling Block Floating Point (BFP) formats. Standard BFP algorithms use a fixed scale based on the maximum magnitude of the block. We observe that this scale choice can be suboptimal with respect to quantization errors. In this work, we propose ScaleSearch, an alternative strategy for selecting these scale factors: using a fine-grained search leveraging the mantissa bits in microscaling formats to minimize the quantization error for the given distribution. ScaleSearch can be integrated with existing quantization methods such as Post Training Quantization and low-precision attention, and is shown to improve their performance. Additionally, we introduce ScaleSearchAttention, an accelerated NVFP4-based attention algorithm, which uses ScaleSearch and adapted prior techniques to ensure near-0 performance loss for causal language modeling. Experiments show that ScaleSearch reduces quantization error by 27% for NVFP4 and improves language model PTQ by up to 15 points for MATH500 (Qwen3-8B), while ScaleSearchAttention improves Wikitext-2 PPL by upto 0.77 points for Llama 3.1 70B. The proposed methods closely match baseline performance while providing quantization accuracy improvements.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.PF" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:50:08Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Tanmaey Gupta</name>
+    </author>
+    <author>
+      <name>Hayden Prairie</name>
+    </author>
+    <author>
+      <name>Xiaoxia Wu</name>
+    </author>
+    <author>
+      <name>Reyna Abhyankar</name>
+    </author>
+    <author>
+      <name>Qingyang Wu</name>
+    </author>
+    <author>
+      <name>Austin Silveria</name>
+    </author>
+    <author>
+      <name>Pragaash Ponnusamy</name>
+    </author>
+    <author>
+      <name>Jue Wang</name>
+    </author>
+    <author>
+      <name>Ben Athiwaratkun</name>
+    </author>
+    <author>
+      <name>Leon Song</name>
+    </author>
+    <author>
+      <name>Tri Dao</name>
+    </author>
+    <author>
+      <name>Daniel Y. Fu</name>
+    </author>
+    <author>
+      <name>Chris De Sa</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12462v1</id>
+    <title>Towards Affordable Energy: A Gymnasium Environment for Electric Utility Demand-Response Programs</title>
+    <updated>2026-05-12T17:48:45Z</updated>
+    <link href="https://arxiv.org/abs/2605.12462v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12462v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Extreme weather and volatile wholesale electricity markets expose residential consumers to catastrophic financial risks, yet demand response at the distribution level remains an underutilized tool for grid flexibility and energy affordability. While a demand-response program can shield consumers by issuing financial credits during high-price periods, optimizing this sequential decision-making process presents a unique challenge for reinforcement learning despite the plentiful offline historical smart meter and wholesale pricing data available publicly. Offline historical data fails to capture the dynamic, interactive feedback loop between an electric utility's pricing signals and customer acceptance and adaptation to a demand-response program. To address this, we introduce DR-Gym, an open-source, online Gymnasium-compatible environment designed to train and evaluate demand-response from the electric utility's perspective. Unlike existing device-level energy simulators, our environment focuses on the market-level electric utility setting and provides a rich observational space relevant to the electric utility. The simulator additionally features a regime-switching wholesale price model calibrated to real-world extreme events, alongside physics-based building demand profiles. For our learning signal, we use a configurable, multi-objective reward function for specifying diverse learning objectives. We demonstrate through baseline strategies and data snapshots the capability of our simulator to create realistic and learnable environments.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CY" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.GT" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:48:45Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Jose E. Aguilar Escamilla</name>
+    </author>
+    <author>
+      <name>Lingdong Zhou</name>
+    </author>
+    <author>
+      <name>Xiangqi Zhu</name>
+    </author>
+    <author>
+      <name>Huazheng Wang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12461v1</id>
+    <title>A proximal gradient algorithm for composite log-concave sampling</title>
+    <updated>2026-05-12T17:48:09Z</updated>
+    <link href="https://arxiv.org/abs/2605.12461v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12461v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We propose an algorithm to sample from composite log-concave distributions over $\mathbb{R}^d$, i.e., densities of the form $π\propto e^{-f-g}$, assuming access to gradient evaluations of $f$ and a restricted Gaussian oracle (RGO) for $g$. The latter requirement means that we can easily sample from the density $\text{RGO}_{g,h,y}(x) \propto \exp(-g(x) -\frac{1}{2h}||y-x||^2)$, which is the sampling analogue of the proximal operator for $g$. If $f + g$ is $α$-strongly convex and $f$ is $β$-smooth, our sampler achieves $\varepsilon$ error in total variation distance in $\widetilde{\mathcal O}(κ\sqrt d \log^4(1/\varepsilon))$ iterations where $κ:= β/α$, which matches prior state-of-the-art results for the case $g=0$. We further extend our results to cases where (1) $π$ is non-log-concave but satisfies a Poincaré or log-Sobolev inequality, and (2) $f$ is non-smooth but Lipschitz.</summary>
+    <category term="math.ST" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DS" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:48:09Z</published>
+    <arxiv:primary_category term="math.ST"/>
+    <author>
+      <name>Linghai Liu</name>
+    </author>
+    <author>
+      <name>Sinho Chewi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12460v1</id>
+    <title>Multi-Stream LLMs: Unblocking Language Models with Parallel Streams of Thoughts, Inputs and Outputs</title>
+    <updated>2026-05-12T17:47:41Z</updated>
+    <link href="https://arxiv.org/abs/2605.12460v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12460v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The continued improvements in language model capability have unlocked their widespread use as drivers of autonomous agents, for example in coding or computer use applications. However, the core of these systems has not changed much since early instruction-tuned models like ChatGPT. Even advanced AI agents function on message exchange formats, successively exchanging messages with users, systems, with itself (i.e. chain-of-thought) and tools in a single stream of computation. This bottleneck to a single stream in chat models leads to a number of limitations: the agent cannot act (generate output) while reading, and in reverse, cannot react to new information while writing. Similarly, the agent cannot act while thinking and cannot think while reading or acting on information.
+  In this work, we show that models can be unblocked by switching from instruction-tuning for sequential message formats to instruction-tuning for multiple, parallel streams of computation, splitting each role into a separate stream. Every forward pass of the language model then simultaneously reads from multiple input streams and generates tokens in multiple output streams, all of which causally depend on earlier timesteps. We argue that this data-driven change remedies a number of usability limitations as outlined above, improves model efficiency through parallelization, improves model security through better separation of concerns and can further improve model monitorability.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:47:41Z</published>
+    <arxiv:comment>Preprint, 37 pages. Code at https://github.com/seal-rg/streaming/</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Guinan Su</name>
+    </author>
+    <author>
+      <name>Yanwu Yang</name>
+    </author>
+    <author>
+      <name>Xueyan Li</name>
+    </author>
+    <author>
+      <name>Jonas Geiping</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12456v1</id>
+    <title>TextSeal: A Localized LLM Watermark for Provenance &amp; Distillation Protection</title>
+    <updated>2026-05-12T17:44:41Z</updated>
+    <link href="https://arxiv.org/abs/2605.12456v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12456v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce TextSeal, a state-of-the-art watermark for large language models. Building on Gumbel-max sampling, TextSeal introduces dual-key generation to restore output diversity, along with entropy-weighted scoring and multi-region localization for improved detection. It supports serving optimizations such as speculative decoding and multi-token prediction, and does not add any inference overhead. TextSeal strictly dominates baselines like SynthID-text in detection strength and is robust to dilution, maintaining confident localized detection even in heavily mixed human/AI documents. The scheme is theoretically distortion-free, and evaluation across reasoning benchmarks confirms that it preserves downstream performance; while a multilingual human evaluation (6000 A/B comparisons, 5 languages) shows no perceptible quality difference. Beyond its use for provenance detection, TextSeal is also ``radioactive'': its watermark signal transfers through model distillation, enabling detection of unauthorized use.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:44:41Z</published>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Tom Sander</name>
+    </author>
+    <author>
+      <name>Hongyan Chang</name>
+    </author>
+    <author>
+      <name>Tomáš Souček</name>
+    </author>
+    <author>
+      <name>Tuan Tran</name>
+    </author>
+    <author>
+      <name>Valeriu Lacatusu</name>
+    </author>
+    <author>
+      <name>Sylvestre-Alvise Rebuffi</name>
+    </author>
+    <author>
+      <name>Alexandre Mourachko</name>
+    </author>
+    <author>
+      <name>Surya Parimi</name>
+    </author>
+    <author>
+      <name>Christophe Ropers</name>
+    </author>
+    <author>
+      <name>Rashel Moritz</name>
+    </author>
+    <author>
+      <name>Vanessa Stark</name>
+    </author>
+    <author>
+      <name>Hady Elsahar</name>
+    </author>
+    <author>
+      <name>Pierre Fernandez</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12453v1</id>
+    <title>Enabling AI-Native Mobility in 6G: A Real-World Dataset for Handover, Beam Management, and Timing Advance</title>
+    <updated>2026-05-12T17:43:49Z</updated>
+    <link href="https://arxiv.org/abs/2605.12453v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12453v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>To address the issues of high interruption time and measurement report overhead under user equipment (UE) mobility especially in high speed 5G use cases the use of AI/ML techniques (AI/ML beam management and mobility procedures) have been proposed. These techniques rely heavily on data that are most often simulated for various scenarios and do not accurately reflect real deployment behavior or user traffic patterns. Therefore, there is an utmost need for realistic datasets under various conditions. This work presents a dataset collected from a commercially deployed network across various modes of mobility (pedestrian, bike, car, bus, and train) and at multiple speeds to depict real time UE mobility. When collecting the dataset, we focused primarily on handover (HO) scenarios, with the aim of reducing the HO interruption time and maintaining continuous throughput during and immediately after HO execution. To support this research, the dataset includes timing advance (TA) measurements at various signaling events such as RACH trigger, MAC CE, and PDCCH grant which are typically missing in existing works.
+  We cover a detailed description of the creation of the dataset; experimental setup, data acquisition, and extraction. We also cover an exploratory analysis of the data, with a primary focus on mobility, beam management, and TA. We discuss multiple use cases in which the proposed dataset can facilitate understanding of the inference of the AI/ML model. One such use case is to train and evaluate various AI/ML models for TA prediction.</summary>
+    <category term="eess.SP" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.NI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:43:49Z</published>
+    <arxiv:primary_category term="eess.SP"/>
+    <author>
+      <name>Mannam Veera Narayana</name>
+    </author>
+    <author>
+      <name>Rohit Singh</name>
+    </author>
+    <author>
+      <name>Deepa M. R</name>
+    </author>
+    <author>
+      <name>Radha Krishna Ganti</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12452v1</id>
+    <title>The Algorithmic Caricature: Auditing LLM-Generated Political Discourse Across Crisis Events</title>
+    <updated>2026-05-12T17:42:03Z</updated>
+    <link href="https://arxiv.org/abs/2605.12452v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12452v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Models (LLMs) can generate fluent political text at scale, raising concerns about synthetic discourse during crises and social conflict. Existing AI-text detection often focuses on sentence-level cues such as perplexity, burstiness, or token irregularities, but these signals may weaken as generative systems improve. We instead adopt a Computational Social Science perspective and ask whether synthetic political discourse behaves like an observed online population. We construct a paired corpus of 1,789,406 posts across nine crisis events: COVID-19, the Jan. 6 Capitol attack, the 2020 and 2024 U.S. elections, Dobbs/Roe v. Wade, the 2020 BLM protests, U.S. midterms, the Utah shooting, and the U.S.-Iran war. For each event, we compare observed discourse from social platforms with synthetic discourse generated for the same context. We evaluate four dimensions: emotional intensity, structural regularity, lexical-ideological framing, and cross-event dependency, using mean gaps and dispersion evidence. Across events, synthetic discourse is fluent but population-level unrealistic. It is generally more negative and less dispersed in sentiment, structurally more regular, and lexically more abstract than observed discourse. Observed discourse instead shows broader emotional variation, longer-tailed structural distributions, and more context-specific, colloquial lexical markers. These differences are event-dependent: larger for fast-moving, decentralized crises and smaller for formal or institutionally mediated events. We summarize them with a simple event-level measure, the Caricature Gap. Our findings suggest that the main limitation of synthetic political discourse is not grammar or fluency, but reduced population realism. Population-level auditing complements traditional text-detection and provides a CSS framework for evaluating the social realism of generated discourse.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CY" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:42:03Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name> Gunjan</name>
+    </author>
+    <author>
+      <name>Sidahmed Benabderrahmane</name>
+    </author>
+    <author>
+      <name>Talal Rahwan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12446v1</id>
+    <title>ORCE: Order-Aware Alignment of Verbalized Confidence in Large Language Models</title>
+    <updated>2026-05-12T17:39:43Z</updated>
+    <link href="https://arxiv.org/abs/2605.12446v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12446v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) often produce answers with high certainty even when they are incorrect, making reliable confidence estimation essential for deployment in real-world scenarios. Verbalized confidence, where models explicitly state their confidence in natural language, provides a flexible and user-facing uncertainty signal that can be applied even when token logits are unavailable. However, existing verbalized-confidence methods often optimize answer generation and confidence generation jointly, which can cause confidence-alignment objectives to interfere with answer accuracy. In this work, we propose a decoupled and order-aware framework for verbalized confidence calibration. Our method first generates an answer and then estimates confidence conditioned on the fixed question--answer pair, allowing confidence optimization without directly perturbing the answer-generation process. To align confidence with correctness likelihood, we construct a sampling-based surrogate from multiple model completions and optimize rank-based reinforcement learning objectives that encourage responses with higher estimated correctness likelihood to receive higher verbalized confidence. Experiments on reasoning and knowledge-intensive benchmarks show that our method improves calibration and failure prediction performance while largely preserving answer accuracy. These results demonstrate that verbalized confidence can be more reliably aligned by decoupling confidence estimation from answer generation and optimizing the relative ordering of confidence across responses.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:39:43Z</published>
+    <arxiv:comment>18 pages, 2 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Chen Li</name>
+    </author>
+    <author>
+      <name>Xiaoling Hu</name>
+    </author>
+    <author>
+      <name>Songzhu Zheng</name>
+    </author>
+    <author>
+      <name>Jiawei Zhou</name>
+    </author>
+    <author>
+      <name>Chao Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12438v1</id>
+    <title>A Causal Language Modeling Detour Improves Encoder Continued Pretraining</title>
+    <updated>2026-05-12T17:34:00Z</updated>
+    <link href="https://arxiv.org/abs/2605.12438v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12438v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>When adapting an encoder to a new domain, the standard approach is to continue training with Masked Language Modeling (MLM). We show that temporarily switching to Causal Language Modeling (CLM) followed by a short MLM decay improves downstream performance. On biomedical texts with ModernBERT, this CLM detour outperforms MLM baselines trained on identical data and compute across 8 French and 11 English biomedical tasks, by +1.2-2.8pp and +0.3-0.8pp respectively, depending on model size. We investigate the reasons for these gains. We find that CLM's dense supervision impacts low transformer layers (0-7) far more than MLM does. Freezing low layers during CLM eliminates the downstream benefit; freezing mid layers preserves it. The representational changes persist through the MLM decay phase, even when it matches the CLM phase in length, and they scale with model capacity. We release ModernCamemBERT-bio and ModernBERT-bio as state-of-the-art biomedical encoders in Base and Large sizes.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:34:00Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Rian Touchent</name>
+    </author>
+    <author>
+      <name>Eric de la Clergerie</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12436v1</id>
+    <title>CAAFC: Chronological Actionable Automated Fact-Checker for misinformation / non-factual hallucination detection and correction</title>
+    <updated>2026-05-12T17:32:15Z</updated>
+    <link href="https://arxiv.org/abs/2605.12436v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12436v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>With the vast amount of content uploaded every hour, along with the AI generated content that can include hallucinations, Automated Fact-Checking (AFC) has become increasingly vital, as it is infeasible for human fact-checkers to manually verify the sheer volume of information generated online. Professional fact-checkers have identified several gaps in existing AFC systems, noting a misalignment between how these systems operate and how fact-checking is performed in practice. In this paper, we introduce CAAFC (Chronological Actionable Automated Fact-Checker), a frame-work designed to bridge these gaps. It surpasses SOTA AFC and hallucination detection systems across multiple benchmark datasets. CAAFC operates on claims, conversations, and dialogues, enabling it not only to detect factual errors and hallucinations, but also to correct them by providing actionable justifications supported by primary information sources. Furthermore, CAAFC can update evidence and knowledge bases by incorporating recent and contextual information when necessary, thereby enhancing the reliability of fact verification.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T17:32:15Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Islam Eldifrawi</name>
+    </author>
+    <author>
+      <name>Shengrui Wang</name>
+    </author>
+    <author>
+      <name>Amine Trabelsi</name>
+    </author>
+  </entry>
+</feed>
