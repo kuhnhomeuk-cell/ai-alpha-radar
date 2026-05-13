@@ -2,932 +2,816 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Alpha Radar · Celestial Observatory</title>
+<title>AI Alpha Radar · Trend Intelligence Observatory</title>
 <link rel="preconnect" href="https://fonts.bunny.net">
-<link href="https://fonts.bunny.net/css?family=cormorant-garamond:300,400,500,600,700|inter:300,400,500,600|jetbrains-mono:400,500" rel="stylesheet">
+<link href="https://fonts.bunny.net/css?family=cormorant-garamond:400,500,600|inter:300,400,500,600,700|jetbrains-mono:400,500,600|space-grotesk:500,700" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 <style>
-  :root {
-    --void: #050813;
-    --void-2: #0a0f1e;
-    --void-3: #111729;
-    --ink: #f4f1ea;
-    --ink-2: #b3b0a8;
-    --ink-3: #6a6862;
-    --champagne: #d4af37;
-    --champagne-soft: #b89730;
-    --whisper: #a8c4ff;
-    --builder: #ffd97a;
-    --creator: #f4a623;
-    --hype:    #ff7a5a;
-    --commodity: #7c98c4;
-    --serif: 'Cormorant Garamond', serif;
-    --sans: 'Inter', system-ui, sans-serif;
-    --mono: 'JetBrains Mono', ui-monospace, monospace;
-    --line: rgba(244, 241, 234, 0.08);
-    --line-hi: rgba(212, 175, 55, 0.25);
-  }
+/* ========================================================
+   SHARED DESIGN TOKEN LAYER
+   :root            = Bloomberg defaults (Radar + Hidden Gems)
+   .page-observatory = champagne overrides (Demand / Star Log / Almanac)
+   ======================================================== */
+:root {
+  /* Typography */
+  --serif:   'Cormorant Garamond', serif;
+  --sans:    'Inter', system-ui, sans-serif;
+  --mono:    'JetBrains Mono', ui-monospace, monospace;
+  --display: 'Space Grotesk', sans-serif;
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
 
-  html, body {
-    background: var(--void);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 13px;
-    line-height: 1.5;
-    overflow-x: hidden;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
+  /* Surface palette — Bloomberg (default) */
+  --surface-1: #07090c;
+  --surface-2: #0c1015;
+  --surface-3: #11161e;
+  --panel:      rgba(18, 24, 33, 0.72);
+  --panel-solid:#121821;
+  --ink:    #d6e1ee;
+  --ink-2:  #8b9cb0;
+  --ink-3:  #5a6878;
+  --line:    rgba(120, 160, 200, 0.10);
+  --line-hi: rgba(120, 200, 255, 0.28);
+  --accent: #00f0ff;
+  --good:   #00ff9d;
+  --bad:    #ff4d6d;
 
-  /* Background: deep nebula */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 70% 20%, rgba(80, 60, 140, 0.12), transparent 60%),
-      radial-gradient(ellipse 60% 70% at 20% 80%, rgba(40, 80, 130, 0.10), transparent 60%),
-      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(150, 110, 50, 0.04), transparent 70%),
-      var(--void);
-    z-index: -2;
-  }
-  /* Faint star field permanently in background */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      radial-gradient(1px 1px at 23px 47px, rgba(244,241,234,0.4), transparent),
-      radial-gradient(1px 1px at 137px 211px, rgba(244,241,234,0.3), transparent),
-      radial-gradient(1px 1px at 287px 73px, rgba(244,241,234,0.5), transparent),
-      radial-gradient(1px 1px at 391px 287px, rgba(244,241,234,0.25), transparent),
-      radial-gradient(1px 1px at 41px 397px, rgba(244,241,234,0.4), transparent),
-      radial-gradient(1px 1px at 511px 137px, rgba(244,241,234,0.3), transparent),
-      radial-gradient(1.5px 1.5px at 219px 359px, rgba(244,241,234,0.5), transparent),
-      radial-gradient(1px 1px at 587px 411px, rgba(244,241,234,0.3), transparent),
-      radial-gradient(1px 1px at 643px 53px, rgba(244,241,234,0.4), transparent),
-      radial-gradient(1px 1px at 769px 287px, rgba(244,241,234,0.25), transparent);
-    background-size: 800px 500px;
-    background-repeat: repeat;
-    opacity: 0.6;
-    z-index: -1;
-    pointer-events: none;
-    animation: drift 200s linear infinite;
-  }
-  @keyframes drift {
-    from { background-position: 0 0; }
-    to { background-position: 800px 500px; }
-  }
+  /* Stage palette — Bloomberg neon (default) */
+  --stage-whisper:   #00d4ff;
+  --stage-builder:   #00ff9d;
+  --stage-creator:   #ffd84d;
+  --stage-hype:      #ff8a3d;
+  --stage-commodity: #7a8696;
 
-  /* =============== TOP BAR =============== */
-  .topbar {
-    display: flex;
-    align-items: center;
-    padding: 18px 32px;
-    border-bottom: 1px solid var(--line);
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(5, 8, 19, 0.7);
-    backdrop-filter: blur(20px);
-  }
-  .brand {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: 20px;
-    letter-spacing: 0.04em;
-    color: var(--ink);
-    display: flex; align-items: center; gap: 14px;
-  }
-  .brand .star {
-    width: 10px; height: 10px;
-    background: radial-gradient(circle, var(--champagne) 0%, transparent 70%);
-    position: relative;
-  }
-  .brand .star::before {
-    content: '✦';
-    position: absolute;
-    inset: -8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    color: var(--champagne);
-    animation: twinkle 4s ease-in-out infinite;
-  }
-  @keyframes twinkle {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.85); }
-  }
-  .brand .subtitle {
-    font-family: var(--sans);
-    font-size: 10px;
-    font-weight: 400;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    border-left: 1px solid var(--line);
-    padding-left: 14px;
-    margin-left: 4px;
-  }
-  .nav {
-    display: flex;
-    margin-left: 56px;
-    gap: 4px;
-  }
-  .nav button {
-    background: transparent;
-    border: none;
-    color: var(--ink-2);
-    font-family: var(--serif);
-    font-size: 16px;
-    font-weight: 400;
-    font-style: italic;
-    padding: 6px 18px;
-    cursor: pointer;
-    position: relative;
-    letter-spacing: 0.02em;
-  }
-  .nav button:hover { color: var(--ink); }
-  .nav button.active { color: var(--champagne); }
-  .nav button.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px; left: 50%; transform: translateX(-50%);
-    width: 4px; height: 4px; border-radius: 50%;
-    background: var(--champagne);
-    box-shadow: 0 0 8px var(--champagne);
-  }
-  .topbar .right {
-    margin-left: auto;
-    display: flex; align-items: center; gap: 20px;
-  }
-  .meta-text {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .niche-input {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--line);
-    color: var(--ink);
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 15px;
-    padding: 4px 4px;
-    width: 240px;
-    text-align: right;
-  }
-  .niche-input:focus {
-    outline: none;
-    border-bottom-color: var(--champagne);
-  }
-  .niche-input::placeholder { color: var(--ink-3); }
+  /* Topbar brand colors (always observatory — product identity) */
+  --champagne: #d4af37;
+  --void:      #050813;
+  --void-2:    #0a0f1e;
+}
 
-  /* =============== PAGE BASE =============== */
-  .page { display: none; }
-  .page.active { display: block; }
+/* Observatory page-scope override */
+.page-observatory {
+  --surface-1: #050813;
+  --surface-2: #0a0f1e;
+  --surface-3: #111729;
+  --panel:      rgba(10, 15, 30, 0.5);
+  --panel-solid:#0a0f1e;
+  --ink:    #f4f1ea;
+  --ink-2:  #b3b0a8;
+  --ink-3:  #6a6862;
+  --line:    rgba(244, 241, 234, 0.08);
+  --line-hi: rgba(212, 175, 55, 0.25);
+  --accent: #d4af37;
 
-  /* =============== SKY MAP =============== */
-  .sky-wrap {
-    position: relative;
-    height: calc(100vh - 73px);
-    overflow: hidden;
-  }
-  #skyCanvas {
-    position: absolute;
-    inset: 0;
-    width: 100%; height: 100%;
-    cursor: crosshair;
-  }
+  --stage-whisper:   #a8c4ff;
+  --stage-builder:   #ffd97a;
+  --stage-creator:   #f4a623;
+  --stage-hype:      #ff7a5a;
+  --stage-commodity: #7c98c4;
+}
 
-  /* Observatory log — top-left floating */
-  .obs-log {
-    position: absolute;
-    top: 32px; left: 32px;
-    width: 380px;
-    padding: 26px 28px;
-    background: rgba(10, 15, 30, 0.45);
-    border: 1px solid var(--line);
-    border-radius: 2px;
-    backdrop-filter: blur(20px);
-    z-index: 10;
-  }
-  .obs-log::before {
-    content: '';
-    position: absolute;
-    top: -1px; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--line-hi), transparent);
-  }
-  .obs-log .stamp {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    color: var(--champagne);
-    text-transform: uppercase;
-    margin-bottom: 16px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .obs-log .stamp::before {
-    content: '◆';
-    font-size: 7px;
-  }
-  .obs-log .stamp::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--line-hi);
-    margin-left: 4px;
-  }
-  .obs-log h2 {
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: 22px;
-    line-height: 1.25;
-    color: var(--ink);
-    margin-bottom: 14px;
-    letter-spacing: 0.005em;
-  }
-  .obs-log h2 em {
-    color: var(--champagne);
-    font-style: italic;
-  }
-  .obs-log p {
-    font-family: var(--serif);
-    font-size: 15px;
-    line-height: 1.6;
-    color: var(--ink-2);
-    font-weight: 300;
-  }
-  .obs-log p .em { color: var(--ink); font-style: italic; }
-  .obs-log p .delta-up { color: var(--builder); font-family: var(--mono); font-size: 12px; font-style: normal; }
-  .obs-log p .delta-down { color: var(--hype); font-family: var(--mono); font-size: 12px; font-style: normal; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* Sky legend — bottom-right */
-  .sky-legend {
-    position: absolute;
-    bottom: 32px; right: 32px;
-    padding: 18px 22px;
-    background: rgba(10, 15, 30, 0.4);
-    border: 1px solid var(--line);
-    backdrop-filter: blur(20px);
-    z-index: 10;
-    min-width: 240px;
-  }
-  .sky-legend .title {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-3);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .sky-legend .item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 4px 0;
-    font-family: var(--serif);
-    font-size: 13px;
-    font-style: italic;
-    color: var(--ink-2);
-  }
-  .sky-legend .item .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    box-shadow: 0 0 8px currentColor;
-  }
-  .item.whisper { color: var(--whisper); }
-  .item.builder { color: var(--builder); }
-  .item.creator { color: var(--creator); }
-  .item.hype { color: var(--hype); }
-  .item.commodity { color: var(--commodity); }
-  .item .dot.whisper { background: var(--whisper); }
-  .item .dot.builder { background: var(--builder); }
-  .item .dot.creator { background: var(--creator); }
-  .item .dot.hype { background: var(--hype); }
-  .item .dot.commodity { background: var(--commodity); }
+html, body {
+  background: var(--surface-1);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-x: hidden;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* Axis labels */
-  .axis-label {
-    position: absolute;
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-3);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    pointer-events: none;
-    z-index: 5;
-  }
-  .axis-label.x { bottom: 16px; left: 50%; transform: translateX(-50%); }
-  .axis-label.y { top: 50%; left: 16px; transform: rotate(-90deg) translateX(50%); transform-origin: left top; }
-  .axis-label .arrow { color: var(--champagne); }
+/* Bloomberg-mode background — grid + scanlines + radial */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(0, 240, 255, 0.06), transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(0, 255, 157, 0.04), transparent 50%),
+    linear-gradient(rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--surface-1);
+  z-index: -2;
+  pointer-events: none;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg,
+    rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px,
+    transparent 1px, transparent 3px);
+  z-index: -1;
+  pointer-events: none;
+}
 
-  /* Object detail panel (selected star) */
-  .object-panel {
-    position: absolute;
-    bottom: 32px; left: 50%;
-    transform: translateX(-50%) translateY(120%);
-    width: min(720px, calc(100vw - 80px));
-    padding: 28px 36px;
-    background: rgba(10, 15, 30, 0.78);
-    border: 1px solid var(--line-hi);
-    backdrop-filter: blur(20px);
-    z-index: 20;
-    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .object-panel.visible { transform: translateX(-50%) translateY(0); }
-  .object-panel::before {
-    content: '';
-    position: absolute;
-    top: -1px; left: 20%; right: 20%; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--champagne), transparent);
-  }
-  .object-panel .designation {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--champagne);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .object-panel .name {
-    font-family: var(--serif);
-    font-size: 32px;
-    font-weight: 400;
-    color: var(--ink);
-    line-height: 1.1;
-    margin-bottom: 6px;
-    letter-spacing: -0.005em;
-  }
-  .object-panel .constellation {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 14px;
-    color: var(--ink-3);
-    margin-bottom: 18px;
-  }
-  .object-panel .summary {
-    font-family: var(--serif);
-    font-size: 16px;
-    color: var(--ink-2);
-    line-height: 1.55;
-    margin-bottom: 20px;
-    font-weight: 300;
-  }
-  .object-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--line);
-    margin-bottom: 20px;
-  }
-  .object-stats .stat {
-    padding: 14px 16px;
-    background: rgba(10, 15, 30, 0.6);
-  }
-  .object-stats .stat .label {
-    font-family: var(--mono);
-    font-size: 8px;
-    color: var(--ink-3);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .object-stats .stat .value {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--ink);
-  }
-  .object-stats .stat .value.gold { color: var(--champagne); }
-  .object-stats .stat .sub {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-3);
-    margin-top: 2px;
-    letter-spacing: 0.05em;
-  }
-  .object-prediction {
-    padding: 14px 16px;
-    border-left: 2px solid var(--champagne);
-    background: rgba(212, 175, 55, 0.04);
-  }
-  .object-prediction .ph {
-    font-family: var(--mono);
-    font-size: 8px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--champagne);
-    margin-bottom: 4px;
-  }
-  .object-prediction .text {
-    font-family: var(--serif);
-    font-size: 15px;
-    color: var(--ink);
-    font-style: italic;
-  }
-  .object-close {
-    position: absolute;
-    top: 16px; right: 18px;
-    background: transparent;
-    border: none;
-    color: var(--ink-3);
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-    letter-spacing: 0.08em;
-  }
-  .object-close:hover { color: var(--ink); }
+/* ========== TOPBAR (observatory branding across all pages) ========== */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: var(--sp-4) var(--sp-6);
+  border-bottom: 1px solid rgba(244, 241, 234, 0.08);
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(5, 8, 19, 0.78);
+  backdrop-filter: blur(20px);
+  color: #f4f1ea;
+}
+.brand {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+.brand .star { width: 10px; height: 10px; position: relative; }
+.brand .star::before {
+  content: '✦';
+  position: absolute; inset: -8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: var(--champagne);
+  animation: twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.85); }
+}
+.brand .subtitle {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6a6862;
+  border-left: 1px solid rgba(244, 241, 234, 0.08);
+  padding-left: var(--sp-3);
+  margin-left: var(--sp-1);
+}
+.nav { display: flex; margin-left: 48px; gap: var(--sp-1); }
+.nav button {
+  background: transparent; border: none;
+  color: #b3b0a8;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 400;
+  font-style: italic;
+  padding: 6px 16px;
+  cursor: pointer;
+  position: relative;
+  letter-spacing: 0.02em;
+}
+.nav button:hover { color: #f4f1ea; }
+.nav button.active { color: var(--champagne); }
+.nav button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--champagne);
+  box-shadow: 0 0 8px var(--champagne);
+}
+.topbar .right { margin-left: auto; display: flex; align-items: center; gap: var(--sp-5); }
+.meta-text {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #6a6862;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.niche-input {
+  background: transparent; border: none;
+  border-bottom: 1px solid rgba(244, 241, 234, 0.08);
+  color: #f4f1ea;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  padding: 4px;
+  width: 240px;
+  text-align: right;
+}
+.niche-input:focus { outline: none; border-bottom-color: var(--champagne); }
+.niche-input::placeholder { color: #6a6862; }
 
-  /* Tooltip on hover */
-  .star-tooltip {
-    position: absolute;
-    pointer-events: none;
-    background: rgba(10, 15, 30, 0.92);
-    border: 1px solid var(--line-hi);
-    padding: 8px 12px;
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 14px;
-    color: var(--ink);
-    z-index: 30;
-    opacity: 0;
-    transition: opacity 0.15s;
-    white-space: nowrap;
-    backdrop-filter: blur(8px);
-  }
-  .star-tooltip .designation {
-    display: block;
-    font-family: var(--mono);
-    font-size: 9px;
-    font-style: normal;
-    letter-spacing: 0.15em;
-    color: var(--champagne);
-    text-transform: uppercase;
-    margin-bottom: 2px;
-  }
+/* ========== PAGE BASE ========== */
+.page { display: none; }
+.page.active { display: block; }
 
-  /* =============== DEMAND CLUSTERS =============== */
-  .demand-wrap { padding: 56px 64px 80px; }
-  .page-title {
-    margin-bottom: 6px;
-  }
-  .page-eyebrow {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--champagne);
-    text-transform: uppercase;
-    margin-bottom: 14px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .page-eyebrow::before { content: '◆'; font-size: 8px; }
-  .page-title h1 {
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: 48px;
-    color: var(--ink);
-    line-height: 1.1;
-    margin-bottom: 12px;
-    letter-spacing: -0.01em;
-  }
-  .page-title h1 em { color: var(--champagne); font-style: italic; }
-  .page-title .lede {
-    font-family: var(--serif);
-    font-size: 18px;
-    color: var(--ink-2);
-    max-width: 720px;
-    font-weight: 300;
-    line-height: 1.55;
-  }
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, var(--line-hi), transparent);
-    margin: 36px 0;
-  }
+/* ====================================================
+   RADAR PAGE (Bloomberg)
+   ==================================================== */
+.briefing {
+  margin: var(--sp-4) var(--sp-5) 0;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, rgba(0,240,255,0.06), rgba(0,255,157,0.03));
+  border: 1px solid var(--line-hi);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+.briefing::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.briefing .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.briefing .label::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--line-hi), transparent);
+}
+.briefing-text { font-family: var(--sans); font-size: 14px; line-height: 1.6; color: var(--ink); }
 
-  .demand-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
-    gap: 32px;
-  }
-  .demand-card {
-    background: rgba(10, 15, 30, 0.5);
-    border: 1px solid var(--line);
-    padding: 32px;
-    position: relative;
-    transition: border-color 0.3s;
-    cursor: pointer;
-  }
-  .demand-card:hover { border-color: var(--line-hi); }
-  .demand-card .askers {
-    font-family: var(--serif);
-    font-size: 48px;
-    font-weight: 500;
-    color: var(--champagne);
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-  .demand-card .askers .unit {
-    font-family: var(--sans);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--ink-3);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    margin-left: 8px;
-  }
-  .demand-card .question {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 22px;
-    color: var(--ink);
-    line-height: 1.35;
-    margin: 14px 0 22px;
-    font-weight: 400;
-  }
-  .demand-card .question::before { content: '“'; color: var(--champagne); margin-right: 2px; }
-  .demand-card .question::after  { content: '”'; color: var(--champagne); margin-left: 2px; }
+.filters {
+  display: flex; gap: 10px; align-items: center;
+  margin: var(--sp-4) var(--sp-5) 0;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  flex-wrap: wrap;
+}
+.filters .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-right: 6px;
+  border-right: 1px solid var(--line);
+  margin-right: 6px;
+}
+.chip {
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  color: var(--ink-2);
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.15s;
+  user-select: none;
+}
+.chip:hover  { color: var(--ink); border-color: var(--line-hi); }
+.chip.active { color: var(--ink); border-color: var(--line-hi); background: rgba(0, 240, 255, 0.05); }
 
-  .demand-quotes {
-    border-top: 1px solid var(--line);
-    padding-top: 18px;
-    margin-bottom: 18px;
-  }
-  .demand-quote {
-    padding: 6px 0 8px 14px;
-    border-left: 1px solid var(--line);
-    margin-bottom: 8px;
-    font-family: var(--serif);
-    font-size: 13px;
-    color: var(--ink-2);
-    line-height: 1.5;
-    font-weight: 300;
-  }
-  .demand-quote .src {
-    display: block;
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-3);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-top: 4px;
-  }
-  .demand-meta {
-    display: flex;
-    gap: 24px;
-    padding-top: 18px;
-    border-top: 1px solid var(--line);
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .demand-meta .item {
-    display: flex; flex-direction: column; gap: 3px;
-  }
-  .demand-meta .item .v {
-    font-family: var(--serif);
-    font-size: 16px;
-    color: var(--ink);
-    letter-spacing: 0;
-    text-transform: none;
-    font-style: italic;
-  }
-  .demand-meta .item .v.gold { color: var(--champagne); }
+.stage-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.stage-dot.whisper   { background: var(--stage-whisper);   box-shadow: 0 0 6px var(--stage-whisper); }
+.stage-dot.builder   { background: var(--stage-builder);   box-shadow: 0 0 6px var(--stage-builder); }
+.stage-dot.creator   { background: var(--stage-creator);   box-shadow: 0 0 6px var(--stage-creator); }
+.stage-dot.hype      { background: var(--stage-hype);      box-shadow: 0 0 6px var(--stage-hype); }
+.stage-dot.commodity { background: var(--stage-commodity); }
 
-  .demand-brief {
-    margin-top: 18px;
-    padding: 14px 16px;
-    border-left: 2px solid var(--champagne);
-    background: rgba(212, 175, 55, 0.04);
-    font-family: var(--serif);
-    font-size: 14px;
-    color: var(--ink);
-    font-style: italic;
-    line-height: 1.5;
-  }
-  .demand-brief .ph {
-    display: block;
-    font-family: var(--mono);
-    font-size: 8px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--champagne);
-    font-style: normal;
-    margin-bottom: 6px;
-  }
+.radar-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--sp-4);
+  margin: var(--sp-4) var(--sp-5) var(--sp-5);
+}
+@media (max-width: 1100px) { .radar-grid { grid-template-columns: 1fr; } }
 
-  /* =============== STAR LOG (predictions) =============== */
-  .log-wrap { padding: 56px 64px 80px; }
-  .hit-rate {
-    display: flex;
-    gap: 48px;
-    align-items: baseline;
-    margin: 32px 0 48px;
-    padding: 32px 36px;
-    background: rgba(10, 15, 30, 0.4);
-    border: 1px solid var(--line);
-    position: relative;
-  }
-  .hit-rate::before {
-    content: '';
-    position: absolute;
-    top: -1px; left: 30%; right: 30%; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--champagne), transparent);
-  }
-  .hit-rate .big {
-    font-family: var(--serif);
-    font-size: 88px;
-    font-weight: 500;
-    color: var(--champagne);
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-  .hit-rate .big .pct { font-size: 32px; vertical-align: top; color: var(--champagne-soft); }
-  .hit-rate .stats {
-    display: grid;
-    grid-template-columns: repeat(4, auto);
-    gap: 40px;
-  }
-  .hit-rate .stats .stat .v {
-    font-family: var(--serif);
-    font-size: 28px;
-    color: var(--ink);
-    font-weight: 400;
-  }
-  .hit-rate .stats .stat .v.good { color: var(--builder); }
-  .hit-rate .stats .stat .v.tracking { color: var(--whisper); }
-  .hit-rate .stats .stat .v.wrong { color: var(--hype); }
-  .hit-rate .stats .stat .l {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    margin-top: 2px;
-  }
-  .hit-rate .caption {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 15px;
-    color: var(--ink-2);
-    max-width: 240px;
-    line-height: 1.5;
-    margin-left: auto;
-    border-left: 1px solid var(--line);
-    padding-left: 24px;
-  }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.panel-head .title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-head .title::before {
+  content: '';
+  width: 3px; height: 12px;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.panel-head .meta { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.chart-host { height: 580px; padding: 8px; }
+.chart-caption {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  border-top: 1px solid var(--line);
+  line-height: 1.5;
+}
+.leaderboard { max-height: 580px; overflow-y: auto; }
+.leaderboard::-webkit-scrollbar { width: 6px; }
+.leaderboard::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 3px; }
+.lb-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 60px 44px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.lb-row:hover { background: rgba(0, 240, 255, 0.04); }
+.lb-row .rank { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.lb-row .name {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-row .stage-mini {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+  display: flex; align-items: center; gap: 4px;
+}
+.lb-row .tbts {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: right;
+}
+.lb-row .vel { font-family: var(--mono); font-size: 10px; text-align: right; color: var(--ink-3); }
+.lb-row .vel.up   { color: var(--good); }
+.lb-row .vel.down { color: var(--bad); }
 
-  .prediction-list {
-    display: flex;
-    flex-direction: column;
-  }
-  .prediction {
-    padding: 28px 0;
-    border-bottom: 1px solid var(--line);
-    display: grid;
-    grid-template-columns: 110px 1fr 220px 90px;
-    gap: 32px;
-    align-items: start;
-  }
-  .prediction:last-child { border-bottom: none; }
-  .prediction .date {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--ink-3);
-    letter-spacing: 0.06em;
-    padding-top: 4px;
-  }
-  .prediction .pred-text {
-    font-family: var(--serif);
-    font-size: 18px;
-    color: var(--ink);
-    line-height: 1.4;
-    font-weight: 400;
-  }
-  .prediction .pred-text .subject { color: var(--champagne); font-style: italic; }
-  .prediction .verdict-text {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 14px;
-    color: var(--ink-2);
-    line-height: 1.5;
-    padding-top: 4px;
-  }
-  .prediction .verdict-badge {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 6px 10px;
-    text-align: center;
-    border: 1px solid;
-    align-self: start;
-  }
-  .verdict-badge.verified { color: var(--builder); border-color: rgba(255, 217, 122, 0.3); }
-  .verdict-badge.tracking { color: var(--whisper); border-color: rgba(168, 196, 255, 0.3); }
-  .verdict-badge.wrong    { color: var(--hype); border-color: rgba(255, 122, 90, 0.3); }
-  .verdict-badge.early    { color: var(--champagne); border-color: rgba(212, 175, 55, 0.3); }
+/* ====================================================
+   HIDDEN GEMS — stub for Commit 1 (full grid lands Commit 2)
+   ==================================================== */
+.gems-stub {
+  margin: var(--sp-5) var(--sp-5);
+  padding: 48px;
+  background: var(--panel);
+  border: 1px dashed var(--line-hi);
+  border-radius: 6px;
+  text-align: center;
+}
+.gems-stub .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.gems-stub .text {
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--ink-2);
+  font-weight: 500;
+}
 
-  /* =============== ALMANAC (content angles) =============== */
-  .almanac-wrap { padding: 56px 64px 80px; }
-  .almanac-niche {
-    display: flex; align-items: center; gap: 16px;
-    margin: 24px 0 40px;
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 16px;
-    color: var(--ink-2);
-  }
-  .almanac-niche .pill {
-    padding: 6px 14px;
-    border: 1px solid var(--line-hi);
-    color: var(--champagne);
-    font-style: italic;
-  }
-  .almanac-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 32px;
-  }
-  .almanac-card {
-    background: rgba(10, 15, 30, 0.4);
-    border: 1px solid var(--line);
-    padding: 28px;
-  }
-  .almanac-card .topic {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--champagne);
-    margin-bottom: 14px;
-    display: flex; gap: 10px; align-items: center;
-  }
-  .almanac-card .topic::before { content: '✦'; }
-  .almanac-card .topic .stage {
-    color: var(--ink-3);
-    font-weight: 400;
-    letter-spacing: 0.1em;
-  }
-  .almanac-row {
-    padding: 14px 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .almanac-row:last-child { border-bottom: none; }
-  .almanac-row .tag {
-    font-family: var(--mono);
-    font-size: 8px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    margin-bottom: 6px;
-  }
-  .almanac-row .title {
-    font-family: var(--serif);
-    font-size: 19px;
-    color: var(--ink);
-    line-height: 1.3;
-    font-weight: 400;
-    cursor: pointer;
-    transition: color 0.15s;
-    display: flex; align-items: flex-start; gap: 12px;
-  }
-  .almanac-row .title:hover { color: var(--champagne); }
-  .almanac-row .title::before { content: '“'; color: var(--champagne); margin-right: 0; flex-shrink: 0; }
-  .almanac-row .title::after  { content: '”'; color: var(--champagne); margin-left: -8px; flex-shrink: 0; }
+/* ====================================================
+   OBSERVATORY PAGES — soft nebula background
+   ==================================================== */
+.page-observatory {
+  position: relative;
+  background: var(--surface-1);
+  min-height: calc(100vh - 73px);
+}
+.page-observatory::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(80, 60, 140, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 70% at 20% 80%, rgba(40, 80, 130, 0.08), transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+}
+.page-observatory > * { position: relative; z-index: 1; }
 
-  /* =============== FOOTER =============== */
-  footer {
-    padding: 32px 64px 48px;
-    border-top: 1px solid var(--line);
-    margin-top: 0;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
-  }
-  footer .quote {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 13px;
-    color: var(--ink-2);
-    text-transform: none;
-    letter-spacing: 0;
-    max-width: 480px;
-  }
+.page-title { margin-bottom: 6px; }
+.page-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--champagne);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.page-eyebrow::before { content: '◆'; font-size: 8px; }
+.page-title h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 48px;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+.page-title h1 em { color: var(--champagne); font-style: italic; }
+.page-title .lede {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--ink-2);
+  max-width: 720px;
+  font-weight: 300;
+  line-height: 1.55;
+}
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, var(--line-hi), transparent);
+  margin: 36px 0;
+}
+
+/* ---- Demand Clusters (observatory) ---- */
+.demand-wrap { padding: 56px 64px 80px; }
+.demand-empty {
+  padding: 64px 48px;
+  border: 1px dashed var(--line-hi);
+  text-align: center;
+  background: var(--panel);
+}
+.demand-empty .ph {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--champagne);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.demand-empty .text {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-style: italic;
+  color: var(--ink-2);
+  font-weight: 300;
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+.demand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 32px;
+}
+.demand-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 32px;
+  position: relative;
+  cursor: pointer;
+}
+.demand-card .askers {
+  font-family: var(--serif);
+  font-size: 48px;
+  font-weight: 500;
+  color: var(--champagne);
+  line-height: 1;
+}
+.demand-card .askers .unit {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+.demand-card .question {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.35;
+  margin: 14px 0 22px;
+}
+
+/* ---- Star Log (observatory) ---- */
+.log-wrap { padding: 56px 64px 80px; }
+.hit-rate {
+  display: flex;
+  gap: 48px;
+  align-items: baseline;
+  margin: 32px 0 48px;
+  padding: 32px 36px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  position: relative;
+}
+.hit-rate::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 30%; right: 30%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--champagne), transparent);
+}
+.hit-rate .big {
+  font-family: var(--serif);
+  font-size: 88px;
+  font-weight: 500;
+  color: var(--champagne);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.hit-rate .big .pct { font-size: 32px; vertical-align: top; opacity: 0.8; }
+.hit-rate .stats {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 40px;
+}
+.hit-rate .stats .stat .v {
+  font-family: var(--serif);
+  font-size: 28px;
+  color: var(--ink);
+  font-weight: 400;
+}
+.hit-rate .stats .stat .v.good     { color: var(--stage-builder); }
+.hit-rate .stats .stat .v.tracking { color: var(--stage-whisper); }
+.hit-rate .stats .stat .v.wrong    { color: var(--stage-hype); }
+.hit-rate .stats .stat .l {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.hit-rate .caption {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-2);
+  max-width: 240px;
+  line-height: 1.5;
+  margin-left: auto;
+  border-left: 1px solid var(--line);
+  padding-left: 24px;
+}
+
+.prediction-list { display: flex; flex-direction: column; }
+.prediction {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 110px 1fr 220px 110px;
+  gap: 32px;
+  align-items: start;
+}
+.prediction:last-child { border-bottom: none; }
+.prediction .date {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  padding-top: 4px;
+}
+.prediction .pred-text { font-family: var(--serif); font-size: 18px; color: var(--ink); line-height: 1.4; }
+.prediction .verdict-text {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  padding-top: 4px;
+}
+.prediction .verdict-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  text-align: center;
+  border: 1px solid;
+  align-self: start;
+}
+.verdict-badge.verified        { color: var(--stage-builder); border-color: rgba(255, 217, 122, 0.3); }
+.verdict-badge.verified_early  { color: var(--champagne);     border-color: rgba(212, 175, 55, 0.3); }
+.verdict-badge.tracking        { color: var(--stage-whisper); border-color: rgba(168, 196, 255, 0.3); }
+.verdict-badge.pending         { color: var(--ink-3);         border-color: var(--line); }
+.verdict-badge.wrong           { color: var(--stage-hype);    border-color: rgba(255, 122, 90, 0.3); }
+
+/* ---- Almanac (observatory) ---- */
+.almanac-wrap { padding: 56px 64px 80px; }
+.almanac-niche {
+  display: flex; align-items: center; gap: 16px;
+  margin: 24px 0 40px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink-2);
+}
+.almanac-niche .pill {
+  padding: 6px 14px;
+  border: 1px solid var(--line-hi);
+  color: var(--champagne);
+  font-style: italic;
+}
+.almanac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 32px;
+}
+.almanac-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 28px;
+}
+.almanac-card .topic {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--champagne);
+  margin-bottom: 14px;
+  display: flex; gap: 10px; align-items: center;
+}
+.almanac-card .topic::before { content: '✦'; }
+.almanac-card .topic .stage { color: var(--ink-3); font-weight: 400; letter-spacing: 0.1em; }
+.almanac-row { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.almanac-row:last-child { border-bottom: none; }
+.almanac-row .tag {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.almanac-row .title {
+  font-family: var(--serif);
+  font-size: 19px;
+  color: var(--ink);
+  line-height: 1.3;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.15s;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.almanac-row .title:hover { color: var(--champagne); }
+.almanac-row .title::before { content: '\201C'; color: var(--champagne); flex-shrink: 0; }
+.almanac-row .title::after  { content: '\201D'; color: var(--champagne); margin-left: -8px; flex-shrink: 0; }
+
+/* ========== FOOTER ========== */
+footer {
+  margin: 24px var(--sp-5);
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #6a6862;
+  border-top: 1px solid rgba(244, 241, 234, 0.08);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+footer .quote {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  color: #b3b0a8;
+  text-transform: none;
+  letter-spacing: 0;
+  max-width: 480px;
+}
 </style>
 </head>
 <body>
 
-<!-- ============== TOPBAR ============== -->
+<!-- ========== TOPBAR ========== -->
 <div class="topbar">
   <div class="brand">
     <span class="star"></span>
     AI Alpha Radar
-    <span class="subtitle">Celestial Observatory · est. 2026</span>
+    <span class="subtitle">Trend Intelligence · est. 2026</span>
   </div>
   <div class="nav">
-    <button data-page="sky" class="active">Sky Map</button>
+    <button data-page="radar" class="active">Radar</button>
+    <button data-page="gems">Hidden Gems</button>
     <button data-page="demand">Demand Clusters</button>
     <button data-page="log">Star Log</button>
     <button data-page="almanac">Almanac</button>
   </div>
   <div class="right">
-    <span class="meta-text">night of 13 May 2026</span>
+    <span class="meta-text" id="snapshotStamp">snapshot · —</span>
     <input class="niche-input" id="nicheInput" placeholder="your niche…" value="AI tools for solo creators">
   </div>
 </div>
 
-<!-- ============== SKY MAP ============== -->
-<div class="page active" data-page="sky">
-  <div class="sky-wrap">
-    <canvas id="skyCanvas"></canvas>
+<!-- ========== RADAR (Bloomberg) ========== -->
+<div class="page active" data-page="radar">
+  <div class="briefing">
+    <div class="label">⚡ Daily Movers · Editorial Briefing</div>
+    <div class="briefing-text" id="briefingText">—</div>
+  </div>
 
-    <div class="obs-log">
-      <div class="stamp">Observer's Log · 06:00 UTC</div>
-      <h2>Three new stars rose <em>before the field noticed</em>.</h2>
-      <p>
-        <span class="em">Test-time training</span> brightened to magnitude <span class="delta-up">+3.1×</span> after fourteen new repositories appeared overnight.
-        <span class="em">World-model agents</span> formed a constellation with two adjacent papers — a convergence event flagged forty-eight hours ago.
-        Meanwhile <span class="em">RAG 2.0</span> is dimming
-        — its window <span class="delta-down">closes in four days</span>.
-      </p>
+  <div class="filters">
+    <span class="label">Stage</span>
+    <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
+    <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
+    <span class="chip active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
+    <span class="chip"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
+    <span class="chip"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
+
+    <span class="label" style="margin-left:16px">Source</span>
+    <span class="chip active" data-filter="source" data-value="arxiv">arXiv</span>
+    <span class="chip active" data-filter="source" data-value="github">GitHub</span>
+    <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
+    <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
+
+    <span class="label" style="margin-left:16px">Sort</span>
+    <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
+    <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
+    <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
+  </div>
+
+  <div class="radar-grid">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="title">Saturation × TBTS Map</div>
+        <div class="meta" id="trackedMeta">— tracked terms</div>
+      </div>
+      <div class="chart-host" id="bubbleChart"></div>
+      <div class="chart-caption">
+        X = saturation · Y = TBTS · size = hidden-gem score · color = stage. Velocity-on-Y returns once the T0/T1 baseline lands (velocity_score is 0 for every trend in the current snapshot).
+      </div>
     </div>
 
-    <div class="sky-legend">
-      <div class="title">Stellar Classification</div>
-      <div class="item whisper"><span class="dot whisper"></span>Whisper — pre-language</div>
-      <div class="item builder"><span class="dot builder"></span>Builder — target zone</div>
-      <div class="item creator"><span class="dot creator"></span>Creator — window closing</div>
-      <div class="item hype"><span class="dot hype"></span>Hype — saturated</div>
-      <div class="item commodity"><span class="dot commodity"></span>Commodity — dim</div>
-    </div>
-
-    <div class="axis-label x">SATURATION <span class="arrow">→</span></div>
-    <div class="axis-label y">VELOCITY <span class="arrow">→</span></div>
-
-    <div class="star-tooltip" id="starTooltip"></div>
-
-    <div class="object-panel" id="objectPanel">
-      <button class="object-close" onclick="closePanel()">CLOSE ✕</button>
-      <div class="designation" id="opDesignation">— · — · —</div>
-      <div class="name" id="opName">—</div>
-      <div class="constellation" id="opConstellation">in the constellation of —</div>
-      <div class="summary" id="opSummary">—</div>
-      <div class="object-stats">
-        <div class="stat"><div class="label">TBTS</div><div class="value gold" id="opTbts">—</div><div class="sub">composite</div></div>
-        <div class="stat"><div class="label">Velocity</div><div class="value" id="opVel">—</div><div class="sub">7d / 30d</div></div>
-        <div class="stat"><div class="label">Saturation</div><div class="value" id="opSat">—</div><div class="sub">% mainstream</div></div>
-        <div class="stat"><div class="label">Window</div><div class="value" id="opWindow">—</div><div class="sub">days remaining</div></div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="title">Top 20 · TBTS Leaderboard</div>
+        <div class="meta">06:00 UTC daily</div>
       </div>
-      <div class="object-prediction">
-        <div class="ph">Dated Prediction · accountability layer</div>
-        <div class="text" id="opPrediction">—</div>
-      </div>
+      <div class="leaderboard" id="leaderboard"></div>
     </div>
   </div>
 </div>
 
-<!-- ============== DEMAND CLUSTERS ============== -->
-<div class="page" data-page="demand">
+<!-- ========== HIDDEN GEMS STUB ========== -->
+<div class="page" data-page="gems">
+  <div class="gems-stub">
+    <div class="label">Hidden Gems</div>
+    <div class="text">Card grid lands in Commit 2 — rebuild in flight.</div>
+  </div>
+</div>
+
+<!-- ========== DEMAND CLUSTERS (observatory) ========== -->
+<div class="page page-observatory" data-page="demand">
   <div class="demand-wrap">
     <div class="page-eyebrow">The hero unit</div>
     <div class="page-title">
       <h1>What audiences are <em>begging for</em> that nobody has answered.</h1>
       <div class="lede">
-        Trends tell you what is rising. Demand clusters tell you what is <em>missing</em>. Each card below is a question-shape that thousands of people have asked across YouTube comments, Reddit, X replies, and HN threads — and that no creator has definitively answered yet. The window is the time before someone fills the void.
+        Trends tell you what is rising. Demand clusters tell you what is <em>missing</em>. Each card below is a question-shape that thousands of people have asked across YouTube comments, Reddit, X replies, and HN threads — and that no creator has definitively answered yet.
       </div>
     </div>
     <div class="divider"></div>
-    <div class="demand-grid" id="demandGrid"></div>
+    <div id="demandHost"></div>
   </div>
 </div>
 
-<!-- ============== STAR LOG ============== -->
-<div class="page" data-page="log">
+<!-- ========== STAR LOG (observatory) ========== -->
+<div class="page page-observatory" data-page="log">
   <div class="log-wrap">
     <div class="page-eyebrow">The accountability layer</div>
     <div class="page-title">
       <h1>Every prediction <em>this observatory</em> has dared to make — verified, tracking, or wrong.</h1>
       <div class="lede">
-        Most trend dashboards report data. This one places bets. Every flagged trend carries a dated prediction. The score below is real, backtested across the past ninety days of snapshots.
+        Most trend dashboards report data. This one places bets. Every flagged trend carries a dated prediction.
       </div>
     </div>
 
     <div class="hit-rate">
       <div>
-        <div class="big">72<span class="pct">%</span></div>
-        <div class="meta-text" style="margin-top:8px">all-time hit rate · 90-day window</div>
+        <div class="big"><span id="hitRateNum">—</span><span class="pct">%</span></div>
+        <div class="meta-text" style="margin-top:8px;color:var(--ink-3)">all-time hit rate · 90-day window</div>
       </div>
       <div class="stats">
-        <div class="stat"><div class="v good">18</div><div class="l">Verified</div></div>
-        <div class="stat"><div class="v tracking">7</div><div class="l">Tracking</div></div>
-        <div class="stat"><div class="v">3</div><div class="l">Verified Early</div></div>
-        <div class="stat"><div class="v wrong">4</div><div class="l">Wrong</div></div>
+        <div class="stat"><div class="v good" id="hitVerified">—</div><div class="l">Verified</div></div>
+        <div class="stat"><div class="v tracking" id="hitTracking">—</div><div class="l">Tracking</div></div>
+        <div class="stat"><div class="v" id="hitEarly">—</div><div class="l">Verified Early</div></div>
+        <div class="stat"><div class="v wrong" id="hitWrong">—</div><div class="l">Wrong</div></div>
       </div>
       <div class="caption">"A trend tracker that doesn't predict is just a thermometer pointed backwards."</div>
     </div>
@@ -936,8 +820,8 @@
   </div>
 </div>
 
-<!-- ============== ALMANAC ============== -->
-<div class="page" data-page="almanac">
+<!-- ========== ALMANAC (observatory) ========== -->
+<div class="page page-observatory" data-page="almanac">
   <div class="almanac-wrap">
     <div class="page-eyebrow">For the creator</div>
     <div class="page-title">
@@ -954,714 +838,320 @@
 </div>
 
 <footer>
-  <span>// AI Alpha Radar · Celestial Observatory · v0.2 mockup</span>
+  <span>// AI Alpha Radar · v0.2 · trend intelligence terminal</span>
   <span class="quote">"By the time it trends on Google, the star has already collapsed."</span>
-  <span id="footerStamp">— ° —</span>
+  <span id="footerStamp">—</span>
 </footer>
 
 <script>
-/* =====================================================
-   DATA
-   ===================================================== */
-
-const STARS = [
-  // {keyword, stage, saturation, velocity, tbts, summary, cluster, prediction, windowDays}
-  { kw:'world model agents',              stage:'whisper',   sat:12, vel:4.2, tbts:87,
-    cluster:'Autonomous Reasoning',
-    sum:'AI agents that learn a physics-style simulator of their environment to plan ahead instead of reacting.',
-    pred:'Reaches Builder stage by 21 June 2026; first mainstream YouTube coverage by 12 July.',
-    window:38 },
-  { kw:'test-time training',              stage:'builder',   sat:28, vel:3.1, tbts:81,
-    cluster:'Autonomous Reasoning',
-    sum:'Models that fine-tune themselves on each new problem during inference, not just at training time.',
-    pred:'Mainstream by 15 June 2026; expect 40+ tutorials by month-end.',
-    window:32 },
-  { kw:'diffusion language models',       stage:'whisper',   sat:8,  vel:5.6, tbts:84,
-    cluster:'Beyond Autoregression',
-    sum:'Text generation using diffusion instead of next-token prediction — parallel decoding, fewer hallucinations.',
-    pred:'Stays Whisper through Q3 2026; first commercial product by 1 October.',
-    window:64 },
-  { kw:'small reasoning models',          stage:'builder',   sat:34, vel:2.8, tbts:79,
-    cluster:'Compressed Intelligence',
-    sum:'Sub-3B-param models trained on synthetic chain-of-thought to match GPT-4-class reasoning.',
-    pred:'Peaks at Creator stage by 10 June 2026.',
-    window:28 },
-  { kw:'JEPA video models',               stage:'builder',   sat:31, vel:2.4, tbts:73,
-    cluster:'Beyond Autoregression',
-    sum:'Self-supervised video models that learn by predicting representations, not pixels.',
-    pred:'Crosses 50% saturation by 28 June 2026.',
-    window:45 },
-  { kw:'agentic memory architectures',    stage:'whisper',   sat:14, vel:3.7, tbts:78,
-    cluster:'Autonomous Reasoning',
-    sum:'Long-term memory systems for AI agents — vector + symbolic + temporal hybrid stores.',
-    pred:'Reaches Builder by 23 June 2026.',
-    window:41 },
-  { kw:'rStar-Math self-evolve',          stage:'builder',   sat:26, vel:3.4, tbts:76,
-    cluster:'Autonomous Reasoning',
-    sum:'Models that generate their own training data through Monte Carlo tree search.',
-    pred:'Mainstream by 6 June 2026.',
-    window:24 },
-  { kw:'browser-use agents (MCP)',        stage:'creator',   sat:52, vel:1.9, tbts:71,
-    cluster:'Tool-Using AI',
-    sum:'Agents that drive real browsers via Anthropic\'s MCP protocol.',
-    pred:'Peaks by 27 May 2026 — window already narrow.',
-    window:14 },
-  { kw:'tool-use RL post-training',       stage:'whisper',   sat:16, vel:4.0, tbts:76,
-    cluster:'Tool-Using AI',
-    sum:'RL fine-tuning where the reward signal comes from tool-call correctness.',
-    pred:'Reaches Builder by 4 July 2026.',
-    window:52 },
-  { kw:'neural CAD generation',           stage:'whisper',   sat:9,  vel:4.8, tbts:74,
-    cluster:'Generative Engineering',
-    sum:'Text-to-CAD with parametric output — editable Fusion 360 / OnShape files, not just meshes.',
-    pred:'Stays Whisper through August 2026.',
-    window:78 },
-  { kw:'agent evaluation harnesses',      stage:'builder',   sat:33, vel:2.6, tbts:68,
-    cluster:'Tool-Using AI',
-    sum:'Open-source frameworks for systematically benchmarking AI agents on real-world tasks.',
-    pred:'Mainstream by 18 June 2026.',
-    window:36 },
-  { kw:'speculative decoding hardware',   stage:'builder',   sat:38, vel:2.1, tbts:65,
-    cluster:'Compressed Intelligence',
-    sum:'Custom silicon and kernel work optimised for draft-model speculation — Groq-style speedups.',
-    pred:'Crosses 50% saturation by 23 June 2026.',
-    window:41 },
-  { kw:'synthetic data pipelines',        stage:'builder',   sat:42, vel:1.7, tbts:58,
-    cluster:'Compressed Intelligence',
-    sum:'End-to-end pipelines for generating, filtering, and verifying synthetic training data at scale.',
-    pred:'Peaks at Creator stage by 13 June 2026.',
-    window:31 },
-  { kw:'voice cloning v3',                stage:'creator',   sat:58, vel:1.4, tbts:55,
-    cluster:'Synthetic Media',
-    sum:'Sub-second-sample voice cloning with emotion control and per-syllable prosody.',
-    pred:'Saturates by 31 May 2026.',
-    window:18 },
-  { kw:'autonomous coding agents',        stage:'creator',   sat:64, vel:1.6, tbts:54,
-    cluster:'Tool-Using AI',
-    sum:'Long-running coding agents that ship PRs end-to-end.',
-    pred:'Peaks by 23 May 2026 — already saturating.',
-    window:10 },
-  { kw:'10M context windows',             stage:'hype',      sat:71, vel:2.3, tbts:51,
-    cluster:'Compressed Intelligence',
-    sum:'Frontier models pushing context to 10M+ tokens with sub-quadratic attention.',
-    pred:'Hype peak in 7 days; decline expected by late June.',
-    window:7 },
-  { kw:'RAG 2.0 agentic retrieval',       stage:'hype',      sat:78, vel:1.8, tbts:44,
-    cluster:'Tool-Using AI',
-    sum:'Multi-step retrieval with planning, re-ranking, and verification loops.',
-    pred:'Already commodity by mid-June 2026.',
-    window:4 },
-  { kw:'local LLM inference',             stage:'commodity', sat:88, vel:0.9, tbts:22,
-    cluster:'Compressed Intelligence',
-    sum:'Running quantized models on consumer hardware — mature toolchain.',
-    pred:'No further movement expected.',
-    window:0 },
-];
-
-const STAGE_COLOR = {
-  whisper:   '#a8c4ff',
-  builder:   '#ffd97a',
-  creator:   '#f4a623',
-  hype:      '#ff7a5a',
-  commodity: '#7c98c4',
+/* ==========================================================
+   DATA LAYER
+   ========================================================== */
+const STAGE_META = {
+  whisper:   { label: 'WHISPER',   color: '#00d4ff' },
+  builder:   { label: 'BUILDER',   color: '#00ff9d' },
+  creator:   { label: 'CREATOR',   color: '#ffd84d' },
+  hype:      { label: 'HYPE',      color: '#ff8a3d' },
+  commodity: { label: 'COMMODITY', color: '#7a8696' },
 };
 
-const STAGE_LABEL = {
-  whisper:   'WHISPER',
-  builder:   'BUILDER',
-  creator:   'CREATOR',
-  hype:      'HYPE',
-  commodity: 'COMMODITY',
-};
+let TRENDS        = [];
+let DEMAND        = [];
+let PREDICTIONS   = [];
+let HIT_RATE      = { rate: 0, verified: 0, tracking: 0, verified_early: 0, wrong: 0 };
+let BRIEFING      = { text: '' };
+let META          = {};
+let SNAPSHOT_DATE = '';
 
-const DEMAND = [
-  {
-    askers: 14200,
-    question: 'How do I run Claude Code on a 16 GB Mac without it crawling?',
-    quotes: [
-      { text: 'I love Claude Code but every time I open it my fan sounds like a jet engine. M2 Air, 16GB. Is there a setting I\'m missing?', src: 'YouTube comment · video on Claude Code workflows' },
-      { text: 'I just got my MacBook and now every AI tutorial assumes you have 64GB. Where is the guide for the rest of us?', src: 'r/ClaudeAI · 312 upvotes' },
-      { text: 'Anyone got Claude Code running smoothly on consumer hardware? Tutorials please.', src: 'X reply · 1.2k impressions' },
-    ],
-    sources: 'YouTube · Reddit · X · HN',
-    velocity: '+38%',
-    window: '11 days',
-    brief: 'Make a "Claude Code on a tight machine" guide. Spec setup, memory-saving flags, model swaps. Will pull from four under-served communities at once.',
-  },
-  {
-    askers: 9800,
-    question: 'Why does my agent keep hallucinating file paths that don\'t exist?',
-    quotes: [
-      { text: 'My agent keeps trying to read files in /Users/admin/projects when I literally have no such folder. Why??', src: 'Discord · LangChain server' },
-      { text: 'Spent the whole afternoon debugging only to find Claude invented a path. Surely there\'s a pattern fix?', src: 'YouTube comment · agent debugging video' },
-      { text: 'Anyone else getting phantom-path bugs? Feels like the model is making things up under load.', src: 'HN thread · 87 comments' },
-    ],
-    sources: 'Discord · YouTube · HN · X',
-    velocity: '+52%',
-    window: '7 days',
-    brief: 'Definitive "phantom path" explainer + fix. Cover prompt design, tool whitelisting, and recovery patterns. Highly technical creators will dominate this.',
-  },
-  {
-    askers: 11500,
-    question: 'What\'s a serious local alternative to OpenAI for coding day-to-day?',
-    quotes: [
-      { text: 'I want to leave OpenAI but every local model I try is either slow or stupid. What are people actually using?', src: 'r/LocalLLaMA · 1.4k upvotes' },
-      { text: 'Tried Llama 3.3, tried DeepSeek, none of them feel like Claude. Did I miss a release?', src: 'YouTube comment · local-AI showdown video' },
-      { text: 'Real talk — is there finally a local model that doesn\'t embarrass itself on TypeScript?', src: 'X · AI builder thread' },
-    ],
-    sources: 'Reddit · YouTube · X',
-    velocity: '+24%',
-    window: '14 days',
-    brief: 'Honest comparison video: same task, same machine, four local models head-to-head. Be the source the algorithm rewards as authoritative.',
-  },
-  {
-    askers: 7800,
-    question: 'How do you actually use MCP in production — not just demos?',
-    quotes: [
-      { text: 'Every MCP demo is a screenshot of Claude opening a browser. Where are the production stories?', src: 'HN front page · 230 comments' },
-      { text: 'I\'ve watched ten MCP tutorials and they all stop at "hello world". What does this look like in a real app?', src: 'r/ClaudeAI' },
-      { text: 'Want to ship MCP to my clients but I cannot find one real-world case study. Anyone seen one?', src: 'LinkedIn comment via Grok' },
-    ],
-    sources: 'HN · Reddit · LinkedIn',
-    velocity: '+44%',
-    window: '9 days',
-    brief: 'Build and document ONE real MCP integration end-to-end (Notion + Calendar + Slack). Show the gotchas. First mover wins category authority.',
-  },
-  {
-    askers: 6400,
-    question: 'Voice cloning that doesn\'t sound like a robot reading a press release?',
-    quotes: [
-      { text: 'I just want my AI narrator to sound like a person. Why does every tool give me uncanny valley?', src: 'YouTube comment · ElevenLabs review' },
-      { text: 'Tried five voice tools last week, all of them sound like a GPS at a funeral.', src: 'X reply · creator account' },
-      { text: 'Genuine question — has anyone solved the breathing problem in TTS yet?', src: 'r/artificial · 412 upvotes' },
-    ],
-    sources: 'YouTube · X · Reddit',
-    velocity: '+19%',
-    window: '21 days',
-    brief: '"Breathing & pacing in AI voice — the trick nobody documents" — niche technical creator gold. Long-tail evergreen video.',
-  },
-  {
-    askers: 5200,
-    question: 'How do I give my agent long-term memory that actually works?',
-    quotes: [
-      { text: 'Embedding + Pinecone got me 60% of the way and then everything fell apart. What did I miss?', src: 'r/MachineLearning' },
-      { text: 'Every memory tutorial is "use a vector DB". That is clearly not enough. What\'s the real architecture?', src: 'YouTube comment · agent memory video' },
-      { text: 'My agent forgets its own name between turns. Help.', src: 'X reply' },
-    ],
-    sources: 'Reddit · YouTube · X',
-    velocity: '+27%',
-    window: '16 days',
-    brief: '"Why vector DBs are the wrong abstraction for agent memory" — contrarian and accurate. Hybrid memory architecture walkthrough.',
-  },
-];
+async function loadData() {
+  try {
+    const res = await fetch('./data.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const snap = await res.json();
+    TRENDS = (snap.trends || []).map(t => ({
+      keyword: t.keyword,
+      canonical_form: t.canonical_form,
+      cluster_id: t.cluster_id,
+      cluster_label: t.cluster_label,
+      stage: t.lifecycle_stage,
+      saturation: t.saturation,
+      velocity: t.velocity_score,
+      velocity_acceleration: t.velocity_acceleration,
+      tbts: t.tbts,
+      hidden_gem: t.hidden_gem_score,
+      builder_signal: t.builder_signal,
+      sources: t.sources || {},
+      convergence: t.convergence || { detected: false },
+      summary: t.summary,
+      angles: t.angles || {},
+      risk: t.risk || {},
+      prediction: t.prediction || null,
+      sparkline: t.sparkline_14d || [],
+    }));
+    DEMAND        = snap.demand_clusters || [];
+    PREDICTIONS   = snap.past_predictions || [];
+    HIT_RATE      = snap.hit_rate    || HIT_RATE;
+    BRIEFING      = snap.briefing    || BRIEFING;
+    META          = snap.meta        || {};
+    SNAPSHOT_DATE = snap.snapshot_date || '';
+  } catch (e) {
+    console.warn('data.json load failed', e);
+  }
+}
 
-const PREDICTIONS = [
-  { date:'2026-02-04', text:'Mixture-of-Experts routing reaches mainstream by end of February.',
-    verdict:'verified', verdictText:'Crossed Google Trends threshold on 28 Feb · +340% mentions.' },
-  { date:'2025-12-19', text:'Test-time compute scaling becomes the dominant 2026 narrative.',
-    verdict:'verified', verdictText:'Validated. Now the central frame in every frontier-model release.' },
-  { date:'2026-04-09', text:'JEPA video models cross 50% saturation by 28 June 2026.',
-    verdict:'tracking', verdictText:'On pace. Currently at 31% saturation, 2.4× velocity.' },
-  { date:'2026-01-28', text:'Browser-use agents (MCP) reach mainstream by 20 February.',
-    verdict:'verified', verdictText:'Hit Google Trends crossover on 19 Feb · one day early. +520% mentions.' },
-  { date:'2026-03-22', text:'rStar-Math self-evolve reaches Builder stage by mid-May.',
-    verdict:'early', verdictText:'Reached Builder on 7 May — two weeks ahead of schedule.' },
-  { date:'2025-11-08', text:'O1-style chain-of-thought becomes the default framing by Q1 2026.',
-    verdict:'verified', verdictText:'Confirmed. Now table stakes for any reasoning model.' },
-  { date:'2026-02-14', text:'Long-context (10M+) becomes a dominant marketing axis by April 2026.',
-    verdict:'wrong', verdictText:'Premature. Adoption stalled; benchmarks revealed practical limits. Demoted to Hype.' },
-  { date:'2025-10-14', text:'Speculative decoding becomes mainstream inference technique by Nov 2025.',
-    verdict:'verified', verdictText:'Validated. Standard across vLLM, TGI, MLC.' },
-  { date:'2026-03-01', text:'Voice cloning v3 (sub-3s samples + emotion) saturates by May 2026.',
-    verdict:'tracking', verdictText:'Saturation at 58%, decline pattern starting.' },
-  { date:'2026-04-15', text:'Diffusion language models stay in Whisper stage through summer.',
-    verdict:'tracking', verdictText:'Currently 8% saturation; on prediction path.' },
-];
-
-/* =====================================================
+/* ==========================================================
    PAGE SWITCHING
-   ===================================================== */
+   ========================================================== */
 document.querySelectorAll('.nav button').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.querySelector(`.page[data-page="${btn.dataset.page}"]`).classList.add('active');
-    if (btn.dataset.page === 'sky') {
-      // re-init canvas
-      setTimeout(initSky, 50);
-    }
+    if (btn.dataset.page === 'radar') setTimeout(renderBubble, 50);
   });
 });
 
-/* =====================================================
-   STAR MAP — Canvas
-   ===================================================== */
-let canvas, ctx, dpr;
-let starObjects = [];
-let mouseX = -1, mouseY = -1;
-let hoveredStar = null;
-let selectedStar = null;
-let animId = null;
-
-function initSky() {
-  canvas = document.getElementById('skyCanvas');
-  if (!canvas) return;
-  ctx = canvas.getContext('2d');
-  resizeCanvas();
-  buildStars();
-  if (animId) cancelAnimationFrame(animId);
-  drawLoop();
-}
-
-function resizeCanvas() {
-  dpr = window.devicePixelRatio || 1;
-  const r = canvas.getBoundingClientRect();
-  canvas.width = r.width * dpr;
-  canvas.height = r.height * dpr;
-  ctx.scale(dpr, dpr);
-}
-
-function buildStars() {
-  const r = canvas.getBoundingClientRect();
-  const pad = 80;
-  starObjects = STARS.map((s, i) => {
-    // x: saturation 0-100 → left to right
-    const x = pad + ((s.sat) / 100) * (r.width - pad * 2);
-    // y: velocity 0-6 → bottom to top (inverted)
-    const yFrac = Math.min(s.vel, 6) / 6;
-    const y = (r.height - pad) - yFrac * (r.height - pad * 2);
-    const baseRadius = 2 + (s.tbts / 100) * 5;
-    return {
-      ...s,
-      x, y,
-      baseRadius,
-      twinklePhase: Math.random() * Math.PI * 2,
-      twinkleSpeed: 0.5 + Math.random() * 1.5,
-      driftX: (Math.random() - 0.5) * 0.3,
-      driftY: (Math.random() - 0.5) * 0.3,
-    };
+/* Filter chips — visual toggle only in Commit 1; reactive wiring arrives in Commit 3 */
+document.querySelectorAll('.filters .chip[data-filter="stage"], .filters .chip[data-filter="source"]').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('active'));
+});
+document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(s => s.classList.remove('active'));
+    c.classList.add('active');
   });
-}
+});
 
-function drawConstellationLines() {
-  // group by cluster, connect each pair within cluster
-  const byCluster = {};
-  starObjects.forEach(s => {
-    if (!byCluster[s.cluster]) byCluster[s.cluster] = [];
-    byCluster[s.cluster].push(s);
-  });
-  ctx.save();
-  for (const cluster in byCluster) {
-    const group = byCluster[cluster];
-    if (group.length < 2) continue;
-    // Minimum spanning approach: connect each star to its nearest neighbor in cluster
-    for (let i = 0; i < group.length; i++) {
-      // find nearest in cluster
-      let nearest = null;
-      let nd = Infinity;
-      for (let j = 0; j < group.length; j++) {
-        if (i === j) continue;
-        const dx = group[i].x - group[j].x;
-        const dy = group[i].y - group[j].y;
-        const d = Math.sqrt(dx*dx + dy*dy);
-        if (d < nd) { nd = d; nearest = group[j]; }
+/* ==========================================================
+   RADAR — bubble chart (ECharts) + leaderboard + briefing
+   ========================================================== */
+let bubbleInstance = null;
+function renderBubble() {
+  const el = document.getElementById('bubbleChart');
+  if (!el) return;
+  if (bubbleInstance) bubbleInstance.dispose();
+  bubbleInstance = echarts.init(el, null, { renderer: 'canvas' });
+
+  const stageOrder = ['whisper','builder','creator','hype','commodity'];
+  const series = stageOrder.map(stage => ({
+    name: STAGE_META[stage].label,
+    type: 'scatter',
+    data: TRENDS.filter(t => t.stage === stage).map(t => ({
+      name: t.keyword,
+      value: [t.saturation, t.tbts, t.hidden_gem || 0, t.keyword, t.cluster_label || '—', t.velocity || 0],
+      itemStyle: {
+        color: STAGE_META[stage].color,
+        opacity: 0.85,
+        shadowBlur: 14,
+        shadowColor: STAGE_META[stage].color,
+        borderColor: 'rgba(255,255,255,0.18)',
+        borderWidth: 1
       }
-      if (nearest) {
-        const alpha = Math.max(0.04, 0.15 - nd / 1200);
-        ctx.strokeStyle = `rgba(212, 175, 55, ${alpha})`;
-        ctx.lineWidth = 0.5;
-        ctx.setLineDash([2, 4]);
-        ctx.beginPath();
-        ctx.moveTo(group[i].x, group[i].y);
-        ctx.lineTo(nearest.x, nearest.y);
-        ctx.stroke();
-      }
-    }
-    // cluster label near centroid
-    const cx = group.reduce((a,b)=>a+b.x,0)/group.length;
-    const cy = group.reduce((a,b)=>a+b.y,0)/group.length;
-    ctx.setLineDash([]);
-    ctx.font = 'italic 11px "Cormorant Garamond", serif';
-    ctx.fillStyle = 'rgba(212, 175, 55, 0.35)';
-    ctx.textAlign = 'center';
-    ctx.fillText(cluster, cx, cy - 32);
-  }
-  ctx.restore();
-}
+    })),
+    symbolSize: v => Math.max(10, 10 + (v[2] || 0) * 24),
+    emphasis: { focus: 'series', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
+    label: { show: false }
+  }));
 
-function drawStar(s, time) {
-  const twinkle = 0.7 + 0.3 * Math.sin(time * 0.001 * s.twinkleSpeed + s.twinklePhase);
-  const r = s.baseRadius * twinkle;
-  const color = STAGE_COLOR[s.stage];
-  const isHover = s === hoveredStar;
-  const isSelected = s === selectedStar;
-
-  // Outer halo
-  const haloR = r * (isHover || isSelected ? 8 : 5);
-  const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, haloR);
-  grad.addColorStop(0, hexToRgba(color, 0.5 * twinkle));
-  grad.addColorStop(0.3, hexToRgba(color, 0.15));
-  grad.addColorStop(1, hexToRgba(color, 0));
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(s.x, s.y, haloR, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Diffraction spikes for big stars
-  if (s.baseRadius > 4 || isSelected) {
-    ctx.strokeStyle = hexToRgba(color, 0.5 * twinkle);
-    ctx.lineWidth = 0.6;
-    const sp = r * 5;
-    ctx.beginPath();
-    ctx.moveTo(s.x - sp, s.y); ctx.lineTo(s.x + sp, s.y);
-    ctx.moveTo(s.x, s.y - sp); ctx.lineTo(s.x, s.y + sp);
-    ctx.stroke();
-  }
-
-  // Star core
-  ctx.fillStyle = '#fff8e7';
-  ctx.beginPath();
-  ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Selected ring
-  if (isSelected) {
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, r * 4, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // designation label
-    ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
-    ctx.font = '9px "JetBrains Mono", monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(designation(s), s.x + r * 4 + 6, s.y - r * 4);
-  }
-}
-
-function hexToRgba(hex, a) {
-  const v = hex.replace('#','');
-  const r = parseInt(v.slice(0,2),16), g = parseInt(v.slice(2,4),16), b = parseInt(v.slice(4,6),16);
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
-function designation(s) {
-  // fake catalog designation
-  const code = s.kw.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,3);
-  return `AAR · ${code} · ${Math.round(s.tbts)}`;
-}
-
-function drawLoop(time = 0) {
-  const r = canvas.getBoundingClientRect();
-  ctx.clearRect(0, 0, r.width, r.height);
-
-  // slow drift
-  starObjects.forEach(s => {
-    s.x += s.driftX * 0.01;
-    s.y += s.driftY * 0.01;
-    if (s.x < 60 || s.x > r.width - 60) s.driftX *= -1;
-    if (s.y < 60 || s.y > r.height - 60) s.driftY *= -1;
+  bubbleInstance.setOption({
+    backgroundColor: 'transparent',
+    grid: { left: 60, right: 40, top: 30, bottom: 60 },
+    tooltip: {
+      backgroundColor: 'rgba(12, 16, 21, 0.95)',
+      borderColor: 'rgba(0, 240, 255, 0.4)',
+      borderWidth: 1,
+      textStyle: { color: '#d6e1ee', fontFamily: 'JetBrains Mono', fontSize: 11 },
+      formatter: p => `
+        <div style="font-family:'Space Grotesk';font-weight:700;font-size:14px;margin-bottom:6px;color:#fff">${p.value[3]}</div>
+        <div style="color:#8b9cb0">cluster    <span style="color:#d6e1ee">${p.value[4]}</span></div>
+        <div style="color:#8b9cb0">saturation <span style="color:#d6e1ee">${p.value[0].toFixed(0)}%</span></div>
+        <div style="color:#8b9cb0">TBTS       <span style="color:#d6e1ee">${p.value[1]}</span></div>
+        <div style="color:#8b9cb0">hidden_gem <span style="color:#d6e1ee">${(p.value[2]||0).toFixed(2)}</span></div>
+        <div style="color:#8b9cb0">velocity   <span style="color:#d6e1ee">${(p.value[5]||0).toFixed(2)}x</span></div>
+      `
+    },
+    xAxis: {
+      type: 'value', min: 0, max: 100,
+      name: 'SATURATION %  →  MAINSTREAM',
+      nameLocation: 'middle', nameGap: 32,
+      nameTextStyle: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10 },
+      axisLine: { lineStyle: { color: 'rgba(120,160,200,0.15)' } },
+      splitLine: { lineStyle: { color: 'rgba(120,160,200,0.05)' } },
+      axisLabel: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10 }
+    },
+    yAxis: {
+      type: 'value', min: 0, max: 100,
+      name: 'TBTS  ↑  COMPOSITE',
+      nameLocation: 'middle', nameGap: 40, nameRotate: 90,
+      nameTextStyle: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10 },
+      axisLine: { lineStyle: { color: 'rgba(120,160,200,0.15)' } },
+      splitLine: { lineStyle: { color: 'rgba(120,160,200,0.05)' } },
+      axisLabel: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10 }
+    },
+    series,
+    legend: { show: false }
   });
 
-  drawConstellationLines();
-  starObjects.forEach(s => drawStar(s, time));
-
-  animId = requestAnimationFrame(drawLoop);
+  document.getElementById('trackedMeta').textContent = `${TRENDS.length} tracked terms`;
 }
 
-/* mouse handling */
-function getHovered(mx, my) {
-  for (let i = starObjects.length - 1; i >= 0; i--) {
-    const s = starObjects[i];
-    const dx = mx - s.x, dy = my - s.y;
-    if (Math.sqrt(dx*dx + dy*dy) < Math.max(14, s.baseRadius * 4)) return s;
-  }
-  return null;
-}
-
-document.addEventListener('mousemove', e => {
-  if (!canvas) return;
-  const r = canvas.getBoundingClientRect();
-  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
-    hoveredStar = null;
-    document.getElementById('starTooltip').style.opacity = 0;
-    canvas.style.cursor = 'crosshair';
-    return;
-  }
-  mouseX = e.clientX - r.left;
-  mouseY = e.clientY - r.top;
-  hoveredStar = getHovered(mouseX, mouseY);
-  const tip = document.getElementById('starTooltip');
-  if (hoveredStar) {
-    tip.innerHTML = `<span class="designation">${designation(hoveredStar)} · ${STAGE_LABEL[hoveredStar.stage]}</span>${hoveredStar.kw}`;
-    tip.style.left = (e.clientX + 16) + 'px';
-    tip.style.top  = (e.clientY + 16) + 'px';
-    tip.style.opacity = 1;
-    canvas.style.cursor = 'pointer';
-  } else {
-    tip.style.opacity = 0;
-    canvas.style.cursor = 'crosshair';
-  }
-});
-
-canvas?.addEventListener?.('click', e => {
-  if (hoveredStar) {
-    selectedStar = hoveredStar;
-    openPanel(hoveredStar);
-  }
-});
-
-function openPanel(s) {
-  document.getElementById('opDesignation').textContent = designation(s) + ' · ' + STAGE_LABEL[s.stage];
-  document.getElementById('opName').textContent = s.kw;
-  document.getElementById('opConstellation').innerHTML = `in the constellation of <em style="color:var(--champagne)">${s.cluster}</em>`;
-  document.getElementById('opSummary').textContent = s.sum;
-  document.getElementById('opTbts').textContent = s.tbts;
-  document.getElementById('opVel').textContent = s.vel.toFixed(1) + '×';
-  document.getElementById('opSat').textContent = s.sat + '%';
-  document.getElementById('opWindow').textContent = s.window + 'd';
-  document.getElementById('opPrediction').textContent = s.pred;
-  document.getElementById('objectPanel').classList.add('visible');
-}
-function closePanel() {
-  document.getElementById('objectPanel').classList.remove('visible');
-  selectedStar = null;
-}
-
-window.addEventListener('resize', () => {
-  if (document.querySelector('.page[data-page="sky"]').classList.contains('active')) {
-    resizeCanvas();
-    buildStars();
-  }
-});
-
-window.closePanel = closePanel;
-
-/* =====================================================
-   DEMAND CLUSTERS
-   ===================================================== */
-function renderDemand() {
-  const html = DEMAND.map(d => `
-    <div class="demand-card">
-      <div class="askers">${d.askers.toLocaleString()}<span class="unit">people asking</span></div>
-      <div class="question">${d.question}</div>
-      <div class="demand-quotes">
-        ${d.quotes.map(q => `
-          <div class="demand-quote">
-            ${q.text}
-            <span class="src">— ${q.src}</span>
-          </div>
-        `).join('')}
+function renderLeaderboard() {
+  const sorted = [...TRENDS].sort((a, b) => b.tbts - a.tbts).slice(0, 20);
+  const html = sorted.map((t, i) => `
+    <div class="lb-row" data-kw="${escapeAttr(t.canonical_form || t.keyword)}">
+      <div class="rank">${String(i + 1).padStart(2, '0')}</div>
+      <div>
+        <div class="name">${escapeHtml(t.keyword)}</div>
+        <div class="stage-mini" style="color:${STAGE_META[t.stage]?.color || '#8b9cb0'}">
+          <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
+        </div>
       </div>
-      <div class="demand-meta">
-        <div class="item"><span>Sources</span><span class="v">${d.sources}</span></div>
-        <div class="item"><span>Weekly growth</span><span class="v gold">${d.velocity}</span></div>
-        <div class="item"><span>Open window</span><span class="v">${d.window}</span></div>
-      </div>
-      <div class="demand-brief">
-        <span class="ph">Creator brief</span>
-        ${d.brief}
-      </div>
+      <div class="tbts">${t.tbts}</div>
+      <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}">${velArrow(t.velocity)}</div>
     </div>
   `).join('');
-  document.getElementById('demandGrid').innerHTML = html;
+  document.getElementById('leaderboard').innerHTML = html;
+}
+function velArrow(v) {
+  if (!v || v === 0) return '—';
+  if (v > 1) return '▲' + v.toFixed(1);
+  return '▼' + v.toFixed(1);
+}
+function renderBriefing() {
+  document.getElementById('briefingText').textContent =
+    (BRIEFING && BRIEFING.text) ? BRIEFING.text : 'Briefing pending.';
 }
 
-/* =====================================================
-   STAR LOG / PREDICTIONS
-   ===================================================== */
+/* ==========================================================
+   DEMAND CLUSTERS — empty state when API returns []
+   ========================================================== */
+function renderDemand() {
+  const host = document.getElementById('demandHost');
+  if (!DEMAND.length) {
+    host.innerHTML = `
+      <div class="demand-empty">
+        <div class="ph">◆ Awaiting prompt-tuning pass</div>
+        <div class="text">Demand clusters fire once Claude enrichment lands. Until then, the radar and predictions panels carry the v0.2 demo.</div>
+      </div>`;
+    return;
+  }
+  host.innerHTML = `<div class="demand-grid">${
+    DEMAND.map(d => `
+      <div class="demand-card">
+        <div class="askers">${(d.askers_estimate || 0).toLocaleString()}<span class="unit">people asking</span></div>
+        <div class="question">${escapeHtml(d.question_shape || '')}</div>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+/* ==========================================================
+   STAR LOG
+   ========================================================== */
 function renderLog() {
+  document.getElementById('hitRateNum').textContent = Math.round((HIT_RATE.rate || 0) * 100);
+  document.getElementById('hitVerified').textContent = HIT_RATE.verified || 0;
+  document.getElementById('hitTracking').textContent = HIT_RATE.tracking || 0;
+  document.getElementById('hitEarly').textContent    = HIT_RATE.verified_early || 0;
+  document.getElementById('hitWrong').textContent    = HIT_RATE.wrong || 0;
+
+  const verdictLabel = {
+    verified: 'Verified',
+    verified_early: 'Verified Early',
+    tracking: 'Tracking',
+    pending: 'Pending',
+    wrong: 'Wrong',
+  };
   const html = PREDICTIONS.map(p => `
     <div class="prediction">
-      <div class="date">${p.date}</div>
-      <div class="pred-text">${p.text}</div>
-      <div class="verdict-text">${p.verdictText}</div>
-      <div class="verdict-badge ${p.verdict}">${verdictLabel(p.verdict)}</div>
+      <div class="date">${p.filed_at || '—'}</div>
+      <div class="pred-text">${escapeHtml(p.text || '')}</div>
+      <div class="verdict-text">${escapeHtml(p.verdict_text || '—')}</div>
+      <div class="verdict-badge ${p.verdict}">${verdictLabel[p.verdict] || p.verdict}</div>
     </div>
   `).join('');
   document.getElementById('predictionList').innerHTML = html;
 }
-function verdictLabel(v) {
-  return { verified:'Verified', tracking:'Tracking', wrong:'Wrong', early:'Verified Early' }[v];
-}
 
-/* =====================================================
+/* ==========================================================
    ALMANAC
-   ===================================================== */
-const ANGLES = {
-  'world model agents': {
-    hook: 'The AI breakthrough hiding in six papers from last week',
-    cont: 'Why "world models" make every current LLM look like a calculator',
-    tut:  'Build a tiny world-model agent in thirty lines of Python',
-  },
-  'test-time training': {
-    hook: 'The training trick that\'s eating fine-tuning alive',
-    cont: 'Test-time training won\'t scale — and here\'s precisely why',
-    tut:  'Add test-time training to your model in one quiet weekend',
-  },
-  'diffusion language models': {
-    hook: 'Why "GPT-style" might be a memory by 2027',
-    cont: 'Diffusion language models sound revolutionary. The benchmarks disagree.',
-    tut:  'Try the first open-source diffusion language model',
-  },
-  'small reasoning models': {
-    hook: 'A 1.5-billion-parameter model just outscored GPT-4 at maths',
-    cont: 'The "small model" trend is mostly marketing — until it isn\'t',
-    tut:  'Run a reasoning model on your MacBook in under five minutes',
-  },
-  'agentic memory architectures': {
-    hook: 'Your AI agent has amnesia. Here\'s the architectural fix.',
-    cont: 'Vector databases are the wrong abstraction for agent memory',
-    tut:  'Build a real long-term memory layer in two hundred lines',
-  },
-  'neural CAD generation': {
-    hook: 'The text-to-CAD breakthrough hardware folks completely missed',
-    cont: 'Neural CAD won\'t replace engineers — for one specific reason',
-    tut:  'Generate your first parametric CAD model from a single prompt',
-  },
-};
-
+   ========================================================== */
 function renderAlmanac() {
   const niche = document.getElementById('nicheInput').value || 'AI tools for solo creators';
   document.getElementById('nichePill').textContent = niche;
-  const picks = STARS.filter(s => (s.stage === 'whisper' || s.stage === 'builder')).slice(0, 6);
-  const html = picks.map(s => {
-    const a = ANGLES[s.kw] || { hook:'—', cont:'—', tut:'—' };
+  const picks = TRENDS
+    .filter(t => t.stage === 'whisper' || t.stage === 'builder')
+    .sort((a, b) => b.tbts - a.tbts)
+    .slice(0, 9);
+  const html = picks.map(t => {
+    const a = t.angles || {};
     return `
       <div class="almanac-card">
-        <div class="topic">${s.kw} <span class="stage">· ${STAGE_LABEL[s.stage]}</span></div>
+        <div class="topic">${escapeHtml(t.keyword)} <span class="stage">· ${STAGE_META[t.stage]?.label || ''}</span></div>
         <div class="almanac-row">
           <div class="tag">Hook</div>
-          <div class="title">${a.hook}</div>
+          <div class="title">${escapeHtml(a.hook || '—')}</div>
         </div>
         <div class="almanac-row">
           <div class="tag">Contrarian</div>
-          <div class="title">${a.cont}</div>
+          <div class="title">${escapeHtml(a.contrarian || '—')}</div>
         </div>
         <div class="almanac-row">
           <div class="tag">Tutorial</div>
-          <div class="title">${a.tut}</div>
+          <div class="title">${escapeHtml(a.tutorial || '—')}</div>
         </div>
       </div>
     `;
   }).join('');
   document.getElementById('almanacGrid').innerHTML = html;
 
-  // copy on click
   document.querySelectorAll('.almanac-row .title').forEach(t => {
     t.addEventListener('click', () => {
       const text = t.textContent.replace(/[“”]/g, '').trim();
       navigator.clipboard?.writeText(text);
-      const orig = t.style.color;
-      t.style.color = 'var(--builder)';
       const original = t.innerHTML;
-      const oldText = t.textContent;
-      t.innerHTML = `<em style="color:var(--builder)">— copied to clipboard —</em>`;
-      setTimeout(() => {
-        t.style.color = orig;
-        t.innerHTML = original;
-      }, 1100);
+      t.innerHTML = `<em style="color:var(--champagne)">— copied to clipboard —</em>`;
+      setTimeout(() => { t.innerHTML = original; }, 1100);
     });
   });
 }
-
 document.getElementById('nicheInput').addEventListener('input', renderAlmanac);
 
-/* =====================================================
-   FOOTER CLOCK
-   ===================================================== */
-function tickStamp() {
+/* ==========================================================
+   FOOTER STAMP
+   ========================================================== */
+function tickFooter() {
   const d = new Date();
-  const hours = d.getHours();
-  const phase = hours < 6 ? 'pre-dawn' : hours < 12 ? 'morning watch' : hours < 18 ? 'afternoon' : 'evening watch';
-  document.getElementById('footerStamp').textContent = `${phase} · ${d.toLocaleTimeString('en-GB')}`;
+  document.getElementById('footerStamp').textContent =
+    `terminal time · ${d.toLocaleTimeString('en-GB')}`;
 }
-setInterval(tickStamp, 1000); tickStamp();
+setInterval(tickFooter, 1000);
+window.addEventListener('resize', () => { if (bubbleInstance) bubbleInstance.resize(); });
 
-/* =====================================================
-   DATA LOADER — fetches public/data.json and adapts the
-   Snapshot schema onto the mockup's STARS / DEMAND /
-   PREDICTIONS shape. If the fetch fails the page falls
-   back to the inline mock arrays so the layout is never
-   broken.
-   ===================================================== */
-async function loadAndAdaptData() {
-  try {
-    const res = await fetch('./data.json', { cache: 'no-store' });
-    if (!res.ok) return null;
-    const snap = await res.json();
-
-    const daysFromNow = (iso) => {
-      if (!iso) return 30;
-      const diff = (new Date(iso).getTime() - Date.now()) / 86400000;
-      return Math.max(0, Math.round(diff));
-    };
-    const verdictMap = {
-      verified: 'verified',
-      verified_early: 'early',
-      tracking: 'tracking',
-      pending: 'tracking',
-      wrong: 'wrong',
-    };
-
-    if (Array.isArray(snap.trends) && snap.trends.length) {
-      STARS.length = 0;
-      STARS.push(...snap.trends.map((t) => ({
-        kw: t.keyword,
-        stage: t.lifecycle_stage,
-        sat: t.saturation,
-        vel: t.velocity_score,
-        tbts: t.tbts,
-        cluster: t.cluster_label,
-        sum: t.summary,
-        pred: t.prediction ? t.prediction.text : '',
-        window: t.prediction ? daysFromNow(t.prediction.target_date) : 30,
-      })));
-    }
-
-    if (Array.isArray(snap.demand_clusters) && snap.demand_clusters.length) {
-      DEMAND.length = 0;
-      DEMAND.push(...snap.demand_clusters.map((c) => ({
-        askers: c.askers_estimate,
-        question: c.question_shape,
-        quotes: (c.quotes || []).map((q) => ({ text: q.text, src: q.source })),
-        sources: (c.sources || []).join(' · '),
-        velocity: `+${c.weekly_growth_pct}%`,
-        window: `${c.open_window_days} days`,
-        brief: c.creator_brief,
-      })));
-    }
-
-    if (Array.isArray(snap.past_predictions) && snap.past_predictions.length) {
-      PREDICTIONS.length = 0;
-      PREDICTIONS.push(...snap.past_predictions.map((p) => ({
-        date: p.filed_at,
-        text: p.text,
-        verdict: verdictMap[p.verdict] || p.verdict,
-        verdictText: p.verdict_text || '',
-      })));
-    }
-
-    return snap;
-  } catch (e) {
-    console.warn('data.json load failed; using inline mock data', e);
-    return null;
-  }
+/* ==========================================================
+   ESCAPE HELPERS
+   ========================================================== */
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
 }
+function escapeAttr(s) { return escapeHtml(s); }
 
-/* =====================================================
+/* ==========================================================
    INIT
-   ===================================================== */
+   ========================================================== */
 window.addEventListener('load', async () => {
-  await loadAndAdaptData();
-  initSky();
+  await loadData();
+  document.getElementById('snapshotStamp').textContent = `snapshot · ${SNAPSHOT_DATE || '—'}`;
+  renderBubble();
+  renderLeaderboard();
+  renderBriefing();
   renderDemand();
   renderLog();
   renderAlmanac();
+  tickFooter();
 });
 </script>
 </body>
