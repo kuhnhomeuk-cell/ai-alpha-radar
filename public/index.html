@@ -369,17 +369,161 @@ body::after {
 .lb-row .vel.down { color: var(--bad); }
 
 /* ====================================================
-   HIDDEN GEMS — stub for Commit 1 (full grid lands Commit 2)
+   HIDDEN GEMS PAGE (Bloomberg)
    ==================================================== */
-.gems-stub {
-  margin: var(--sp-5) var(--sp-5);
+.gems-head {
+  display: flex; gap: var(--sp-3); align-items: center;
+  margin: var(--sp-4) var(--sp-5) 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.gems-head .count { color: var(--accent); font-weight: 600; }
+.gems-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.gems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--sp-4);
+  margin: var(--sp-4) var(--sp-5) var(--sp-5);
+}
+.gem-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.15s, transform 0.15s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.gem-card:hover {
+  border-color: var(--line-hi);
+  transform: translateY(-2px);
+}
+.gem-card.convergence::after {
+  content: 'CONVERGENCE';
+  position: absolute; top: 8px; right: 8px;
+  font-family: var(--mono);
+  font-size: 8px;
+  padding: 2px 6px;
+  background: rgba(0, 240, 255, 0.10);
+  color: var(--accent);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 100px;
+  letter-spacing: 0.08em;
+}
+.gem-headrow {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+.gem-keyword {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gem-score {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: right;
+  flex-shrink: 0;
+  line-height: 1.1;
+}
+.gem-score .label {
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  display: block;
+  font-weight: 500;
+}
+.gem-meta {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.gem-meta .badge {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-2);
+  display: flex; align-items: center; gap: 5px;
+}
+.gem-summary {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  font-family: var(--sans);
+}
+.gem-sparkline {
+  height: 32px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.gem-sparkline.empty {
+  border-top: 1px dashed var(--line);
+  border-bottom: 1px dashed var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.gem-angles {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.gem-angles .label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.angle {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 5px 0;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.angle:hover { color: var(--ink); }
+.angle .tag {
+  font-family: var(--mono);
+  font-size: 8px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+.angle .tag.hook { background: rgba(0, 240, 255, 0.12); color: var(--stage-whisper); }
+.angle .tag.cont { background: rgba(255, 138, 61, 0.15); color: var(--stage-hype); }
+.angle .tag.tut  { background: rgba(0, 255, 157, 0.12); color: var(--stage-builder); }
+.gems-empty {
+  margin: var(--sp-5);
   padding: 48px;
   background: var(--panel);
   border: 1px dashed var(--line-hi);
   border-radius: 6px;
   text-align: center;
 }
-.gems-stub .label {
+.gems-empty .ph {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.18em;
@@ -387,11 +531,10 @@ body::after {
   text-transform: uppercase;
   margin-bottom: 12px;
 }
-.gems-stub .text {
+.gems-empty .text {
   font-family: var(--display);
   font-size: 18px;
   color: var(--ink-2);
-  font-weight: 500;
 }
 
 /* ====================================================
@@ -768,12 +911,14 @@ footer .quote {
   </div>
 </div>
 
-<!-- ========== HIDDEN GEMS STUB ========== -->
+<!-- ========== HIDDEN GEMS (Bloomberg) ========== -->
 <div class="page" data-page="gems">
-  <div class="gems-stub">
-    <div class="label">Hidden Gems</div>
-    <div class="text">Card grid lands in Commit 2 — rebuild in flight.</div>
+  <div class="briefing">
+    <div class="label">💎 Hidden Gems · Whisper + Builder · low saturation, high acceleration</div>
+    <div class="briefing-text">Trends in the sweet-spot quadrant — builders are active, mainstream hasn't caught on. Each card has a 2–4 week content window before saturation.</div>
   </div>
+  <div class="gems-head">Top Picks · <span class="count" id="gemsCount">—</span> matching today's criteria</div>
+  <div id="gemsHost"></div>
 </div>
 
 <!-- ========== DEMAND CLUSTERS (observatory) ========== -->
@@ -1047,6 +1192,96 @@ function renderDemand() {
 }
 
 /* ==========================================================
+   HIDDEN GEMS — sweet-spot card grid
+   ========================================================== */
+function renderGems() {
+  const host = document.getElementById('gemsHost');
+  if (!host) return;
+  const gems = TRENDS
+    .filter(t => t.stage === 'whisper' || t.stage === 'builder')
+    .sort((a, b) => (b.hidden_gem || 0) - (a.hidden_gem || 0))
+    .slice(0, 12);
+
+  document.getElementById('gemsCount').textContent = gems.length;
+
+  if (!gems.length) {
+    host.innerHTML = `
+      <div class="gems-empty">
+        <div class="ph">Hidden Gems</div>
+        <div class="text">No Whisper-stage trends today — check Radar for Builder candidates.</div>
+      </div>`;
+    return;
+  }
+
+  const sourceBadge = (s) => {
+    const arx = s.arxiv_30d || 0;
+    const gh  = s.github_repos_7d || 0;
+    const hn  = s.hn_posts_7d || 0;
+    return `arXiv ${arx} · GH ${gh} · HN ${hn}`;
+  };
+
+  host.innerHTML = `<div class="gems-grid">${
+    gems.map(t => {
+      const conv = t.convergence && t.convergence.detected;
+      const a = t.angles || {};
+      const sparkEmpty = !t.sparkline || !t.sparkline.length;
+      return `
+        <div class="gem-card ${conv ? 'convergence' : ''}" data-kw="${escapeAttr(t.canonical_form || t.keyword)}">
+          <div class="gem-headrow">
+            <div class="gem-keyword">${escapeHtml(t.keyword)}</div>
+            <div class="gem-score">
+              ${Math.round((t.hidden_gem || 0) * 100)}
+              <span class="label">GEM SCORE</span>
+            </div>
+          </div>
+          <div class="gem-meta">
+            <span class="badge"><span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage}</span>
+            <span class="badge">SAT ${Math.round(t.saturation)}%</span>
+            <span class="badge">TBTS ${t.tbts}</span>
+            <span class="badge">${sourceBadge(t.sources || {})}</span>
+          </div>
+          <div class="gem-summary">${escapeHtml(t.summary || '—')}</div>
+          ${sparkEmpty
+            ? `<div class="gem-sparkline empty">no 14d series yet</div>`
+            : `<div class="gem-sparkline" data-spark='${JSON.stringify(t.sparkline)}' data-color="${STAGE_META[t.stage]?.color || '#8b9cb0'}"></div>`}
+          <div class="gem-angles">
+            <div class="label">CONTENT ANGLES · tailored to your niche</div>
+            <div class="angle"><span class="tag hook">HOOK</span><span>${escapeHtml(a.hook || '—')}</span></div>
+            <div class="angle"><span class="tag cont">CONTRARIAN</span><span>${escapeHtml(a.contrarian || '—')}</span></div>
+            <div class="angle"><span class="tag tut">TUTORIAL</span><span>${escapeHtml(a.tutorial || '—')}</span></div>
+          </div>
+        </div>
+      `;
+    }).join('')
+  }</div>`;
+
+  document.querySelectorAll('.gem-sparkline[data-spark]').forEach(el => {
+    const data = JSON.parse(el.dataset.spark);
+    const color = el.dataset.color;
+    const inst = echarts.init(el, null, { renderer: 'canvas' });
+    inst.setOption({
+      grid: { left: 0, right: 0, top: 4, bottom: 4 },
+      xAxis: { type: 'category', show: false, data: data.map((_, i) => i) },
+      yAxis: { type: 'value', show: false },
+      series: [{
+        type: 'line',
+        data,
+        smooth: true,
+        symbol: 'none',
+        lineStyle: { color, width: 1.5 },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: color + '40' },
+            { offset: 1, color: color + '00' }
+          ]
+        } }
+      }],
+      animation: false,
+    });
+  });
+}
+
+/* ==========================================================
    STAR LOG
    ========================================================== */
 function renderLog() {
@@ -1148,6 +1383,7 @@ window.addEventListener('load', async () => {
   renderBubble();
   renderLeaderboard();
   renderBriefing();
+  renderGems();
   renderDemand();
   renderLog();
   renderAlmanac();
