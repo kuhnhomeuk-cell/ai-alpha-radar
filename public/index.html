@@ -89,13 +89,17 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Bloomberg-mode background — grid + scanlines + radial */
+/* Bloomberg-mode background — grid + scanlines + radial.
+   Gradient opacities are loud on purpose: they are the substrate
+   the liquid-glass surfaces refract. Flat dark = grey plastic. */
 body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(0, 240, 255, 0.06), transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(0, 255, 157, 0.04), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 15% 20%, rgba(0, 240, 255, 0.22), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 85% 15%, rgba(0, 255, 157, 0.15), transparent 60%),
+    radial-gradient(ellipse 50% 60% at 50% 85%, rgba(255, 138, 61, 0.18), transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 70%, rgba(150, 50, 200, 0.12), transparent 60%),
     linear-gradient(rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
     linear-gradient(90deg, rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
     var(--surface-1);
@@ -1444,12 +1448,59 @@ footer .quote {
   letter-spacing: 0;
   max-width: 480px;
 }
+
+/* ========================================================
+   LIQUID GLASS — Tier 1 (CSS-only) utility.
+   Appended last so it overrides element-specific backgrounds,
+   blurs, and borders defined earlier in the cascade.
+   ::before shine inherits the element's actual border-radius,
+   so it conforms to chip pills as well as card corners.
+   ======================================================== */
+.glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  isolation: isolate;
+}
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.02) 12%,
+    transparent 30%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+/* Chips keep their pill shape and are the only hover-animated
+   glass surfaces, so they're the only place will-change pays off. */
+.chip.glass {
+  border-radius: 100px;
+  will-change: backdrop-filter;
+}
+/* Restore positioning for surfaces whose original position was
+   stronger than the utility's default `relative` — these need
+   sticky / fixed to behave correctly when scrolled or toggled. */
+.topbar.glass       { position: sticky; }
+.detail-panel.glass { position: fixed; }
+.conv-modal.glass   { position: fixed; }
 </style>
 </head>
 <body>
 
 <!-- ========== TOPBAR ========== -->
-<div class="topbar">
+<div class="topbar glass">
   <div class="brand">
     <span class="star"></span>
     AI Alpha Radar
@@ -1475,35 +1526,35 @@ footer .quote {
 
 <!-- ========== RADAR (Bloomberg) ========== -->
 <div class="page active" data-page="radar">
-  <div class="briefing">
+  <div class="briefing glass">
     <div class="label">⚡ Daily Movers · Editorial Briefing</div>
     <div class="briefing-text" id="briefingText">—</div>
   </div>
 
   <div class="filters">
     <span class="label">Stage</span>
-    <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
-    <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
-    <span class="chip active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
-    <span class="chip"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
-    <span class="chip"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
+    <span class="chip glass active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
+    <span class="chip glass active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
+    <span class="chip glass active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
+    <span class="chip glass"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
+    <span class="chip glass"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
 
     <span class="label" style="margin-left:16px">Source</span>
-    <span class="chip active" data-filter="source" data-value="arxiv">arXiv</span>
-    <span class="chip active" data-filter="source" data-value="github">GitHub</span>
-    <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
-    <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
+    <span class="chip glass active" data-filter="source" data-value="arxiv">arXiv</span>
+    <span class="chip glass active" data-filter="source" data-value="github">GitHub</span>
+    <span class="chip glass active" data-filter="source" data-value="hackernews">HN</span>
+    <span class="chip glass active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
 
     <span class="label" style="margin-left:16px">Sort</span>
-    <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
-    <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
-    <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
+    <span class="chip glass active" data-filter="sort" data-value="tbts">TBTS ↓</span>
+    <span class="chip glass"        data-filter="sort" data-value="velocity">Velocity ↓</span>
+    <span class="chip glass"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
 
     <span class="label" style="margin-left:16px">Overlay</span>
-    <span class="chip" data-filter="themes">◇ Themes</span>
+    <span class="chip glass" data-filter="themes">◇ Themes</span>
 
     <span class="label" style="margin-left:16px">View</span>
-    <span class="chip" id="watchlistChip">★ Watchlist (0)</span>
+    <span class="chip glass" id="watchlistChip">★ Watchlist (0)</span>
   </div>
 
   <div class="radar-grid">
@@ -1536,7 +1587,7 @@ footer .quote {
     </div>
   </div>
 
-  <div class="detail-panel" id="detailPanel" aria-hidden="true">
+  <div class="detail-panel glass" id="detailPanel" aria-hidden="true">
     <div class="dp-head">
       <div>
         <div class="name" id="dpName">—</div>
@@ -1640,14 +1691,14 @@ footer .quote {
 </div>
 
 <!-- ========== SOURCE-HEALTH STRIP (global, all pages) ========== -->
-<div class="source-health" id="sourceHealth">
+<div class="source-health glass" id="sourceHealth">
   <div class="src-list" id="srcList">—</div>
   <div class="src-claude" id="srcClaude">—</div>
 </div>
 
 <!-- ========== CONVERGENCE MODAL (global) ========== -->
 <div class="conv-scrim" id="convScrim" onclick="window.closeConvergence()"></div>
-<div class="conv-modal" id="convModal" aria-hidden="true" role="dialog" aria-labelledby="convName">
+<div class="conv-modal glass" id="convModal" aria-hidden="true" role="dialog" aria-labelledby="convName">
   <div class="conv-head">
     <div>
       <div class="conv-name" id="convName">—</div>
