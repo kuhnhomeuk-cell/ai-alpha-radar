@@ -199,6 +199,50 @@ body::after {
 .niche-input:focus { outline: none; border-bottom-color: var(--champagne); }
 .niche-input::placeholder { color: #6a6862; }
 
+.watchlist-pill {
+  background: transparent;
+  border: 1px solid rgba(244, 241, 234, 0.14);
+  color: #b3b0a8;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 5px 11px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.watchlist-pill:disabled,
+.watchlist-pill[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+.watchlist-pill.has-items {
+  color: var(--champagne);
+  border-color: rgba(212, 175, 55, 0.45);
+}
+.watchlist-pill.has-items:hover {
+  color: #ffffff;
+  border-color: var(--champagne);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.star-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-3);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 0.15s, transform 0.15s;
+  font-family: var(--mono);
+  opacity: 0.55;
+}
+.star-btn:hover { color: var(--ink); transform: scale(1.18); opacity: 1; }
+.star-btn.on { color: var(--accent); opacity: 1; }
+.star-btn.on:hover { color: #ffffff; }
+
 /* ========== PAGE BASE ========== */
 .page { display: none; }
 .page.active { display: block; }
@@ -331,7 +375,7 @@ body::after {
 .leaderboard::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 3px; }
 .lb-row {
   display: grid;
-  grid-template-columns: 28px 1fr 60px 44px;
+  grid-template-columns: 28px 1fr 56px 38px 22px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   align-items: center;
@@ -1298,6 +1342,7 @@ footer .quote {
     <button data-page="almanac">Almanac</button>
   </div>
   <div class="right">
+    <button class="watchlist-pill" id="watchlistPill" type="button" disabled>★ Watchlist (0)</button>
     <span class="meta-text" id="snapshotStamp">snapshot · —</span>
     <input class="niche-input" id="nicheInput" placeholder="your niche…" value="AI tools for solo creators">
   </div>
@@ -1331,6 +1376,9 @@ footer .quote {
 
     <span class="label" style="margin-left:16px">Overlay</span>
     <span class="chip" data-filter="themes">◇ Themes</span>
+
+    <span class="label" style="margin-left:16px">View</span>
+    <span class="chip" id="watchlistChip">★ Watchlist (0)</span>
   </div>
 
   <div class="radar-grid">
@@ -1509,6 +1557,41 @@ let BRIEFING      = { text: '' };
 let META          = {};
 let SNAPSHOT_DATE = '';
 
+const WATCHLIST = new Set();
+function loadWatchlist() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('aar_watchlist') || '[]');
+    if (Array.isArray(stored)) stored.forEach(k => k && WATCHLIST.add(k));
+  } catch (e) { /* localStorage unavailable */ }
+}
+function persistWatchlist() {
+  try { localStorage.setItem('aar_watchlist', JSON.stringify([...WATCHLIST])); } catch (e) {}
+}
+function inWatch(kw) { return WATCHLIST.has(kw); }
+function toggleWatch(kw) {
+  if (!kw) return;
+  if (WATCHLIST.has(kw)) WATCHLIST.delete(kw); else WATCHLIST.add(kw);
+  persistWatchlist();
+  syncWatchlistViews();
+}
+function syncWatchlistViews() {
+  updateWatchlistUI();
+  applyState();
+  renderGems();
+  renderAlmanac();
+}
+function updateWatchlistUI() {
+  const n = WATCHLIST.size;
+  const pill = document.getElementById('watchlistPill');
+  if (pill) {
+    pill.textContent = `★ Watchlist (${n})`;
+    pill.classList.toggle('has-items', n > 0);
+    pill.disabled = n === 0;
+  }
+  const chip = document.getElementById('watchlistChip');
+  if (chip) chip.textContent = `★ Watchlist (${n})`;
+}
+
 async function loadData() {
   try {
     const res = await fetch('./data.json', { cache: 'no-store' });
@@ -1568,7 +1651,13 @@ const state = {
   selectedKeyword: null,
   showThemes:    false,
   activeCluster: null,
+  watchlistOnly: false,
 };
+
+function trendVisibleByWatchlist(t) {
+  if (!state.watchlistOnly) return true;
+  return inWatch(t.canonical_form || t.keyword);
+}
 
 function hasConvergence(t) {
   return !!(t && t.convergence && t.convergence.detected);
@@ -1690,6 +1779,30 @@ document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(c => {
   });
 });
 
+/* Watchlist chip (Radar): toggles state.watchlistOnly */
+document.getElementById('watchlistChip').addEventListener('click', () => {
+  state.watchlistOnly = !state.watchlistOnly;
+  document.getElementById('watchlistChip').classList.toggle('active', state.watchlistOnly);
+  applyState();
+});
+/* Watchlist pill (topbar): switches to Radar + activates the chip */
+document.getElementById('watchlistPill').addEventListener('click', () => {
+  if (WATCHLIST.size === 0) return;
+  document.querySelector('.nav button[data-page="radar"]').click();
+  if (!state.watchlistOnly) {
+    state.watchlistOnly = true;
+    document.getElementById('watchlistChip').classList.add('active');
+    applyState();
+  }
+});
+/* Global star click delegation — stopPropagation so leaderboard row click doesn't fire */
+document.addEventListener('click', (e) => {
+  const star = e.target.closest('.star-btn');
+  if (!star || !star.dataset.kw) return;
+  e.stopPropagation();
+  toggleWatch(star.dataset.kw);
+});
+
 /* Themes chip: toggles the cluster-region overlay on the chart */
 document.querySelectorAll('.filters .chip[data-filter="themes"]').forEach(c => {
   c.addEventListener('click', () => {
@@ -1731,7 +1844,7 @@ function renderBubble() {
       name: STAGE_META[stage].label,
       type: 'scatter',
       data: TRENDS
-        .filter(t => t.stage === stage && trendVisibleBySource(t))
+        .filter(t => t.stage === stage && trendVisibleBySource(t) && trendVisibleByWatchlist(t))
         .map(t => {
           const kw = t.canonical_form || t.keyword;
           const sel = kw === state.selectedKeyword;
@@ -1868,6 +1981,7 @@ function renderLeaderboard() {
   const visible = TRENDS.filter(t =>
     state.stages.has(t.stage) &&
     trendVisibleBySource(t) &&
+    trendVisibleByWatchlist(t) &&
     (state.activeCluster === null || t.cluster_id === state.activeCluster)
   );
   const sortKey = state.sort;
@@ -1893,6 +2007,7 @@ function renderLeaderboard() {
         </div>
         <div class="tbts">${t.tbts}</div>
         <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}">${velArrow(t.velocity)}</div>
+        <button class="star-btn${inWatch(kw) ? ' on' : ''}" data-kw="${escapeAttr(kw)}" aria-label="Toggle watchlist" title="Toggle watchlist">★</button>
       </div>
     `;
   }).join('');
@@ -2158,7 +2273,10 @@ function renderGems() {
       return `
         <div class="gem-card ${conv ? 'convergence' : ''}" data-kw="${escapeAttr(t.canonical_form || t.keyword)}">
           <div class="gem-headrow">
-            <div class="gem-keyword">${escapeHtml(t.keyword)}</div>
+            <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+              <button class="star-btn${inWatch(t.canonical_form || t.keyword) ? ' on' : ''}" data-kw="${escapeAttr(t.canonical_form || t.keyword)}" aria-label="Toggle watchlist" title="Toggle watchlist">★</button>
+              <div class="gem-keyword">${escapeHtml(t.keyword)}</div>
+            </div>
             <div class="gem-score">
               ${Math.round((t.hidden_gem || 0) * 100)}
               <span class="label">GEM SCORE</span>
@@ -2260,7 +2378,10 @@ function renderAlmanac() {
     const a = t.angles || {};
     return `
       <div class="almanac-card">
-        <div class="topic">${escapeHtml(t.keyword)} <span class="stage">· ${STAGE_META[t.stage]?.label || ''}</span></div>
+        <div class="topic">
+          ${escapeHtml(t.keyword)} <span class="stage">· ${STAGE_META[t.stage]?.label || ''}</span>
+          <button class="star-btn${inWatch(t.canonical_form || t.keyword) ? ' on' : ''}" data-kw="${escapeAttr(t.canonical_form || t.keyword)}" aria-label="Toggle watchlist" title="Toggle watchlist" style="margin-left:auto;">★</button>
+        </div>
         <div class="almanac-row">
           <div class="tag">Hook</div>
           <div class="title">${escapeHtml(a.hook || '—')}</div>
@@ -2315,8 +2436,10 @@ function escapeAttr(s) { return escapeHtml(s); }
    INIT
    ========================================================== */
 window.addEventListener('load', async () => {
+  loadWatchlist();
   await loadData();
   document.getElementById('snapshotStamp').textContent = `snapshot · ${SNAPSHOT_DATE || '—'}`;
+  updateWatchlistUI();
   renderBubble();
   renderLeaderboard();
   renderThemes();
