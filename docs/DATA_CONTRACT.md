@@ -65,7 +65,10 @@ frontend interface; any change requires a frontend coordination note.
         "target_date": "2026-06-15",
         "verdict": "tracking",
         "verdict_text": null,
-        "verified_at": null
+        "verified_at": null,
+        "keyword": null,
+        "lifecycle_at_filing": null,
+        "target_lifecycle": null
       },
       "sparkline_14d": [
         1,
@@ -139,7 +142,10 @@ frontend interface; any change requires a frontend coordination note.
       "target_date": "2026-06-15",
       "verdict": "tracking",
       "verdict_text": null,
-      "verified_at": null
+      "verified_at": null,
+      "keyword": null,
+      "lifecycle_at_filing": null,
+      "target_lifecycle": null
     }
   ],
   "meta": {

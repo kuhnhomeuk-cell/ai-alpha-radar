@@ -63,6 +63,12 @@ class Prediction(BaseModel):
     verdict: PredictionVerdict
     verdict_text: Optional[str] = None
     verified_at: Optional[date] = None
+    # Linkage + criteria for deterministic verdict checking.
+    # Optional for backwards compat with the original BACKEND_BUILD §6
+    # schema; Step 10 onwards populates them.
+    keyword: Optional[str] = None
+    lifecycle_at_filing: Optional["LifecycleStage"] = None
+    target_lifecycle: Optional["LifecycleStage"] = None
 
 
 class Trend(BaseModel):
