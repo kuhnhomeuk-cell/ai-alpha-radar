@@ -368,6 +368,54 @@ body::after {
 .lb-row .vel.up   { color: var(--good); }
 .lb-row .vel.down { color: var(--bad); }
 
+/* Right-column wrapper: leaderboard + themes stack */
+.radar-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.theme-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  gap: 12px;
+  align-items: center;
+  transition: background 0.1s;
+}
+.theme-row:last-child { border-bottom: none; }
+.theme-row:hover { background: rgba(0, 240, 255, 0.04); }
+.theme-row.active {
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.theme-row .label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.theme-row .count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+}
+.theme-row .avg {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.theme-row .avg.dim {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
 /* ====================================================
    HIDDEN GEMS PAGE (Bloomberg)
    ==================================================== */
@@ -1022,6 +1070,9 @@ footer .quote {
     <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
     <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
     <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
+
+    <span class="label" style="margin-left:16px">Overlay</span>
+    <span class="chip" data-filter="themes">◇ Themes</span>
   </div>
 
   <div class="radar-grid">
@@ -1036,12 +1087,21 @@ footer .quote {
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-head">
-        <div class="title">Top 20 · TBTS Leaderboard</div>
-        <div class="meta">06:00 UTC daily</div>
+    <div class="radar-side">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="title">Top 20 · TBTS Leaderboard</div>
+          <div class="meta">06:00 UTC daily</div>
+        </div>
+        <div class="leaderboard" id="leaderboard"></div>
       </div>
-      <div class="leaderboard" id="leaderboard"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="title">Themes</div>
+          <div class="meta" id="themesMeta">click to filter</div>
+        </div>
+        <div id="themesList"></div>
+      </div>
     </div>
   </div>
 
@@ -1225,6 +1285,8 @@ const state = {
   sources: new Set(['arxiv','github','hackernews','semantic_scholar']),
   sort:    'tbts',
   selectedKeyword: null,
+  showThemes:    false,
+  activeCluster: null,
 };
 
 function trendVisibleBySource(t) {
@@ -1241,6 +1303,66 @@ function trendVisibleBySource(t) {
 function applyState() {
   renderBubble();
   renderLeaderboard();
+  renderThemes();
+}
+
+/* Cluster region geometry — used by the overlay AND the panel/click handler.
+   Skip cluster_id < 0 (unclustered) for the chart overlay; the panel still
+   surfaces unclustered as its own row. */
+function clusterGroups() {
+  const byCluster = new Map();
+  TRENDS.forEach(t => {
+    const key = t.cluster_id;
+    if (!byCluster.has(key)) byCluster.set(key, []);
+    byCluster.get(key).push(t);
+  });
+  return byCluster;
+}
+
+function clusterRegions() {
+  const regions = [];
+  for (const [id, members] of clusterGroups()) {
+    if (id < 0 || members.length < 2) continue;
+    const xs = members.map(t => t.saturation);
+    const ys = members.map(t => t.tbts);
+    const minX = Math.max(0, Math.min(...xs) - 6);
+    const maxX = Math.min(100, Math.max(...xs) + 6);
+    const minY = Math.max(0, Math.min(...ys) - 6);
+    const maxY = Math.min(100, Math.max(...ys) + 6);
+    const cx = xs.reduce((a, b) => a + b, 0) / xs.length;
+    const cy = ys.reduce((a, b) => a + b, 0) / ys.length;
+    regions.push({
+      id, minX, maxX, minY, maxY, cx, cy,
+      label: members[0].cluster_label || `cluster ${id}`,
+      active: state.activeCluster === id,
+    });
+  }
+  return regions;
+}
+
+function renderThemes() {
+  const host = document.getElementById('themesList');
+  if (!host) return;
+  const rows = [...clusterGroups().entries()].map(([id, members]) => {
+    const label   = members[0].cluster_label || (id < 0 ? 'Unclustered' : `cluster ${id}`);
+    const avgTbts = Math.round(members.reduce((a, t) => a + (t.tbts || 0), 0) / members.length);
+    return { id, label, count: members.length, avg: avgTbts, unclustered: id < 0 };
+  }).sort((a, b) => b.count - a.count);
+
+  host.innerHTML = rows.map(th => {
+    const active = state.activeCluster === th.id;
+    return `
+      <div class="theme-row${active ? ' active' : ''}" data-cluster="${th.id}">
+        <div class="label">${escapeHtml(th.label)}${th.unclustered ? ' <span style="color:var(--ink-3)">·</span>' : ''}</div>
+        <div class="count">${th.count} trends</div>
+        <div class="avg${th.unclustered ? ' dim' : ''}">avg ${th.avg} TBTS</div>
+      </div>
+    `;
+  }).join('');
+
+  host.querySelectorAll('.theme-row').forEach(row => {
+    row.addEventListener('click', () => toggleActiveCluster(parseInt(row.dataset.cluster, 10)));
+  });
 }
 
 function selectTrend(kw) {
@@ -1283,9 +1405,26 @@ document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(c => {
   });
 });
 
-/* Esc clears selection */
+/* Themes chip: toggles the cluster-region overlay on the chart */
+document.querySelectorAll('.filters .chip[data-filter="themes"]').forEach(c => {
+  c.addEventListener('click', () => {
+    state.showThemes = !state.showThemes;
+    c.classList.toggle('active', state.showThemes);
+    renderBubble();
+  });
+});
+
+/* Cluster filter helper — toggled by Themes panel rows + overlay-label clicks */
+function toggleActiveCluster(id) {
+  state.activeCluster = (state.activeCluster === id) ? null : id;
+  applyState();
+}
+
+/* Esc clears selection (and active cluster on a second press) */
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.selectedKeyword) clearSelection();
+  if (e.key !== 'Escape') return;
+  if (state.selectedKeyword) { clearSelection(); return; }
+  if (state.activeCluster !== null) { toggleActiveCluster(state.activeCluster); return; }
 });
 
 /* ==========================================================
@@ -1309,12 +1448,14 @@ function renderBubble() {
         .map(t => {
           const kw = t.canonical_form || t.keyword;
           const sel = kw === state.selectedKeyword;
+          const clusterActive = state.activeCluster === null || t.cluster_id === state.activeCluster;
+          const lit = stageActive && clusterActive;
           return {
             name: t.keyword,
             value: [t.saturation, t.tbts, t.hidden_gem || 0, t.keyword, t.cluster_label || '—', t.velocity || 0, kw],
             itemStyle: {
               color: STAGE_META[stage].color,
-              opacity: stageActive ? (sel ? 1 : 0.85) : 0.15,
+              opacity: lit ? (sel ? 1 : 0.85) : 0.15,
               shadowBlur: sel ? 22 : 14,
               shadowColor: STAGE_META[stage].color,
               borderColor: sel ? '#ffffff' : 'rgba(255,255,255,0.18)',
@@ -1335,6 +1476,52 @@ function renderBubble() {
       emphasis: { focus: 'none', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
     };
   });
+
+  const regions = state.showThemes ? clusterRegions() : [];
+  if (regions.length) {
+    series.push({
+      type: 'custom',
+      data: regions.map((_, i) => i),
+      z: 0,
+      silent: false,
+      renderItem: (params, api) => {
+        const r = regions[params.dataIndex];
+        const p0 = api.coord([r.minX, r.maxY]);
+        const p1 = api.coord([r.maxX, r.minY]);
+        return {
+          type: 'group',
+          children: [
+            {
+              type: 'rect',
+              shape: {
+                x: p0[0], y: p0[1],
+                width:  p1[0] - p0[0],
+                height: p1[1] - p0[1],
+                r: 8,
+              },
+              style: {
+                fill:   r.active ? 'rgba(0, 240, 255, 0.08)' : 'rgba(0, 240, 255, 0.025)',
+                stroke: r.active ? 'rgba(0, 240, 255, 0.45)' : 'rgba(120, 160, 200, 0.22)',
+                lineWidth: r.active ? 1.5 : 1,
+                lineDash: r.active ? null : [4, 4],
+              },
+            },
+            {
+              type: 'text',
+              position: [(p0[0] + p1[0]) / 2, p0[1] - 4],
+              style: {
+                text: r.label,
+                fill: r.active ? '#00f0ff' : 'rgba(139, 156, 176, 0.85)',
+                font: '11px "JetBrains Mono", monospace',
+                textAlign: 'center',
+                textVerticalAlign: 'bottom',
+              },
+            }
+          ],
+        };
+      }
+    });
+  }
 
   bubbleInstance.setOption({
     backgroundColor: 'transparent',
@@ -1377,6 +1564,11 @@ function renderBubble() {
 
   bubbleInstance.off('click');
   bubbleInstance.on('click', (params) => {
+    if (params.seriesType === 'custom') {
+      const r = regions[params.dataIndex];
+      if (r) toggleActiveCluster(r.id);
+      return;
+    }
     const kw = params?.value?.[6];
     if (kw) selectTrend(kw);
   });
@@ -1385,7 +1577,11 @@ function renderBubble() {
 }
 
 function renderLeaderboard() {
-  const visible = TRENDS.filter(t => state.stages.has(t.stage) && trendVisibleBySource(t));
+  const visible = TRENDS.filter(t =>
+    state.stages.has(t.stage) &&
+    trendVisibleBySource(t) &&
+    (state.activeCluster === null || t.cluster_id === state.activeCluster)
+  );
   const sortKey = state.sort;
   const sorted = visible.sort((a, b) => {
     if (sortKey === 'velocity')   return (b.velocity || 0)   - (a.velocity || 0);
@@ -1673,6 +1869,7 @@ window.addEventListener('load', async () => {
   document.getElementById('snapshotStamp').textContent = `snapshot · ${SNAPSHOT_DATE || '—'}`;
   renderBubble();
   renderLeaderboard();
+  renderThemes();
   renderBriefing();
   renderGems();
   renderDemand();
