@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     from dotenv import load_dotenv
 
-    load_dotenv(".env.local")  # repo-local secrets, gitignored
+    load_dotenv(".env.local", override=True)  # repo-local secrets win over shell exports
     pat = os.environ.get("GH_PAT", "").strip()
     if not pat:
         print(

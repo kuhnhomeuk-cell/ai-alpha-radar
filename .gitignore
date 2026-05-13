@@ -16,9 +16,8 @@ dist/
 build/
 
 # Environment (never commit secrets)
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
 
 # Caches
 .pytest_cache/

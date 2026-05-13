@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     from dotenv import load_dotenv
 
-    load_dotenv(".env.local")
+    load_dotenv(".env.local", override=True)
     key = os.environ.get("SEMANTIC_SCHOLAR_KEY") or None
 
     from pipeline.fetch import arxiv
