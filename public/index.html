@@ -817,6 +817,141 @@ body::after {
 .almanac-row .title::before { content: '\201C'; color: var(--champagne); flex-shrink: 0; }
 .almanac-row .title::after  { content: '\201D'; color: var(--champagne); margin-left: -8px; flex-shrink: 0; }
 
+/* ====================================================
+   DETAIL PANEL (slide-in from right) + selected row
+   ==================================================== */
+.detail-panel {
+  position: fixed;
+  top: 73px; right: 0; bottom: 0;
+  width: 380px;
+  background: rgba(7, 9, 12, 0.96);
+  border-left: 1px solid var(--line-hi);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 40;
+  overflow-y: auto;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+}
+.detail-panel.visible { transform: translateX(0); }
+.detail-panel .dp-head {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px;
+}
+.detail-panel .dp-head .name {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.detail-panel .dp-head .cluster {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.detail-panel .close {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 5px 9px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+}
+.detail-panel .close:hover { color: var(--ink); border-color: var(--line-hi); }
+.detail-panel .body { padding: 18px 20px; }
+.detail-panel .summary {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin-bottom: 18px;
+  font-family: var(--sans);
+}
+.detail-panel .stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line);
+  margin-bottom: 18px;
+}
+.detail-panel .stats .stat {
+  padding: 12px 14px;
+  background: rgba(7, 9, 12, 0.85);
+}
+.detail-panel .stats .stat .l {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.detail-panel .stats .stat .v {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.detail-panel .stats .stat .v.gold { color: var(--accent); }
+.detail-panel .pred {
+  padding: 12px 14px;
+  border-left: 2px solid var(--accent);
+  background: rgba(0, 240, 255, 0.04);
+  margin-bottom: 14px;
+}
+.detail-panel .pred .ph {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.detail-panel .pred .text {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.detail-panel .pred .badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+  display: inline-block;
+  border: 1px solid;
+}
+.detail-panel .pred .badge.verified       { color: var(--good);          border-color: rgba(0, 255, 157, 0.3); }
+.detail-panel .pred .badge.verified_early { color: var(--accent);        border-color: rgba(0, 240, 255, 0.3); }
+.detail-panel .pred .badge.tracking       { color: var(--stage-whisper); border-color: rgba(0, 212, 255, 0.3); }
+.detail-panel .pred .badge.pending        { color: var(--ink-3);         border-color: var(--line); }
+.detail-panel .pred .badge.wrong          { color: var(--bad);           border-color: rgba(255, 77, 109, 0.3); }
+.detail-panel .audience-slot {
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.lb-row.selected {
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
 /* ========== FOOTER ========== */
 footer {
   margin: 24px var(--sp-5);
@@ -907,6 +1042,31 @@ footer .quote {
         <div class="meta">06:00 UTC daily</div>
       </div>
       <div class="leaderboard" id="leaderboard"></div>
+    </div>
+  </div>
+
+  <div class="detail-panel" id="detailPanel" aria-hidden="true">
+    <div class="dp-head">
+      <div>
+        <div class="name" id="dpName">—</div>
+        <div class="cluster" id="dpCluster">—</div>
+      </div>
+      <button class="close" onclick="window.clearSelection()">CLOSE ✕</button>
+    </div>
+    <div class="body">
+      <div class="summary" id="dpSummary">—</div>
+      <div class="stats">
+        <div class="stat"><div class="l">TBTS</div><div class="v gold" id="dpTbts">—</div></div>
+        <div class="stat"><div class="l">Saturation</div><div class="v" id="dpSat">—</div></div>
+        <div class="stat"><div class="l">Hidden Gem</div><div class="v" id="dpGem">—</div></div>
+        <div class="stat"><div class="l">Stage</div><div class="v" id="dpStage">—</div></div>
+      </div>
+      <div class="pred">
+        <div class="ph">Dated Prediction · accountability layer</div>
+        <div class="text" id="dpPredText">—</div>
+        <span class="badge" id="dpPredBadge">—</span>
+      </div>
+      <div class="audience-slot">// audience-bridge slot · ships in Commit 6</div>
     </div>
   </div>
 </div>
@@ -1057,15 +1217,75 @@ document.querySelectorAll('.nav button').forEach(btn => {
   });
 });
 
-/* Filter chips — visual toggle only in Commit 1; reactive wiring arrives in Commit 3 */
-document.querySelectorAll('.filters .chip[data-filter="stage"], .filters .chip[data-filter="source"]').forEach(c => {
-  c.addEventListener('click', () => c.classList.toggle('active'));
+/* ==========================================================
+   REACTIVE STATE — one object drives chart + leaderboard + panel
+   ========================================================== */
+const state = {
+  stages:  new Set(['whisper','builder','creator']),
+  sources: new Set(['arxiv','github','hackernews','semantic_scholar']),
+  sort:    'tbts',
+  selectedKeyword: null,
+};
+
+function trendVisibleBySource(t) {
+  const s = t.sources || {};
+  for (const src of state.sources) {
+    if (src === 'arxiv'            && (s.arxiv_30d || 0) > 0) return true;
+    if (src === 'github'           && ((s.github_repos_7d || 0) + (s.github_stars_7d || 0)) > 0) return true;
+    if (src === 'hackernews'       && ((s.hn_posts_7d || 0) + (s.hn_points_7d || 0)) > 0) return true;
+    if (src === 'semantic_scholar' && (s.semantic_scholar_citations_7d || 0) > 0) return true;
+  }
+  return false;
+}
+
+function applyState() {
+  renderBubble();
+  renderLeaderboard();
+}
+
+function selectTrend(kw) {
+  state.selectedKeyword = kw;
+  applyState();
+  openDetailPanel(kw);
+}
+function clearSelection() {
+  state.selectedKeyword = null;
+  applyState();
+  closeDetailPanel();
+}
+window.clearSelection = clearSelection;
+
+/* Stage chips: fade outside-set bubbles + hide rows */
+document.querySelectorAll('.filters .chip[data-filter="stage"]').forEach(c => {
+  c.addEventListener('click', () => {
+    const v = c.dataset.value;
+    if (state.stages.has(v)) state.stages.delete(v); else state.stages.add(v);
+    c.classList.toggle('active');
+    applyState();
+  });
 });
+/* Source chips: filter trends out of chart + leaderboard */
+document.querySelectorAll('.filters .chip[data-filter="source"]').forEach(c => {
+  c.addEventListener('click', () => {
+    const v = c.dataset.value;
+    if (state.sources.has(v)) state.sources.delete(v); else state.sources.add(v);
+    c.classList.toggle('active');
+    applyState();
+  });
+});
+/* Sort chips: single-select, leaderboard resort */
 document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(c => {
   c.addEventListener('click', () => {
     document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(s => s.classList.remove('active'));
     c.classList.add('active');
+    state.sort = c.dataset.value;
+    renderLeaderboard();
   });
+});
+
+/* Esc clears selection */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.selectedKeyword) clearSelection();
 });
 
 /* ==========================================================
@@ -1079,25 +1299,42 @@ function renderBubble() {
   bubbleInstance = echarts.init(el, null, { renderer: 'canvas' });
 
   const stageOrder = ['whisper','builder','creator','hype','commodity'];
-  const series = stageOrder.map(stage => ({
-    name: STAGE_META[stage].label,
-    type: 'scatter',
-    data: TRENDS.filter(t => t.stage === stage).map(t => ({
-      name: t.keyword,
-      value: [t.saturation, t.tbts, t.hidden_gem || 0, t.keyword, t.cluster_label || '—', t.velocity || 0],
-      itemStyle: {
-        color: STAGE_META[stage].color,
-        opacity: 0.85,
-        shadowBlur: 14,
-        shadowColor: STAGE_META[stage].color,
-        borderColor: 'rgba(255,255,255,0.18)',
-        borderWidth: 1
-      }
-    })),
-    symbolSize: v => Math.max(10, 10 + (v[2] || 0) * 24),
-    emphasis: { focus: 'series', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
-    label: { show: false }
-  }));
+  const series = stageOrder.map(stage => {
+    const stageActive = state.stages.has(stage);
+    return {
+      name: STAGE_META[stage].label,
+      type: 'scatter',
+      data: TRENDS
+        .filter(t => t.stage === stage && trendVisibleBySource(t))
+        .map(t => {
+          const kw = t.canonical_form || t.keyword;
+          const sel = kw === state.selectedKeyword;
+          return {
+            name: t.keyword,
+            value: [t.saturation, t.tbts, t.hidden_gem || 0, t.keyword, t.cluster_label || '—', t.velocity || 0, kw],
+            itemStyle: {
+              color: STAGE_META[stage].color,
+              opacity: stageActive ? (sel ? 1 : 0.85) : 0.15,
+              shadowBlur: sel ? 22 : 14,
+              shadowColor: STAGE_META[stage].color,
+              borderColor: sel ? '#ffffff' : 'rgba(255,255,255,0.18)',
+              borderWidth: sel ? 3 : 1,
+            },
+            label: {
+              show: sel,
+              position: 'right',
+              formatter: t.keyword,
+              color: '#ffffff',
+              fontSize: 11,
+              fontFamily: 'JetBrains Mono',
+              distance: 10,
+            }
+          };
+        }),
+      symbolSize: v => Math.max(10, 10 + (v[2] || 0) * 24),
+      emphasis: { focus: 'none', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
+    };
+  });
 
   bubbleInstance.setOption({
     backgroundColor: 'transparent',
@@ -1138,25 +1375,48 @@ function renderBubble() {
     legend: { show: false }
   });
 
+  bubbleInstance.off('click');
+  bubbleInstance.on('click', (params) => {
+    const kw = params?.value?.[6];
+    if (kw) selectTrend(kw);
+  });
+
   document.getElementById('trackedMeta').textContent = `${TRENDS.length} tracked terms`;
 }
 
 function renderLeaderboard() {
-  const sorted = [...TRENDS].sort((a, b) => b.tbts - a.tbts).slice(0, 20);
-  const html = sorted.map((t, i) => `
-    <div class="lb-row" data-kw="${escapeAttr(t.canonical_form || t.keyword)}">
-      <div class="rank">${String(i + 1).padStart(2, '0')}</div>
-      <div>
-        <div class="name">${escapeHtml(t.keyword)}</div>
-        <div class="stage-mini" style="color:${STAGE_META[t.stage]?.color || '#8b9cb0'}">
-          <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
+  const visible = TRENDS.filter(t => state.stages.has(t.stage) && trendVisibleBySource(t));
+  const sortKey = state.sort;
+  const sorted = visible.sort((a, b) => {
+    if (sortKey === 'velocity')   return (b.velocity || 0)   - (a.velocity || 0);
+    if (sortKey === 'hidden_gem') return (b.hidden_gem || 0) - (a.hidden_gem || 0);
+    return b.tbts - a.tbts;
+  }).slice(0, 20);
+
+  const html = sorted.map((t, i) => {
+    const kw = t.canonical_form || t.keyword;
+    const sel = kw === state.selectedKeyword;
+    return `
+      <div class="lb-row${sel ? ' selected' : ''}" data-kw="${escapeAttr(kw)}">
+        <div class="rank">${String(i + 1).padStart(2, '0')}</div>
+        <div>
+          <div class="name">${escapeHtml(t.keyword)}</div>
+          <div class="stage-mini" style="color:${STAGE_META[t.stage]?.color || '#8b9cb0'}">
+            <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
+          </div>
         </div>
+        <div class="tbts">${t.tbts}</div>
+        <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}">${velArrow(t.velocity)}</div>
       </div>
-      <div class="tbts">${t.tbts}</div>
-      <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}">${velArrow(t.velocity)}</div>
-    </div>
-  `).join('');
-  document.getElementById('leaderboard').innerHTML = html;
+    `;
+  }).join('');
+  const host = document.getElementById('leaderboard');
+  host.innerHTML = html;
+  host.querySelectorAll('.lb-row').forEach(row => {
+    row.addEventListener('click', () => selectTrend(row.dataset.kw));
+  });
+  const selRow = host.querySelector('.lb-row.selected');
+  if (selRow) selRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 function velArrow(v) {
   if (!v || v === 0) return '—';
@@ -1166,6 +1426,37 @@ function velArrow(v) {
 function renderBriefing() {
   document.getElementById('briefingText').textContent =
     (BRIEFING && BRIEFING.text) ? BRIEFING.text : 'Briefing pending.';
+}
+
+const VERDICT_LABEL = {
+  verified: 'Verified', verified_early: 'Verified Early',
+  tracking: 'Tracking', pending: 'Pending', wrong: 'Wrong',
+};
+
+function openDetailPanel(kw) {
+  const t = TRENDS.find(x => (x.canonical_form || x.keyword) === kw);
+  if (!t) return;
+  document.getElementById('dpName').textContent    = t.keyword;
+  document.getElementById('dpCluster').textContent = `cluster · ${t.cluster_label || '—'}`;
+  document.getElementById('dpSummary').textContent = t.summary || '—';
+  document.getElementById('dpTbts').textContent    = t.tbts;
+  document.getElementById('dpSat').textContent     = `${Math.round(t.saturation)}%`;
+  document.getElementById('dpGem').textContent     = ((t.hidden_gem || 0) * 100).toFixed(0);
+  document.getElementById('dpStage').textContent   = STAGE_META[t.stage]?.label || t.stage;
+  const p = t.prediction || {};
+  document.getElementById('dpPredText').textContent = p.text || '—';
+  const badge = document.getElementById('dpPredBadge');
+  badge.textContent = VERDICT_LABEL[p.verdict] || p.verdict || '—';
+  badge.className   = 'badge ' + (p.verdict || '');
+
+  const panel = document.getElementById('detailPanel');
+  panel.classList.add('visible');
+  panel.setAttribute('aria-hidden', 'false');
+}
+function closeDetailPanel() {
+  const panel = document.getElementById('detailPanel');
+  panel.classList.remove('visible');
+  panel.setAttribute('aria-hidden', 'true');
 }
 
 /* ==========================================================
