@@ -190,6 +190,138 @@ def test_system_prompt_has_cache_control_marker() -> None:
         assert sys_block.get("cache_control") == {"type": "ephemeral"}
 
 
+# ---------- Batch + briefing mocks ----------
+
+
+class FakeBatchClient:
+    """Stub for messages.batches.{create,retrieve,results}."""
+
+    def __init__(self, prompt_responses: dict[str, str]) -> None:
+        self.prompt_responses = prompt_responses
+        self._counter = 0
+        self._batches: dict[str, dict] = {}
+        self.messages = SimpleNamespace(
+            create=self._not_implemented,
+            batches=SimpleNamespace(
+                create=self._batch_create,
+                retrieve=self._batch_retrieve,
+                results=self._batch_results,
+            ),
+        )
+
+    def _not_implemented(self, **_: Any) -> Any:
+        raise AssertionError("sync path called in batch-only test")
+
+    def _next_id(self) -> str:
+        self._counter += 1
+        return f"batch_{self._counter}"
+
+    def _batch_create(self, *, requests: list[dict]) -> Any:
+        batch_id = self._next_id()
+        self._batches[batch_id] = {"requests": requests, "status": "ended"}
+        return SimpleNamespace(id=batch_id, processing_status="ended")
+
+    def _batch_retrieve(self, batch_id: str) -> Any:
+        return SimpleNamespace(id=batch_id, processing_status="ended")
+
+    def _batch_results(self, batch_id: str) -> Any:
+        records = []
+        for r in self._batches[batch_id]["requests"]:
+            prompt_text = r["params"]["messages"][0]["content"]
+            payload = None
+            for key, p in self.prompt_responses.items():
+                if key in prompt_text:
+                    payload = p
+                    break
+            if payload is None:
+                raise AssertionError(
+                    f"FakeBatchClient: no canned response for prompt: {prompt_text[:80]}"
+                )
+            records.append(
+                SimpleNamespace(
+                    custom_id=r["custom_id"],
+                    result=SimpleNamespace(
+                        type="succeeded",
+                        message=SimpleNamespace(
+                            content=[SimpleNamespace(text=payload)]
+                        ),
+                    ),
+                )
+            )
+        return iter(records)
+
+
+def test_enrich_cards_batch_two_stage_orchestration() -> None:
+    cards = [_make_card(keyword="alpha"), _make_card(keyword="beta")]
+    fake = FakeBatchClient(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "S", "confidence": "high"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "H", "contrarian": "C", "tutorial": "T"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "medium",
+                    "peak_estimate_days": 30,
+                    "risk_flag": "none",
+                    "rationale": "r",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "E"}),
+        }
+    )
+    outputs = summarize.enrich_cards_batch(cards, client=fake)
+    assert set(outputs.keys()) == {0, 1}
+    for o in outputs.values():
+        assert o.summary == "S"
+        assert o.angles.hook == "H"
+        assert o.angles.eli_creator == "E"
+        assert o.risk.breakout_likelihood == "medium"
+
+
+def test_enrich_cards_batch_empty_list_returns_empty_dict() -> None:
+    fake = FakeBatchClient({})
+    assert summarize.enrich_cards_batch([], client=fake) == {}
+
+
+def test_daily_briefing_calls_sonnet_and_parses() -> None:
+    movers = [
+        summarize.TrendMover(
+            keyword="world-model-agents",
+            lifecycle_stage="builder",
+            velocity_score=3.4,
+            velocity_acceleration=1.1,
+            saturation=22,
+        ),
+        summarize.TrendMover(
+            keyword="prompt-engineering",
+            lifecycle_stage="commodity",
+            velocity_score=0.8,
+            velocity_acceleration=-0.3,
+            saturation=82,
+        ),
+    ]
+    canned = json.dumps(
+        {
+            "text": "What moved: world-model-agents. What died: prompt-engineering. "
+            "What's emerging: small AI agents.",
+            "moved_up": ["world-model-agents"],
+            "moved_down": ["prompt-engineering"],
+            "emerging": ["small-ai-agents"],
+        }
+    )
+    fake = FakeAnthropic({"Today's tracked trends": canned})
+    briefing = summarize.daily_briefing(movers, client=fake)
+    assert briefing.moved_up == ["world-model-agents"]
+    assert briefing.moved_down == ["prompt-engineering"]
+    assert briefing.emerging == ["small-ai-agents"]
+    assert briefing.generated_at.tzinfo is not None
+    # daily briefing uses Sonnet
+    assert fake.calls[0]["model"] == summarize.SONNET_MODEL
+
+
 def test_enrich_card_raises_when_response_unparseable() -> None:
     card = _make_card()
     fake = FakeAnthropic(
