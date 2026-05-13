@@ -1000,6 +1000,177 @@ body::after {
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
+/* ====================================================
+   CONVERGENCE — badge + modal + timeline
+   ==================================================== */
+.conv-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  background: rgba(0, 240, 255, 0.10);
+  border: 1px solid rgba(0, 240, 255, 0.32);
+  border-radius: 100px;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.conv-badge:hover {
+  background: rgba(0, 240, 255, 0.20);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+.conv-scrim {
+  position: fixed; inset: 0;
+  background: rgba(7, 9, 12, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.conv-scrim.visible { opacity: 1; pointer-events: auto; }
+.conv-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.96);
+  width: min(680px, calc(100vw - 48px));
+  background: rgba(7, 9, 12, 0.97);
+  border: 1px solid var(--line-hi);
+  border-radius: 8px;
+  z-index: 61;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+}
+.conv-modal.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+.conv-modal .conv-head {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px;
+}
+.conv-modal .conv-name {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.conv-modal .conv-cluster {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.conv-modal .close {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+}
+.conv-modal .close:hover { color: var(--ink); border-color: var(--line-hi); }
+.conv-modal .conv-body { padding: 18px 24px 28px; }
+.conv-modal .conv-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.conv-modal .conv-eyebrow::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--line-hi), transparent);
+}
+.tl-host {
+  position: relative;
+  height: 110px;
+  margin: 24px 8px 12px;
+}
+.tl-axis {
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: var(--line-hi);
+}
+.tl-band {
+  position: absolute;
+  top: 35%; height: 30%;
+  background: rgba(0, 240, 255, 0.08);
+  border-right: 1px dashed rgba(0, 240, 255, 0.55);
+}
+.tl-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.tl-label {
+  position: absolute;
+  top: calc(50% + 14px);
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.tl-ticks {
+  position: absolute;
+  top: calc(50% - 24px);
+  left: 0; right: 0;
+  height: 12px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+}
+.tl-ticks span { position: absolute; transform: translateX(-50%); }
+.conv-empty {
+  padding: 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+}
+.conv-modal .conv-foot {
+  padding: 14px 16px;
+  border-left: 2px solid var(--accent);
+  background: rgba(0, 240, 255, 0.04);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+}
+.conv-modal .conv-foot strong { color: var(--accent); font-weight: 600; }
+.conv-modal .conv-foot .dim {
+  font-style: italic;
+  color: var(--ink-3);
+}
+
 /* ========== FOOTER ========== */
 footer {
   margin: 24px var(--sp-5);
@@ -1110,6 +1281,9 @@ footer .quote {
       <div>
         <div class="name" id="dpName">—</div>
         <div class="cluster" id="dpCluster">—</div>
+        <div id="dpConvergence" style="margin-top: 8px; display: none;">
+          <span class="conv-badge" data-conv="" id="dpConvBadge">⚡ CONVERGENCE · timeline</span>
+        </div>
       </div>
       <button class="close" onclick="window.clearSelection()">CLOSE ✕</button>
     </div>
@@ -1202,6 +1376,23 @@ footer .quote {
   </div>
 </div>
 
+<!-- ========== CONVERGENCE MODAL (global) ========== -->
+<div class="conv-scrim" id="convScrim" onclick="window.closeConvergence()"></div>
+<div class="conv-modal" id="convModal" aria-hidden="true" role="dialog" aria-labelledby="convName">
+  <div class="conv-head">
+    <div>
+      <div class="conv-name" id="convName">—</div>
+      <div class="conv-cluster" id="convCluster">—</div>
+    </div>
+    <button class="close" onclick="window.closeConvergence()">CLOSE ✕</button>
+  </div>
+  <div class="conv-body">
+    <div class="conv-eyebrow">⚡ Cross-source convergence event</div>
+    <div class="tl-host" id="convTimeline"></div>
+    <div class="conv-foot" id="convFoot">—</div>
+  </div>
+</div>
+
 <footer>
   <span>// AI Alpha Radar · v0.2 · trend intelligence terminal</span>
   <span class="quote">"By the time it trends on Google, the star has already collapsed."</span>
@@ -1288,6 +1479,10 @@ const state = {
   showThemes:    false,
   activeCluster: null,
 };
+
+function hasConvergence(t) {
+  return !!(t && t.convergence && t.convergence.detected);
+}
 
 function trendVisibleBySource(t) {
   const s = t.sources || {};
@@ -1420,9 +1615,11 @@ function toggleActiveCluster(id) {
   applyState();
 }
 
-/* Esc clears selection (and active cluster on a second press) */
+/* Esc dismisses (in order): convergence modal → selection → active cluster */
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
+  const convModal = document.getElementById('convModal');
+  if (convModal && convModal.classList.contains('visible')) { closeConvergence(); return; }
   if (state.selectedKeyword) { clearSelection(); return; }
   if (state.activeCluster !== null) { toggleActiveCluster(state.activeCluster); return; }
 });
@@ -1452,7 +1649,7 @@ function renderBubble() {
           const lit = stageActive && clusterActive;
           return {
             name: t.keyword,
-            value: [t.saturation, t.tbts, t.hidden_gem || 0, t.keyword, t.cluster_label || '—', t.velocity || 0, kw],
+            value: [t.saturation, t.tbts, t.hidden_gem || 0, t.keyword, t.cluster_label || '—', t.velocity || 0, kw, hasConvergence(t) ? 1 : 0],
             itemStyle: {
               color: STAGE_META[stage].color,
               opacity: lit ? (sel ? 1 : 0.85) : 0.15,
@@ -1538,6 +1735,7 @@ function renderBubble() {
         <div style="color:#8b9cb0">TBTS       <span style="color:#d6e1ee">${p.value[1]}</span></div>
         <div style="color:#8b9cb0">hidden_gem <span style="color:#d6e1ee">${(p.value[2]||0).toFixed(2)}</span></div>
         <div style="color:#8b9cb0">velocity   <span style="color:#d6e1ee">${(p.value[5]||0).toFixed(2)}x</span></div>
+        ${p.value[7] ? '<div style="color:#00f0ff;margin-top:6px;font-weight:600">⚡ Convergence detected · click leaderboard ⚡CONV for timeline</div>' : ''}
       `
     },
     xAxis: {
@@ -1592,6 +1790,7 @@ function renderLeaderboard() {
   const html = sorted.map((t, i) => {
     const kw = t.canonical_form || t.keyword;
     const sel = kw === state.selectedKeyword;
+    const conv = hasConvergence(t);
     return `
       <div class="lb-row${sel ? ' selected' : ''}" data-kw="${escapeAttr(kw)}">
         <div class="rank">${String(i + 1).padStart(2, '0')}</div>
@@ -1599,6 +1798,7 @@ function renderLeaderboard() {
           <div class="name">${escapeHtml(t.keyword)}</div>
           <div class="stage-mini" style="color:${STAGE_META[t.stage]?.color || '#8b9cb0'}">
             <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
+            ${conv ? `<span class="conv-badge" data-conv="${escapeAttr(kw)}" title="View convergence timeline">⚡ CONV</span>` : ''}
           </div>
         </div>
         <div class="tbts">${t.tbts}</div>
@@ -1609,7 +1809,15 @@ function renderLeaderboard() {
   const host = document.getElementById('leaderboard');
   host.innerHTML = html;
   host.querySelectorAll('.lb-row').forEach(row => {
-    row.addEventListener('click', () => selectTrend(row.dataset.kw));
+    row.addEventListener('click', (e) => {
+      const badge = e.target.closest('.conv-badge');
+      if (badge && badge.dataset.conv) {
+        e.stopPropagation();
+        openConvergence(badge.dataset.conv);
+        return;
+      }
+      selectTrend(row.dataset.kw);
+    });
   });
   const selRow = host.querySelector('.lb-row.selected');
   if (selRow) selRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1645,6 +1853,16 @@ function openDetailPanel(kw) {
   badge.textContent = VERDICT_LABEL[p.verdict] || p.verdict || '—';
   badge.className   = 'badge ' + (p.verdict || '');
 
+  const convWrap = document.getElementById('dpConvergence');
+  const convBadge = document.getElementById('dpConvBadge');
+  if (hasConvergence(t)) {
+    convWrap.style.display = '';
+    convBadge.dataset.conv = t.canonical_form || t.keyword;
+  } else {
+    convWrap.style.display = 'none';
+    convBadge.dataset.conv = '';
+  }
+
   const panel = document.getElementById('detailPanel');
   panel.classList.add('visible');
   panel.setAttribute('aria-hidden', 'false');
@@ -1654,6 +1872,86 @@ function closeDetailPanel() {
   panel.classList.remove('visible');
   panel.setAttribute('aria-hidden', 'true');
 }
+
+/* ==========================================================
+   CONVERGENCE — timeline modal
+   ========================================================== */
+function predictionForKeyword(kw) {
+  if (!kw) return null;
+  return PREDICTIONS.find(p => p.keyword === kw || p.canonical_form === kw) || null;
+}
+
+function renderConvergenceTimeline(host, firstAppearance) {
+  const entries = Object.entries(firstAppearance || {})
+    .filter(([, ts]) => !!ts)
+    .map(([src, ts]) => ({ src, ts: new Date(ts).getTime() }))
+    .filter(e => !isNaN(e.ts))
+    .sort((a, b) => a.ts - b.ts);
+  if (!entries.length) {
+    host.innerHTML = '<div class="conv-empty">No first-appearance timestamps recorded for this event.</div>';
+    return;
+  }
+  const t0 = entries[0].ts;
+  const offsets = entries.map(e => ({ src: e.src, hours: (e.ts - t0) / 3600000 }));
+  const maxHr = Math.max(80, Math.max(...offsets.map(o => o.hours)) + 4);
+  const pct = h => (h / maxHr * 100).toFixed(2);
+  const dots = offsets.map(o => `
+    <div class="tl-dot" style="left:${pct(o.hours)}%"></div>
+    <div class="tl-label" style="left:${pct(o.hours)}%">${escapeHtml(o.src)} · +${o.hours.toFixed(1)}h</div>
+  `).join('');
+  host.innerHTML = `
+    <div class="tl-band" style="left:0; width:${pct(Math.min(72, maxHr))}%"></div>
+    <div class="tl-axis"></div>
+    ${dots}
+    <div class="tl-ticks">
+      <span style="left:0">0h</span>
+      <span style="left:${pct(72)}%">72h window</span>
+      <span style="left:100%">${maxHr.toFixed(0)}h</span>
+    </div>
+  `;
+}
+
+function openConvergence(kw) {
+  const t = TRENDS.find(x => (x.canonical_form || x.keyword) === kw);
+  if (!t || !hasConvergence(t)) return;
+  document.getElementById('convName').textContent    = t.keyword;
+  document.getElementById('convCluster').textContent = `cluster · ${t.cluster_label || '—'}`;
+  renderConvergenceTimeline(document.getElementById('convTimeline'), t.convergence.first_appearance);
+
+  const pred = predictionForKeyword(t.keyword) || predictionForKeyword(t.canonical_form);
+  const foot = document.getElementById('convFoot');
+  if (pred && pred.verdict === 'verified' && pred.filed_at && pred.verified_at) {
+    const dFiled    = new Date(pred.filed_at);
+    const dVerified = new Date(pred.verified_at);
+    const days = Math.round((dVerified - dFiled) / 86400000);
+    foot.innerHTML = `Fired on <strong>${escapeHtml(pred.filed_at)}</strong>, <strong>${days} days</strong> before GT crossover.`;
+  } else {
+    foot.innerHTML = '<span class="dim">Awaiting first verified crossover — past_predictions has no verified verdict on this keyword yet.</span>';
+  }
+
+  document.getElementById('convScrim').classList.add('visible');
+  const modal = document.getElementById('convModal');
+  modal.classList.add('visible');
+  modal.setAttribute('aria-hidden', 'false');
+}
+function closeConvergence() {
+  document.getElementById('convScrim').classList.remove('visible');
+  const modal = document.getElementById('convModal');
+  modal.classList.remove('visible');
+  modal.setAttribute('aria-hidden', 'true');
+}
+window.closeConvergence = closeConvergence;
+
+/* Global delegation: any .conv-badge click outside the leaderboard
+   (e.g. detail-panel chip) opens the modal. Leaderboard rows have
+   their own handler that branches on .conv-badge already. */
+document.addEventListener('click', (e) => {
+  const badge = e.target.closest('.conv-badge');
+  if (!badge || !badge.dataset.conv) return;
+  if (badge.closest('.lb-row')) return; // leaderboard handles its own
+  e.stopPropagation();
+  openConvergence(badge.dataset.conv);
+});
 
 /* ==========================================================
    DEMAND CLUSTERS — empty state when API returns []
