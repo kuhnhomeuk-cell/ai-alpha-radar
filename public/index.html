@@ -243,6 +243,127 @@ body::after {
 .star-btn.on { color: var(--accent); opacity: 1; }
 .star-btn.on:hover { color: #ffffff; }
 
+.search-wrap { position: relative; }
+.search-input {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(244, 241, 234, 0.10);
+  color: #f4f1ea;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  width: 240px;
+  letter-spacing: 0.04em;
+}
+.search-input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.search-input::placeholder { color: #6a6862; }
+.search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 320px;
+  background: rgba(7, 9, 12, 0.97);
+  border: 1px solid var(--line-hi);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  padding: 8px;
+  z-index: 55;
+  display: none;
+  backdrop-filter: blur(12px);
+}
+.search-results.visible { display: block; }
+.search-results .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.search-results .row:hover { background: rgba(0, 240, 255, 0.08); }
+.search-results .row.empty { cursor: default; opacity: 0.55; }
+.search-results .row.empty:hover { background: transparent; }
+.search-results .row .label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+.search-results .row .count {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.search-results .row.empty .count { color: var(--ink-3); font-weight: 400; }
+.search-results .empty-state {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  text-align: center;
+  padding: 14px;
+  letter-spacing: 0.06em;
+}
+
+.source-health {
+  margin: 0 var(--sp-5) var(--sp-4);
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+}
+.src-list { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.src-item { display: inline-flex; align-items: center; gap: 5px; }
+.src-item .name  { color: var(--ink-2); }
+.src-item .ok    { color: var(--good); }
+.src-item .fail  { color: var(--bad); }
+.src-item .count { color: var(--ink); }
+.src-item .stale-pill {
+  font-size: 8px;
+  padding: 1px 5px;
+  color: var(--bad);
+  border: 1px solid rgba(255, 77, 109, 0.35);
+  border-radius: 100px;
+  letter-spacing: 0.08em;
+  margin-left: 4px;
+}
+.src-list .refreshed {
+  color: var(--ink-3);
+  margin-left: 8px;
+  border-left: 1px solid var(--line);
+  padding-left: 16px;
+}
+.src-claude {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  color: var(--ink-2);
+}
+.src-claude.pending { color: var(--ink-3); font-style: italic; }
+.src-claude.live {
+  color: var(--accent);
+  border-color: rgba(0, 240, 255, 0.3);
+}
+
+.gem-card.flash { animation: gem-flash 1.4s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes gem-flash {
+  0%   { border-color: var(--line);   box-shadow: 0 0 0    rgba(0, 240, 255, 0); }
+  20%  { border-color: var(--accent); box-shadow: 0 0 28px rgba(0, 240, 255, 0.55); }
+  100% { border-color: var(--line);   box-shadow: 0 0 0    rgba(0, 240, 255, 0); }
+}
+
 /* ========== PAGE BASE ========== */
 .page { display: none; }
 .page.active { display: block; }
@@ -1342,6 +1463,10 @@ footer .quote {
     <button data-page="almanac">Almanac</button>
   </div>
   <div class="right">
+    <div class="search-wrap">
+      <input class="search-input" id="searchInput" type="search" placeholder="search trends, clusters, demand…" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
     <button class="watchlist-pill" id="watchlistPill" type="button" disabled>★ Watchlist (0)</button>
     <span class="meta-text" id="snapshotStamp">snapshot · —</span>
     <input class="niche-input" id="nicheInput" placeholder="your niche…" value="AI tools for solo creators">
@@ -1512,6 +1637,12 @@ footer .quote {
     </div>
     <div class="almanac-grid" id="almanacGrid"></div>
   </div>
+</div>
+
+<!-- ========== SOURCE-HEALTH STRIP (global, all pages) ========== -->
+<div class="source-health" id="sourceHealth">
+  <div class="src-list" id="srcList">—</div>
+  <div class="src-claude" id="srcClaude">—</div>
 </div>
 
 <!-- ========== CONVERGENCE MODAL (global) ========== -->
@@ -1803,6 +1934,121 @@ document.addEventListener('click', (e) => {
   toggleWatch(star.dataset.kw);
 });
 
+/* ==========================================================
+   CROSS-PAGE SEARCH
+   ========================================================== */
+function runSearch(rawQ) {
+  const card = document.getElementById('searchResults');
+  const q = (rawQ || '').trim().toLowerCase();
+  if (!q) { card.classList.remove('visible'); card.innerHTML = ''; return; }
+
+  const radarMatches = TRENDS.filter(t =>
+    (t.keyword || '').toLowerCase().includes(q) ||
+    (t.canonical_form || '').toLowerCase().includes(q)
+  );
+  const gemsMatches = radarMatches.filter(t => t.stage === 'whisper' || t.stage === 'builder');
+  const demandMatches = DEMAND.filter(d => (d.question_shape || '').toLowerCase().includes(q));
+
+  const total = radarMatches.length + gemsMatches.length + demandMatches.length;
+  if (total === 0) {
+    card.innerHTML = `<div class="empty-state">No matches for "${escapeHtml(q)}"</div>`;
+    card.classList.add('visible');
+    return;
+  }
+  const firstRadar  = radarMatches[0] ? (radarMatches[0].canonical_form || radarMatches[0].keyword) : '';
+  const firstGem    = gemsMatches[0]  ? (gemsMatches[0].canonical_form  || gemsMatches[0].keyword)  : '';
+  const firstDemand = demandMatches[0] ? slugifyQuestion(demandMatches[0].question_shape) : '';
+
+  card.innerHTML = `
+    <div class="row${radarMatches.length ? '' : ' empty'}" data-target="radar"  data-kw="${escapeAttr(firstRadar)}">
+      <div class="label">→ Radar</div><div class="count">${radarMatches.length}</div>
+    </div>
+    <div class="row${gemsMatches.length ? '' : ' empty'}" data-target="gems"   data-kw="${escapeAttr(firstGem)}">
+      <div class="label">→ Hidden Gems</div><div class="count">${gemsMatches.length}</div>
+    </div>
+    <div class="row${demandMatches.length ? '' : ' empty'}" data-target="demand" data-slug="${escapeAttr(firstDemand)}">
+      <div class="label">→ Demand Clusters</div><div class="count">${demandMatches.length}</div>
+    </div>
+  `;
+  card.querySelectorAll('.row').forEach(row => {
+    row.addEventListener('click', () => {
+      if (row.classList.contains('empty')) return;
+      const target = row.dataset.target;
+      if (target === 'radar' && row.dataset.kw) {
+        document.querySelector('.nav button[data-page="radar"]').click();
+        selectTrend(row.dataset.kw);
+      } else if (target === 'gems' && row.dataset.kw) {
+        document.querySelector('.nav button[data-page="gems"]').click();
+        requestAnimationFrame(() => {
+          const gc = document.querySelector(`.gem-card[data-kw="${row.dataset.kw}"]`);
+          if (!gc) return;
+          gc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          gc.classList.remove('flash');
+          void gc.offsetWidth;
+          gc.classList.add('flash');
+          setTimeout(() => gc.classList.remove('flash'), 1400);
+        });
+      } else if (target === 'demand' && row.dataset.slug) {
+        jumpToDemand(row.dataset.slug);
+      }
+      clearSearch();
+    });
+  });
+  card.classList.add('visible');
+}
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  const card  = document.getElementById('searchResults');
+  if (input) input.value = '';
+  if (card)  { card.classList.remove('visible'); card.innerHTML = ''; }
+}
+document.getElementById('searchInput').addEventListener('input', (e) => runSearch(e.target.value));
+/* click outside the search box closes the results card */
+document.addEventListener('click', (e) => {
+  const card = document.getElementById('searchResults');
+  if (!card.classList.contains('visible')) return;
+  if (e.target.closest('.search-wrap')) return;
+  card.classList.remove('visible');
+});
+
+/* ==========================================================
+   SOURCE-HEALTH STRIP — reads META.sources every load
+   ========================================================== */
+function renderSourceHealth() {
+  const srcList = document.getElementById('srcList');
+  const srcClaude = document.getElementById('srcClaude');
+  if (!srcList || !srcClaude) return;
+
+  const labels = { arxiv: 'arXiv', github: 'GitHub', hackernews: 'HN', semantic_scholar: 'SemScholar' };
+  const sources = (META && META.sources) || {};
+  const parts = Object.entries(labels).map(([key, label]) => {
+    const s = sources[key] || { ok: false, fetched: 0 };
+    if (s.ok) {
+      return `<span class="src-item"><span class="name">${label}</span><span class="ok">✓</span><span class="count">${s.fetched || 0}</span></span>`;
+    }
+    return `<span class="src-item"><span class="name">${label}</span><span class="fail">✗</span><span class="stale-pill">stale</span></span>`;
+  });
+  if (SNAPSHOT_DATE) {
+    parts.push(`<span class="refreshed">refreshed ${escapeHtml(SNAPSHOT_DATE)} · 06:00 UTC</span>`);
+  }
+  srcList.innerHTML = parts.join('');
+
+  const cost = META && typeof META.claude_cost_usd === 'number' ? META.claude_cost_usd : null;
+  const hit  = META && typeof META.claude_cache_hit_rate === 'number' ? META.claude_cache_hit_rate : null;
+  if (cost !== null || hit !== null) {
+    const costStr = cost !== null ? `$${cost.toFixed(2)}` : '—';
+    const hitStr  = hit  !== null ? `${(hit * 100).toFixed(0)}%` : '—';
+    srcClaude.textContent = `Claude · ${costStr} · cache ${hitStr}`;
+    srcClaude.className = 'src-claude live';
+  } else if (META && META.use_claude) {
+    srcClaude.textContent = 'Claude · live';
+    srcClaude.className = 'src-claude live';
+  } else {
+    srcClaude.textContent = 'Claude · pending tuning pass';
+    srcClaude.className = 'src-claude pending';
+  }
+}
+
 /* Themes chip: toggles the cluster-region overlay on the chart */
 document.querySelectorAll('.filters .chip[data-filter="themes"]').forEach(c => {
   c.addEventListener('click', () => {
@@ -1818,9 +2064,11 @@ function toggleActiveCluster(id) {
   applyState();
 }
 
-/* Esc dismisses (in order): convergence modal → selection → active cluster */
+/* Esc dismisses (in order): search → convergence modal → selection → active cluster */
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
+  const searchCard = document.getElementById('searchResults');
+  if (searchCard && searchCard.classList.contains('visible')) { clearSearch(); return; }
   const convModal = document.getElementById('convModal');
   if (convModal && convModal.classList.contains('visible')) { closeConvergence(); return; }
   if (state.selectedKeyword) { clearSelection(); return; }
@@ -2448,6 +2696,7 @@ window.addEventListener('load', async () => {
   renderDemand();
   renderLog();
   renderAlmanac();
+  renderSourceHealth();
   tickFooter();
 });
 </script>
