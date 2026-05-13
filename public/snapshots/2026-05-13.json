@@ -1,0 +1,1870 @@
+{
+  "snapshot_date": "2026-05-13",
+  "generated_at": "2026-05-13T19:55:13.216252Z",
+  "trends": [
+    {
+      "keyword": "ai",
+      "canonical_form": "ai",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 13,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 129,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 33.333333333333336,
+      "hidden_gem_score": 0.2333333333333333,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 11,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "ai placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "ai",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "models",
+      "canonical_form": "models",
+      "cluster_id": 1,
+      "cluster_label": "framework",
+      "sources": {
+        "arxiv_30d": 79,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 50,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 43.18181818181818,
+      "hidden_gem_score": 0.19886363636363633,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 10,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "models placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "models",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "model",
+      "canonical_form": "model",
+      "cluster_id": 1,
+      "cluster_label": "framework",
+      "sources": {
+        "arxiv_30d": 61,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 62,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 44.242424242424235,
+      "hidden_gem_score": 0.19515151515151516,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 10,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "model placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "model",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "claude",
+      "canonical_form": "claude",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 3,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 106,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 29.46969696969697,
+      "hidden_gem_score": 0.2468560606060606,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 11,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "claude placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "claude",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "language",
+      "canonical_form": "language",
+      "cluster_id": 1,
+      "cluster_label": "framework",
+      "sources": {
+        "arxiv_30d": 72,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 19,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 31.43939393939394,
+      "hidden_gem_score": 0.23996212121212118,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 11,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "language placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "language",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "llm",
+      "canonical_form": "llm",
+      "cluster_id": 0,
+      "cluster_label": "hn",
+      "sources": {
+        "arxiv_30d": 27,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 60,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 30.378787878787882,
+      "hidden_gem_score": 0.2436742424242424,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 11,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "llm placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "llm",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "hn",
+      "canonical_form": "hn",
+      "cluster_id": 0,
+      "cluster_label": "hn",
+      "sources": {
+        "arxiv_30d": 0,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 82,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 27.27272727272727,
+      "hidden_gem_score": 0.2545454545454545,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "hn placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "hn",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "llms",
+      "canonical_form": "llms",
+      "cluster_id": 0,
+      "cluster_label": "hn",
+      "sources": {
+        "arxiv_30d": 39,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 43,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 30.151515151515156,
+      "hidden_gem_score": 0.24446969696969695,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 11,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "llms placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "llms",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "learning",
+      "canonical_form": "learning",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 59,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 6,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 22.954545454545453,
+      "hidden_gem_score": 0.2696590909090909,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "learning placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "learning",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "large",
+      "canonical_form": "large",
+      "cluster_id": 0,
+      "cluster_label": "hn",
+      "sources": {
+        "arxiv_30d": 55,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 6,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 22.121212121212125,
+      "hidden_gem_score": 0.2725757575757576,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "large placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "large",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "propose",
+      "canonical_form": "propose",
+      "cluster_id": -1,
+      "cluster_label": "Unclustered Emerging",
+      "sources": {
+        "arxiv_30d": 59,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 0,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 17.5,
+      "hidden_gem_score": 0.28874999999999995,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "propose placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "propose",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "data",
+      "canonical_form": "data",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 42,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 15,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 20.37878787878788,
+      "hidden_gem_score": 0.2786742424242424,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "data placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "data",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "language-models",
+      "canonical_form": "language-models",
+      "cluster_id": 1,
+      "cluster_label": "framework",
+      "sources": {
+        "arxiv_30d": 50,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 7,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 21.818181818181817,
+      "hidden_gem_score": 0.2736363636363636,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "language-models placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "language-models",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "results",
+      "canonical_form": "results",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 52,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 5,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 19.924242424242422,
+      "hidden_gem_score": 0.2802651515151515,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "results placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "results",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "existing",
+      "canonical_form": "existing",
+      "cluster_id": -1,
+      "cluster_label": "Unclustered Emerging",
+      "sources": {
+        "arxiv_30d": 48,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 4,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 16.893939393939398,
+      "hidden_gem_score": 0.2908712121212121,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "existing placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "existing",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "training",
+      "canonical_form": "training",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 44,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 8,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 19.848484848484848,
+      "hidden_gem_score": 0.280530303030303,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "training placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "training",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "agent",
+      "canonical_form": "agent",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 19,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 31,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 21.893939393939394,
+      "hidden_gem_score": 0.27337121212121207,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "agent placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "agent",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "agents",
+      "canonical_form": "agents",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 19,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 29,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 19.166666666666668,
+      "hidden_gem_score": 0.28291666666666665,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "agents placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "agents",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "large-language",
+      "canonical_form": "large-language",
+      "cluster_id": 1,
+      "cluster_label": "framework",
+      "sources": {
+        "arxiv_30d": 46,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 2,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 14.696969696969695,
+      "hidden_gem_score": 0.298560606060606,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "large-language placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "large-language",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "performance",
+      "canonical_form": "performance",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 42,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 5,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 14.924242424242424,
+      "hidden_gem_score": 0.29776515151515154,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "performance placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "performance",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "introduce",
+      "canonical_form": "introduce",
+      "cluster_id": -1,
+      "cluster_label": "Unclustered Emerging",
+      "sources": {
+        "arxiv_30d": 45,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 0,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 12.5,
+      "hidden_gem_score": 0.30624999999999997,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "introduce placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "introduce",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "framework",
+      "canonical_form": "framework",
+      "cluster_id": 1,
+      "cluster_label": "framework",
+      "sources": {
+        "arxiv_30d": 40,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 2,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 10.53030303030303,
+      "hidden_gem_score": 0.3131439393939394,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "framework placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "framework",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "tasks",
+      "canonical_form": "tasks",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 34,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 8,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 14.848484848484846,
+      "hidden_gem_score": 0.29803030303030303,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "tasks placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "tasks",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "work",
+      "canonical_form": "work",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 25,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 17,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 15.90909090909091,
+      "hidden_gem_score": 0.2943181818181818,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "work placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "work",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "experiments",
+      "canonical_form": "experiments",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 41,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 0,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 10.0,
+      "hidden_gem_score": 0.315,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "experiments placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "experiments",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "x27",
+      "canonical_form": "x27",
+      "cluster_id": 0,
+      "cluster_label": "hn",
+      "sources": {
+        "arxiv_30d": 0,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 40,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 20.45454545454545,
+      "hidden_gem_score": 0.27840909090909094,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "x27 placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "x27",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "large-language-models",
+      "canonical_form": "large-language-models",
+      "cluster_id": 1,
+      "cluster_label": "framework",
+      "sources": {
+        "arxiv_30d": 37,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 2,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 8.863636363636363,
+      "hidden_gem_score": 0.3189772727272727,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 14,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "large-language-models placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "large-language-models",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "like",
+      "canonical_form": "like",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 9,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 30,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 18.030303030303028,
+      "hidden_gem_score": 0.28689393939393937,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "like placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "like",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "https",
+      "canonical_form": "https",
+      "cluster_id": 2,
+      "cluster_label": "agent",
+      "sources": {
+        "arxiv_30d": 12,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 26,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 16.136363636363633,
+      "hidden_gem_score": 0.29352272727272727,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 13,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "https placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "https",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    },
+    {
+      "keyword": "x2f",
+      "canonical_form": "x2f",
+      "cluster_id": 0,
+      "cluster_label": "hn",
+      "sources": {
+        "arxiv_30d": 0,
+        "github_repos_7d": 0,
+        "github_stars_7d": 0,
+        "hn_posts_7d": 38,
+        "hn_points_7d": 0,
+        "semantic_scholar_citations_7d": 0,
+        "youtube_videos_7d": 0,
+        "reddit_mentions_7d": 0,
+        "x_posts_7d": 0
+      },
+      "velocity_score": 0.0,
+      "velocity_acceleration": 0.0,
+      "saturation": 19.09090909090909,
+      "hidden_gem_score": 0.28318181818181815,
+      "builder_signal": 0.0,
+      "lifecycle_stage": "whisper",
+      "tbts": 12,
+      "convergence": {
+        "detected": false,
+        "sources_hit": [],
+        "window_hours": 0,
+        "first_appearance": {}
+      },
+      "summary": "(awaiting Claude enrichment)",
+      "summary_confidence": "low",
+      "angles": {
+        "hook": "(awaiting Claude enrichment)",
+        "contrarian": "(awaiting Claude enrichment)",
+        "tutorial": "(awaiting Claude enrichment)",
+        "eli_creator": "(awaiting Claude enrichment)"
+      },
+      "risk": {
+        "breakout_likelihood": "medium",
+        "peak_estimate_days": null,
+        "risk_flag": "single-source signal",
+        "rationale": "(awaiting Claude enrichment)"
+      },
+      "prediction": {
+        "text": "x2f placeholder prediction",
+        "filed_at": "2026-05-13",
+        "target_date": "2026-06-12",
+        "verdict": "pending",
+        "verdict_text": null,
+        "verified_at": null,
+        "keyword": "x2f",
+        "lifecycle_at_filing": "whisper",
+        "target_lifecycle": "builder"
+      },
+      "sparkline_14d": []
+    }
+  ],
+  "demand_clusters": [],
+  "briefing": {
+    "text": "Daily Movers Briefing pending Claude enrichment.",
+    "moved_up": [],
+    "moved_down": [],
+    "emerging": [],
+    "generated_at": "2026-05-13T19:55:13.216243Z"
+  },
+  "hit_rate": {
+    "rate": 0.0,
+    "verified": 0,
+    "tracking": 13,
+    "verified_early": 0,
+    "wrong": 0
+  },
+  "past_predictions": [
+    {
+      "text": "llm reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "llm",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "ai reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "ai",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "llms reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "llms",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "model reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "model",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "agent reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "agent",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "agents reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "agents",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "hn reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "hn",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "language reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "language",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "models reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "models",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "training reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "training",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "introduce reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "introduce",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "work reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "work",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    },
+    {
+      "text": "claude reaches Builder stage by 2026-06-12 based on current cross-source momentum.",
+      "filed_at": "2026-05-13",
+      "target_date": "2026-06-12",
+      "verdict": "tracking",
+      "verdict_text": null,
+      "verified_at": null,
+      "keyword": "claude",
+      "lifecycle_at_filing": "whisper",
+      "target_lifecycle": "builder"
+    }
+  ],
+  "meta": {
+    "pipeline_runtime_seconds": 23.47,
+    "fetch_seconds": 17.65,
+    "sources": {
+      "arxiv": {
+        "fetched": 141,
+        "ok": true
+      },
+      "github": {
+        "fetched": 0,
+        "ok": false
+      },
+      "hackernews": {
+        "fetched": 479,
+        "ok": true
+      },
+      "semantic_scholar": {
+        "fetched": 0,
+        "ok": false
+      }
+    },
+    "trends_processed": 30,
+    "use_claude": false
+  }
+}
