@@ -700,6 +700,12 @@ body::after {
   line-height: 1.35;
   margin: 14px 0 22px;
 }
+.demand-card.flash { animation: demand-flash 1.4s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes demand-flash {
+  0%   { border-color: var(--line);     box-shadow: 0 0 0    rgba(212, 175, 55, 0); }
+  20%  { border-color: var(--champagne); box-shadow: 0 0 28px rgba(212, 175, 55, 0.55); }
+  100% { border-color: var(--line);     box-shadow: 0 0 0    rgba(212, 175, 55, 0); }
+}
 
 /* ---- Star Log (observatory) ---- */
 .log-wrap { padding: 56px 64px 80px; }
@@ -984,16 +990,58 @@ body::after {
 .detail-panel .pred .badge.tracking       { color: var(--stage-whisper); border-color: rgba(0, 212, 255, 0.3); }
 .detail-panel .pred .badge.pending        { color: var(--ink-3);         border-color: var(--line); }
 .detail-panel .pred .badge.wrong          { color: var(--bad);           border-color: rgba(255, 77, 109, 0.3); }
-.detail-panel .audience-slot {
-  padding: 16px;
+.detail-panel .audience-section { margin-top: 18px; }
+.detail-panel .audience-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.audience-empty {
+  padding: 14px 16px;
   border: 1px dashed var(--line);
   border-radius: 4px;
   font-family: var(--mono);
   font-size: 10px;
   color: var(--ink-3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.06em;
   text-align: center;
+  line-height: 1.6;
+}
+.audience-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.audience-row {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 9px 11px;
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.audience-row:hover {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--line-hi);
+}
+.audience-row .arrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.audience-row .question {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink);
+  font-style: italic;
+  line-height: 1.45;
 }
 .lb-row.selected {
   background: rgba(0, 240, 255, 0.08);
@@ -1300,7 +1348,10 @@ footer .quote {
         <div class="text" id="dpPredText">—</div>
         <span class="badge" id="dpPredBadge">—</span>
       </div>
-      <div class="audience-slot">// audience-bridge slot · ships in Commit 6</div>
+      <div class="audience-section">
+        <div class="audience-eyebrow">◆ What audiences are asking</div>
+        <div id="dpAudience"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1863,6 +1914,30 @@ function openDetailPanel(kw) {
     convBadge.dataset.conv = '';
   }
 
+  const audHost = document.getElementById('dpAudience');
+  const tkw = t.canonical_form || t.keyword;
+  const matches = demandForTrend(tkw);
+  if (!DEMAND.length) {
+    audHost.innerHTML = '<div class="audience-empty">Awaiting prompt-tuning pass — demand clusters arrive with Claude enrichment.</div>';
+  } else if (!matches.length) {
+    audHost.innerHTML = '<div class="audience-empty">No matching demand clusters for this trend yet.</div>';
+  } else {
+    audHost.innerHTML = `<div class="audience-list">${
+      matches.map(d => {
+        const slug = slugifyQuestion(d.question_shape || '');
+        return `
+          <div class="audience-row" data-slug="${escapeAttr(slug)}">
+            <span class="arrow">→</span>
+            <span class="question">"${escapeHtml(d.question_shape || '')}"</span>
+          </div>
+        `;
+      }).join('')
+    }</div>`;
+    audHost.querySelectorAll('.audience-row').forEach(row => {
+      row.addEventListener('click', () => jumpToDemand(row.dataset.slug));
+    });
+  }
+
   const panel = document.getElementById('detailPanel');
   panel.classList.add('visible');
   panel.setAttribute('aria-hidden', 'false');
@@ -1956,6 +2031,34 @@ document.addEventListener('click', (e) => {
 /* ==========================================================
    DEMAND CLUSTERS — empty state when API returns []
    ========================================================== */
+function slugifyQuestion(qs) {
+  return String(qs || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+function demandForTrend(canonicalForm) {
+  if (!canonicalForm) return [];
+  return DEMAND.filter(d => Array.isArray(d.related_trends) && d.related_trends.includes(canonicalForm));
+}
+function jumpToDemand(slug) {
+  if (!slug) return;
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector('.nav button[data-page="demand"]')?.classList.add('active');
+  document.querySelector('.page[data-page="demand"]')?.classList.add('active');
+  requestAnimationFrame(() => {
+    const card = document.getElementById('demand-' + slug);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.remove('flash');
+    void card.offsetWidth; // force reflow for repeat clicks
+    card.classList.add('flash');
+    setTimeout(() => card.classList.remove('flash'), 1400);
+  });
+}
+
 function renderDemand() {
   const host = document.getElementById('demandHost');
   if (!DEMAND.length) {
@@ -1967,12 +2070,15 @@ function renderDemand() {
     return;
   }
   host.innerHTML = `<div class="demand-grid">${
-    DEMAND.map(d => `
-      <div class="demand-card">
-        <div class="askers">${(d.askers_estimate || 0).toLocaleString()}<span class="unit">people asking</span></div>
-        <div class="question">${escapeHtml(d.question_shape || '')}</div>
-      </div>
-    `).join('')
+    DEMAND.map(d => {
+      const slug = slugifyQuestion(d.question_shape || '');
+      return `
+        <div class="demand-card" id="demand-${slug}" data-slug="${slug}">
+          <div class="askers">${(d.askers_estimate || 0).toLocaleString()}<span class="unit">people asking</span></div>
+          <div class="question">${escapeHtml(d.question_shape || '')}</div>
+        </div>
+      `;
+    }).join('')
   }</div>`;
 }
 
