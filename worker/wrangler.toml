@@ -1,0 +1,17 @@
+name = "ai-alpha-radar"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+
+# Owner must `wrangler kv:namespace create RADAR_KV` and paste the returned
+# id below before first deploy. The preview_id is auto-created by
+# `wrangler dev`.
+# [[kv_namespaces]]
+# binding = "RADAR_KV"
+# id = "REPLACE_WITH_REAL_KV_ID"
+# preview_id = "REPLACE_WITH_REAL_PREVIEW_ID"
+
+[vars]
+# Non-secret vars. Secrets land via `wrangler secret put`.
+ANTHROPIC_MODEL_HAIKU = "claude-haiku-4-5"
+ANTHROPIC_MODEL_SONNET = "claude-sonnet-4-6"
+DAILY_SPEND_CAP_CENTS = "30"
