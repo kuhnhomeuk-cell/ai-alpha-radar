@@ -27,7 +27,8 @@ frontend interface; any change requires a frontend coordination note.
         "huggingface_spaces_7d": 0,
         "bluesky_mentions_7d": 0,
         "reddit_mentions_7d": 0,
-        "producthunt_launches_7d": 0
+        "producthunt_launches_7d": 0,
+        "replicate_runs_7d_delta": 0
       },
       "velocity_score": 3.8,
       "velocity_acceleration": 1.2,

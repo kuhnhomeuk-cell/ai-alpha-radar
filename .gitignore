@@ -38,3 +38,4 @@ Thumbs.db
 # Pipeline runtime artifacts
 data/corpus_centroid_60d.npy
 data/bluesky_mentions.sqlite
+data/replicate_run_counts.json

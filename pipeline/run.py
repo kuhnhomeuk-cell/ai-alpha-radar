@@ -47,10 +47,12 @@ from pipeline.fetch import (
     newsletters,
     producthunt as producthunt_fetcher,
     reddit as reddit_fetcher,
+    replicate as replicate_fetcher,
     semantic_scholar,
 )
 from pipeline.fetch.producthunt import ProductHuntLaunch
 from pipeline.fetch.reddit import RedditPost
+from pipeline.fetch.replicate import ReplicateModel
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
@@ -131,6 +133,7 @@ def _build_source_counts(
     bluesky_count: int = 0,
     reddit_count: int = 0,
     producthunt_count: int = 0,
+    replicate_delta: int = 0,
 ) -> SourceCounts:
     return SourceCounts(
         arxiv_30d=term.arxiv_mentions,
@@ -145,6 +148,7 @@ def _build_source_counts(
         bluesky_mentions_7d=bluesky_count,
         reddit_mentions_7d=reddit_count,
         producthunt_launches_7d=producthunt_count,
+        replicate_runs_7d_delta=replicate_delta,
     )
 
 
@@ -340,6 +344,7 @@ def _build_trend(
     reddit_count: int = 0,
     reddit_top: Optional[str] = None,
     producthunt_count: int = 0,
+    replicate_runs_delta: int = 0,
     rrf: float = 0.0,
     novelty: float = 0.0,
     meta_trend: Optional[str] = None,
@@ -355,6 +360,7 @@ def _build_trend(
         bluesky_count=bluesky_count,
         reddit_count=reddit_count,
         producthunt_count=producthunt_count,
+        replicate_delta=replicate_runs_delta,
     )
     history = history or {}
     today_count = _total_mentions(term)
@@ -499,6 +505,7 @@ def main(
     newsletter_signals: Optional[list[NewsletterSignal]] = None,
     reddit_posts: Optional[list[RedditPost]] = None,
     producthunt_launches: Optional[list[ProductHuntLaunch]] = None,
+    replicate_models: Optional[list[ReplicateModel]] = None,
     s2_data: Optional[dict[str, CitationInfo]] = None,
     use_claude: bool = False,
     max_cost_cents: Optional[float] = None,
@@ -536,6 +543,7 @@ def main(
         "huggingface": False,
         "reddit": False,
         "producthunt": False,
+        "replicate": False,
     }
     if papers is None:
         try:
@@ -600,6 +608,15 @@ def main(
             print(f"producthunt fetch failed: {e}", file=sys.stderr)
             producthunt_launches = []
     fetch_health["producthunt"] = len(producthunt_launches) > 0
+
+    # Replicate — needs REPLICATE_API_KEY; empty on miss.
+    if replicate_models is None:
+        try:
+            replicate_models = replicate_fetcher.fetch_trending()
+        except Exception as e:
+            print(f"replicate fetch failed: {e}", file=sys.stderr)
+            replicate_models = []
+    fetch_health["replicate"] = len(replicate_models) > 0
 
     # Semantic Scholar enrichment — runs against arxiv ids we just fetched.
     if s2_data is None:
@@ -758,6 +775,32 @@ def main(
     ph_launches_by_term = producthunt_fetcher.launches_per_term(
         producthunt_launches, terms=reddit_keyword_terms
     )
+    # Replicate per-term run delta (audit 3.5). Persist today's totals so the
+    # next run can compute a delta against this one.
+    today_replicate_counts = {
+        f"{m.owner}/{m.name}": m.run_count for m in replicate_models
+    }
+    prior_replicate_counts = replicate_fetcher.load_prior_run_counts()
+    replicate_deltas = replicate_fetcher.run_count_deltas(
+        today_replicate_counts, prior_replicate_counts
+    )
+    # Build a synthetic ReplicateModel-like list where run_count is the *delta*
+    # so runs_per_term aggregates growth rather than total volume.
+    delta_models = [
+        replicate_fetcher.ReplicateModel(
+            owner=m.owner,
+            name=m.name,
+            description=m.description,
+            visibility=m.visibility,
+            run_count=replicate_deltas.get(f"{m.owner}/{m.name}", 0),
+        )
+        for m in replicate_models
+    ]
+    replicate_by_term = replicate_fetcher.runs_per_term(
+        delta_models, terms=reddit_keyword_terms
+    )
+    if today_replicate_counts:
+        replicate_fetcher.save_run_counts(today_replicate_counts)
     # Reciprocal Rank Fusion across per-source counts (audit 3.7).
     rrf_input = {
         "arxiv": rrf.ranks_from_counts(
@@ -807,6 +850,7 @@ def main(
                 reddit_count=reddit_mentions.get(term.canonical_form, 0),
                 reddit_top=reddit_tops.get(term.canonical_form),
                 producthunt_count=ph_launches_by_term.get(term.canonical_form, 0),
+                replicate_runs_delta=replicate_by_term.get(term.canonical_form, 0),
                 rrf=rrf_by_term.get(term.canonical_form, 0.0),
                 novelty=novelty_by_term.get(term.canonical_form, 0.0),
                 meta_trend=meta_trend_label,
@@ -895,6 +939,10 @@ def main(
                 "producthunt": {
                     "fetched": len(producthunt_launches),
                     "ok": fetch_health["producthunt"],
+                },
+                "replicate": {
+                    "fetched": len(replicate_models),
+                    "ok": fetch_health["replicate"],
                 },
             },
             "trends_processed": len(trends),

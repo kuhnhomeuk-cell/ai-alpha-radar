@@ -40,6 +40,8 @@ class SourceCounts(BaseModel):
     reddit_mentions_7d: int = 0
     # Audit 3.4 — Product Hunt featured launches per term
     producthunt_launches_7d: int = 0
+    # Audit 3.5 — Replicate model-run-count delta per term
+    replicate_runs_7d_delta: int = 0
 
 
 class ConvergenceEvent(BaseModel):
