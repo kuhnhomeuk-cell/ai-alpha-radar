@@ -73,19 +73,12 @@ def _prefix_arxiv_ids(arxiv_ids: Iterable[str]) -> list[str]:
 
 
 @with_retry(attempts=3, base_delay=1.0)
-def enrich_papers(
-    arxiv_ids: list[str], *, api_key: Optional[str] = None
+def _post_batch(
+    arxiv_ids: list[str], api_key: Optional[str] = None
 ) -> dict[str, CitationInfo]:
-    """Live: POST a single batch to S2; return {original_id: CitationInfo}.
-
-    Splits batches >500 isn't implemented yet — raises ValueError. We never
-    fetch >200 papers/day from arXiv, so this hasn't been needed.
-    """
+    """One POST to the S2 batch endpoint. Up to S2_BATCH_LIMIT ids per call."""
     if not arxiv_ids:
         return {}
-    if len(arxiv_ids) > S2_BATCH_LIMIT:
-        raise ValueError(f"S2 batch limit is {S2_BATCH_LIMIT}; got {len(arxiv_ids)}")
-
     prefixed = _prefix_arxiv_ids(arxiv_ids)
     headers = {"User-Agent": S2_USER_AGENT}
     if api_key:
@@ -100,10 +93,24 @@ def enrich_papers(
         response.raise_for_status()
         data = response.json()
     time.sleep(S2_REQUEST_INTERVAL_SECONDS)
-
-    # The response is parallel to `prefixed`; map back to the caller's
-    # original ids so downstream code can correlate without re-normalizing.
     return parse_batch_response(arxiv_ids, data)
+
+
+def enrich_papers(
+    arxiv_ids: list[str], *, api_key: Optional[str] = None
+) -> dict[str, CitationInfo]:
+    """Return {original_id: CitationInfo} for every indexed paper.
+
+    Chunks input into S2_BATCH_LIMIT-sized POSTs so callers don't need to
+    pre-split. Per-batch retry is applied via _post_batch's @with_retry.
+    """
+    if not arxiv_ids:
+        return {}
+    results: dict[str, CitationInfo] = {}
+    for start in range(0, len(arxiv_ids), S2_BATCH_LIMIT):
+        chunk = arxiv_ids[start : start + S2_BATCH_LIMIT]
+        results.update(_post_batch(chunk, api_key))
+    return results
 
 
 if __name__ == "__main__":
