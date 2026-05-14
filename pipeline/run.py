@@ -45,9 +45,11 @@ from pipeline.fetch import (
     hackernews,
     huggingface,
     newsletters,
+    producthunt as producthunt_fetcher,
     reddit as reddit_fetcher,
     semantic_scholar,
 )
+from pipeline.fetch.producthunt import ProductHuntLaunch
 from pipeline.fetch.reddit import RedditPost
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
@@ -128,6 +130,7 @@ def _build_source_counts(
     hf_downloads: int = 0,
     bluesky_count: int = 0,
     reddit_count: int = 0,
+    producthunt_count: int = 0,
 ) -> SourceCounts:
     return SourceCounts(
         arxiv_30d=term.arxiv_mentions,
@@ -141,6 +144,7 @@ def _build_source_counts(
         huggingface_spaces_7d=0,  # /api/spaces not yet wired
         bluesky_mentions_7d=bluesky_count,
         reddit_mentions_7d=reddit_count,
+        producthunt_launches_7d=producthunt_count,
     )
 
 
@@ -335,6 +339,7 @@ def _build_trend(
     bluesky_count: int = 0,
     reddit_count: int = 0,
     reddit_top: Optional[str] = None,
+    producthunt_count: int = 0,
     rrf: float = 0.0,
     novelty: float = 0.0,
     meta_trend: Optional[str] = None,
@@ -349,6 +354,7 @@ def _build_trend(
         hf_downloads=hf_downloads,
         bluesky_count=bluesky_count,
         reddit_count=reddit_count,
+        producthunt_count=producthunt_count,
     )
     history = history or {}
     today_count = _total_mentions(term)
@@ -492,6 +498,7 @@ def main(
     hf_models: Optional[list[HFModel]] = None,
     newsletter_signals: Optional[list[NewsletterSignal]] = None,
     reddit_posts: Optional[list[RedditPost]] = None,
+    producthunt_launches: Optional[list[ProductHuntLaunch]] = None,
     s2_data: Optional[dict[str, CitationInfo]] = None,
     use_claude: bool = False,
     max_cost_cents: Optional[float] = None,
@@ -528,6 +535,7 @@ def main(
         "semantic_scholar": False,
         "huggingface": False,
         "reddit": False,
+        "producthunt": False,
     }
     if papers is None:
         try:
@@ -583,6 +591,15 @@ def main(
             print(f"reddit fetch failed: {e}", file=sys.stderr)
             reddit_posts = []
     fetch_health["reddit"] = len(reddit_posts) > 0
+
+    # Product Hunt — needs PRODUCT_HUNT_TOKEN; empty on miss.
+    if producthunt_launches is None:
+        try:
+            producthunt_launches = producthunt_fetcher.fetch_trending_launches()
+        except Exception as e:
+            print(f"producthunt fetch failed: {e}", file=sys.stderr)
+            producthunt_launches = []
+    fetch_health["producthunt"] = len(producthunt_launches) > 0
 
     # Semantic Scholar enrichment — runs against arxiv ids we just fetched.
     if s2_data is None:
@@ -737,6 +754,10 @@ def main(
     reddit_tops = reddit_fetcher.top_subreddit_per_term(
         reddit_posts, terms=reddit_keyword_terms
     )
+    # Product Hunt per-term launches (audit 3.4).
+    ph_launches_by_term = producthunt_fetcher.launches_per_term(
+        producthunt_launches, terms=reddit_keyword_terms
+    )
     # Reciprocal Rank Fusion across per-source counts (audit 3.7).
     rrf_input = {
         "arxiv": rrf.ranks_from_counts(
@@ -785,6 +806,7 @@ def main(
                 bluesky_count=bluesky_counts.get(term.canonical_form, 0),
                 reddit_count=reddit_mentions.get(term.canonical_form, 0),
                 reddit_top=reddit_tops.get(term.canonical_form),
+                producthunt_count=ph_launches_by_term.get(term.canonical_form, 0),
                 rrf=rrf_by_term.get(term.canonical_form, 0.0),
                 novelty=novelty_by_term.get(term.canonical_form, 0.0),
                 meta_trend=meta_trend_label,
@@ -869,6 +891,10 @@ def main(
                 "reddit": {
                     "fetched": len(reddit_posts),
                     "ok": fetch_health["reddit"],
+                },
+                "producthunt": {
+                    "fetched": len(producthunt_launches),
+                    "ok": fetch_health["producthunt"],
                 },
             },
             "trends_processed": len(trends),

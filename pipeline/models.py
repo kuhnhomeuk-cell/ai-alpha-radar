@@ -38,6 +38,8 @@ class SourceCounts(BaseModel):
     bluesky_mentions_7d: int = 0
     # Audit 3.3 — Reddit (re-added; was removed in 1.4 pre-fetcher)
     reddit_mentions_7d: int = 0
+    # Audit 3.4 — Product Hunt featured launches per term
+    producthunt_launches_7d: int = 0
 
 
 class ConvergenceEvent(BaseModel):

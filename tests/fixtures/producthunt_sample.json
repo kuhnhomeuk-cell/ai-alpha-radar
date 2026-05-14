@@ -1,0 +1,55 @@
+{
+  "data": {
+    "posts": {
+      "edges": [
+        {
+          "node": {
+            "id": "1",
+            "name": "Claude Coder",
+            "tagline": "AI pair-programmer that reads your codebase",
+            "url": "https://producthunt.com/posts/claude-coder",
+            "votesCount": 540,
+            "createdAt": "2026-05-12T08:00:00Z",
+            "topics": {
+              "edges": [
+                {"node": {"name": "Developer Tools"}},
+                {"node": {"name": "Artificial Intelligence"}}
+              ]
+            }
+          }
+        },
+        {
+          "node": {
+            "id": "2",
+            "name": "FlowDiff",
+            "tagline": "Diffusion video generator for solo creators",
+            "url": "https://producthunt.com/posts/flowdiff",
+            "votesCount": 312,
+            "createdAt": "2026-05-13T15:30:00Z",
+            "topics": {
+              "edges": [
+                {"node": {"name": "Video"}},
+                {"node": {"name": "Artificial Intelligence"}}
+              ]
+            }
+          }
+        },
+        {
+          "node": {
+            "id": "3",
+            "name": "NoteCanvas",
+            "tagline": "Markdown notes with infinite zoom",
+            "url": "https://producthunt.com/posts/notecanvas",
+            "votesCount": 95,
+            "createdAt": "2026-05-13T18:00:00Z",
+            "topics": {
+              "edges": [
+                {"node": {"name": "Productivity"}}
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
