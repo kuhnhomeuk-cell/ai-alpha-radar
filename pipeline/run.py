@@ -37,7 +37,7 @@ from pipeline import demand as demand_mod
 from pipeline import leadlag
 from pipeline import meta_trends
 from pipeline import novelty as novelty_mod
-from pipeline import predict, rrf, score, snapshot, summarize
+from pipeline import predict, questions as question_mining, rrf, score, snapshot, summarize
 from pipeline.fetch import (
     arxiv,
     bluesky,
@@ -345,6 +345,7 @@ def _build_trend(
     reddit_top: Optional[str] = None,
     producthunt_count: int = 0,
     replicate_runs_delta: int = 0,
+    top_questions: Optional[list[str]] = None,
     rrf: float = 0.0,
     novelty: float = 0.0,
     meta_trend: Optional[str] = None,
@@ -426,6 +427,7 @@ def _build_trend(
         cluster_label=cluster_label,
         meta_trend=meta_trend,
         reddit_top_subreddit=reddit_top,
+        top_questions=top_questions or [],
         sources=sources,
         velocity_score=velocity_score,
         velocity_acceleration=velocity_acceleration,
@@ -775,6 +777,19 @@ def main(
     ph_launches_by_term = producthunt_fetcher.launches_per_term(
         producthunt_launches, terms=reddit_keyword_terms
     )
+    # Question mining (audit 3.14) — drains HN story/comment text + Reddit
+    # title/selftext into a single text pool per term.
+    question_texts: list[str] = []
+    for p in posts:
+        question_texts.append(p.title)
+        if p.story_text:
+            question_texts.append(p.story_text)
+        for c in (p.comments or []):
+            question_texts.append(c.text)
+    for r in reddit_posts:
+        question_texts.append(r.title)
+        if r.selftext:
+            question_texts.append(r.selftext)
     # Replicate per-term run delta (audit 3.5). Persist today's totals so the
     # next run can compute a delta against this one.
     today_replicate_counts = {
@@ -851,6 +866,9 @@ def main(
                 reddit_top=reddit_tops.get(term.canonical_form),
                 producthunt_count=ph_launches_by_term.get(term.canonical_form, 0),
                 replicate_runs_delta=replicate_by_term.get(term.canonical_form, 0),
+                top_questions=question_mining.top_questions_for_term(
+                    question_texts, term=term.canonical_form, top_n=5
+                ),
                 rrf=rrf_by_term.get(term.canonical_form, 0.0),
                 novelty=novelty_by_term.get(term.canonical_form, 0.0),
                 meta_trend=meta_trend_label,

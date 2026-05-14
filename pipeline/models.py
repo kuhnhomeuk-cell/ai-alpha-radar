@@ -87,6 +87,7 @@ class Trend(BaseModel):
     cluster_label: str
     meta_trend: Optional[str] = None
     reddit_top_subreddit: Optional[str] = None
+    top_questions: list[str] = []
     sources: SourceCounts
     velocity_score: float
     velocity_acceleration: float

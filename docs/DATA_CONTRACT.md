@@ -15,6 +15,7 @@ frontend interface; any change requires a frontend coordination note.
       "cluster_label": "Autonomous Reasoning",
       "meta_trend": null,
       "reddit_top_subreddit": null,
+      "top_questions": [],
       "sources": {
         "arxiv_30d": 42,
         "github_repos_7d": 8,
