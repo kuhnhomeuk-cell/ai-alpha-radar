@@ -19,7 +19,10 @@ frontend interface; any change requires a frontend coordination note.
         "github_stars_7d": 240,
         "hn_posts_7d": 11,
         "hn_points_7d": 560,
-        "semantic_scholar_citations_7d": 15
+        "semantic_scholar_citations_7d": 15,
+        "huggingface_likes_7d": 0,
+        "huggingface_downloads_7d": 0,
+        "huggingface_spaces_7d": 0
       },
       "velocity_score": 3.8,
       "velocity_acceleration": 1.2,

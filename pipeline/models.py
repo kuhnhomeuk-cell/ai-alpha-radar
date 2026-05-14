@@ -30,6 +30,10 @@ class SourceCounts(BaseModel):
     hn_posts_7d: int = 0
     hn_points_7d: int = 0
     semantic_scholar_citations_7d: int = 0
+    # Audit 3.1 — Hugging Face Hub trending signals
+    huggingface_likes_7d: int = 0
+    huggingface_downloads_7d: int = 0
+    huggingface_spaces_7d: int = 0  # populated in a later wave (/api/spaces)
 
 
 class ConvergenceEvent(BaseModel):

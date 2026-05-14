@@ -34,10 +34,11 @@ from pipeline import cluster_identity
 from pipeline import cold_start
 from pipeline import demand as demand_mod
 from pipeline import predict, score, snapshot, summarize
-from pipeline.fetch import arxiv, github, hackernews, semantic_scholar
+from pipeline.fetch import arxiv, github, hackernews, huggingface, semantic_scholar
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
+from pipeline.fetch.huggingface import HFModel
 from pipeline.fetch.semantic_scholar import CitationInfo
 from pipeline.models import (
     ConvergenceEvent,
@@ -62,6 +63,8 @@ HN_LOOKBACK_DAYS = 7
 
 SPARKLINE_DAYS = 14
 VELOCITY_LOOKBACK_DAYS = 30
+# Truthfulness gate threshold (audit 1.5). 5 sources active as of 3.1;
+# minimum still 3 ok so two can fail without aborting.
 MIN_OK_SOURCES = 3
 
 PLACEHOLDER_SUMMARY = "(awaiting Claude enrichment)"
@@ -102,7 +105,13 @@ def _detect_convergence_today(
     return score.detect_convergence(appearances)
 
 
-def _build_source_counts(term: Term, *, s2_citations_7d: int = 0) -> SourceCounts:
+def _build_source_counts(
+    term: Term,
+    *,
+    s2_citations_7d: int = 0,
+    hf_likes: int = 0,
+    hf_downloads: int = 0,
+) -> SourceCounts:
     return SourceCounts(
         arxiv_30d=term.arxiv_mentions,
         github_repos_7d=term.github_mentions,
@@ -110,7 +119,31 @@ def _build_source_counts(term: Term, *, s2_citations_7d: int = 0) -> SourceCount
         hn_posts_7d=term.hn_mentions,
         hn_points_7d=0,  # warm-up; aggregate later
         semantic_scholar_citations_7d=s2_citations_7d,
+        huggingface_likes_7d=hf_likes,
+        huggingface_downloads_7d=hf_downloads,
+        huggingface_spaces_7d=0,  # /api/spaces not yet wired
     )
+
+
+def _hf_per_term(
+    hf_models: list[HFModel], terms: list[Term]
+) -> dict[str, dict[str, int]]:
+    """For each term, sum likes/downloads across HF models matching a raw form."""
+    if not hf_models:
+        return {}
+    # Pre-lowercase model text once.
+    model_texts = [(m, huggingface.model_text(m).lower()) for m in hf_models]
+    out: dict[str, dict[str, int]] = {}
+    for term in terms:
+        likes = 0
+        downloads = 0
+        for m, text in model_texts:
+            if any(raw.lower() in text for raw in term.raw_forms):
+                likes += m.likes
+                downloads += m.downloads
+        if likes or downloads:
+            out[term.canonical_form] = {"likes": likes, "downloads": downloads}
+    return out
 
 
 def _placeholder_creator_angles() -> CreatorAngles:
@@ -256,11 +289,18 @@ def _build_trend(
     cluster_label: str,
     convergence: ConvergenceEvent,
     s2_citations_7d: int = 0,
+    hf_likes: int = 0,
+    hf_downloads: int = 0,
     history: Optional[dict[date, Snapshot]] = None,
     prior_alpha: Optional[float] = None,
     prior_beta: Optional[float] = None,
 ) -> Trend:
-    sources = _build_source_counts(term, s2_citations_7d=s2_citations_7d)
+    sources = _build_source_counts(
+        term,
+        s2_citations_7d=s2_citations_7d,
+        hf_likes=hf_likes,
+        hf_downloads=hf_downloads,
+    )
     history = history or {}
     today_count = _total_mentions(term)
     sparkline = _keyword_daily_counts(
@@ -387,6 +427,7 @@ def main(
     papers: Optional[list[Paper]] = None,
     posts: Optional[list[HNPost]] = None,
     repos: Optional[list[RepoStat]] = None,
+    hf_models: Optional[list[HFModel]] = None,
     s2_data: Optional[dict[str, CitationInfo]] = None,
     use_claude: bool = False,
     max_cost_cents: Optional[float] = None,
@@ -414,7 +455,13 @@ def main(
 
     # ---- 1. Fetch (or accept injected inputs for tests) ----
     fetch_started = time.time()
-    fetch_health = {"arxiv": True, "hackernews": True, "github": True, "semantic_scholar": False}
+    fetch_health = {
+        "arxiv": True,
+        "hackernews": True,
+        "github": True,
+        "semantic_scholar": False,
+        "huggingface": False,
+    }
     if papers is None:
         try:
             papers = arxiv.fetch_recent_papers(ARXIV_CATEGORIES, ARXIV_LOOKBACK_DAYS)
@@ -441,6 +488,15 @@ def main(
         else:
             repos = []
             fetch_health["github"] = False
+
+    # Hugging Face Hub trending — no auth, free public endpoint.
+    if hf_models is None:
+        try:
+            hf_models = huggingface.fetch_trending_models()
+        except Exception as e:
+            print(f"huggingface fetch failed: {e}", file=sys.stderr)
+            hf_models = []
+    fetch_health["huggingface"] = len(hf_models) > 0
 
     # Semantic Scholar enrichment — runs against arxiv ids we just fetched.
     if s2_data is None:
@@ -470,7 +526,7 @@ def main(
         sys.exit(2)
 
     # ---- 2. Normalize ----
-    terms = extract_candidate_terms(papers, posts, repos)
+    terms = extract_candidate_terms(papers, posts, repos, hf_models=hf_models)
 
     # ---- 3. Top-N selection ----
     top_terms = sorted(terms, key=_total_mentions, reverse=True)[:TOP_N_TRENDS]
@@ -542,6 +598,7 @@ def main(
 
     # ---- 6. Build trends (placeholder Claude outputs) ----
     s2_by_term = _s2_citations_by_term(papers, top_terms, s2_data)
+    hf_by_term = _hf_per_term(hf_models, top_terms)
     trends: list[Trend] = []
     for i, term in enumerate(top_terms):
         builder_sig = term.github_mentions / max_github_for_builder_signal
@@ -549,6 +606,7 @@ def main(
             github=gh_pcts[i], hn=hn_pcts[i], arxiv=arxiv_pcts[i], semantic_scholar=0.0
         )
         s2_citations = s2_by_term.get(term.canonical_form, 0)
+        hf_agg = hf_by_term.get(term.canonical_form, {"likes": 0, "downloads": 0})
         convergence = _detect_convergence_today(
             term, has_s2=s2_citations > 0, today=today_dt
         )
@@ -565,6 +623,8 @@ def main(
                 cluster_label=cluster_label,
                 convergence=convergence,
                 s2_citations_7d=s2_citations,
+                hf_likes=hf_agg["likes"],
+                hf_downloads=hf_agg["downloads"],
                 history=history,
                 prior_alpha=prior_alpha,
                 prior_beta=prior_beta,
@@ -637,6 +697,10 @@ def main(
                 "semantic_scholar": {
                     "fetched": len(s2_data),
                     "ok": fetch_health["semantic_scholar"],
+                },
+                "huggingface": {
+                    "fetched": len(hf_models),
+                    "ok": fetch_health["huggingface"],
                 },
             },
             "trends_processed": len(trends),

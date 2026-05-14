@@ -30,6 +30,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
+from pipeline.fetch.huggingface import HFModel, model_text as _hf_text
 
 MIN_TOKEN_LENGTH = 2  # AI, ML, RL, NLP all need 2 chars — see module docstring
 
@@ -61,6 +62,7 @@ class Term(BaseModel):
     arxiv_mentions: int = 0
     github_mentions: int = 0
     hn_mentions: int = 0
+    huggingface_mentions: int = 0
 
 
 def _strip_html(text: str) -> str:
@@ -109,20 +111,24 @@ def extract_candidate_terms(
     posts: list[HNPost],
     repos: list[RepoStat],
     *,
+    hf_models: Optional[list[HFModel]] = None,
     aliases: Optional[dict[str, str]] = None,
 ) -> list[Term]:
     if aliases is None:
         aliases = _load_aliases()
+    hf_models = hf_models or []
 
     arxiv_docs = [_paper_text(p) for p in papers]
     hn_docs = [_post_text(p) for p in posts]
     gh_docs = [_repo_text(r) for r in repos]
-    all_docs = arxiv_docs + hn_docs + gh_docs
+    hf_docs = [_hf_text(m) for m in hf_models]
+    all_docs = arxiv_docs + hn_docs + gh_docs + hf_docs
     if not all_docs:
         return []
 
     n_arxiv = len(arxiv_docs)
     n_hn = len(hn_docs)
+    n_gh = len(gh_docs)
 
     vectorizer = _build_vectorizer()
     matrix = vectorizer.fit_transform(all_docs)
@@ -130,7 +136,8 @@ def extract_candidate_terms(
 
     arxiv_slice = matrix[:n_arxiv]
     hn_slice = matrix[n_arxiv : n_arxiv + n_hn]
-    gh_slice = matrix[n_arxiv + n_hn :]
+    gh_slice = matrix[n_arxiv + n_hn : n_arxiv + n_hn + n_gh]
+    hf_slice = matrix[n_arxiv + n_hn + n_gh :]
 
     # Per-feature document presence count (binary collapse then sum) per source.
     def _doc_presence(sl) -> list[int]:
@@ -142,9 +149,10 @@ def extract_candidate_terms(
     arxiv_counts = _doc_presence(arxiv_slice)
     hn_counts = _doc_presence(hn_slice)
     gh_counts = _doc_presence(gh_slice)
+    hf_counts = _doc_presence(hf_slice)
 
     buckets: dict[str, dict] = defaultdict(
-        lambda: {"raw_forms": set(), "arxiv": 0, "hn": 0, "github": 0}
+        lambda: {"raw_forms": set(), "arxiv": 0, "hn": 0, "github": 0, "hf": 0}
     )
 
     for idx, raw in enumerate(features):
@@ -160,6 +168,7 @@ def extract_candidate_terms(
         bucket["arxiv"] += arxiv_counts[idx]
         bucket["hn"] += hn_counts[idx]
         bucket["github"] += gh_counts[idx]
+        bucket["hf"] += hf_counts[idx]
 
     return [
         Term(
@@ -168,6 +177,7 @@ def extract_candidate_terms(
             arxiv_mentions=b["arxiv"],
             hn_mentions=b["hn"],
             github_mentions=b["github"],
+            huggingface_mentions=b["hf"],
         )
         for c, b in buckets.items()
     ]
