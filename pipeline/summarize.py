@@ -27,8 +27,10 @@ from datetime import datetime, timezone
 from typing import Any, Iterable, Literal, Optional
 
 import anthropic
+from pathlib import Path
 from pydantic import BaseModel
 
+from pipeline.batch_cache import BatchCache, hash_requests
 from pipeline.lifecycle_horizons import HORIZONS, clamp_peak_days
 from pipeline.log import log
 from pipeline.models import CreatorAngles, DailyBriefing, LifecycleStage, RiskFlag
@@ -330,15 +332,43 @@ def _build_request_params(
 
 
 def _submit_and_collect_batch(
-    client: anthropic.Anthropic, requests: list[dict[str, Any]]
+    client: anthropic.Anthropic,
+    requests: list[dict[str, Any]],
+    *,
+    cache: Optional[BatchCache] = None,
 ) -> dict[str, dict[str, Any]]:
     """Submit one batch, poll until ended, return {custom_id: parsed_json}.
 
     Each `requests` entry has shape: {"custom_id": str, "params": <_build_request_params>}.
     Unparseable JSON responses become ClaudeParseError exceptions; failed
     batch entries become entries missing from the result dict.
+
+    When `cache` is supplied (audit 4.2): if the same request set was
+    completed in the last 24h, returns the cached results without
+    calling the API. If submitted-but-not-yet-collected, polls the
+    existing batch_id rather than creating a new one.
     """
-    batch = client.messages.batches.create(requests=requests)
+    key: Optional[str] = None
+    if cache is not None:
+        key = hash_requests(requests)
+        cached = cache.get(key)
+        if cached is not None and "results" in cached:
+            log("batch_cache_hit", level="info", key=key[:12], requests=len(requests))
+            return cached["results"]
+        if cached is not None and "batch_id" in cached:
+            log(
+                "batch_cache_resume",
+                level="info",
+                key=key[:12],
+                batch_id=cached["batch_id"],
+            )
+            batch = client.messages.batches.retrieve(cached["batch_id"])
+        else:
+            batch = client.messages.batches.create(requests=requests)
+            cache.set_batch_id(key, batch.id)
+    else:
+        batch = client.messages.batches.create(requests=requests)
+
     deadline = time.time() + BATCH_TIMEOUT_SECONDS
     while batch.processing_status != "ended":
         if time.time() > deadline:
@@ -354,11 +384,17 @@ def _submit_and_collect_batch(
         message = result.message
         text = message.content[0].text
         out[entry.custom_id] = _extract_json(text)
+
+    if cache is not None and key is not None:
+        cache.set_results(key, batch.id, out)
     return out
 
 
 def enrich_cards_batch(
-    cards: list[CardInput], *, client: Optional[anthropic.Anthropic] = None
+    cards: list[CardInput],
+    *,
+    client: Optional[anthropic.Anthropic] = None,
+    cache_path: Optional[Path] = None,
 ) -> dict[int, CardOutput]:
     """Enrich a list of cards via two sequential Batch API submissions.
 
@@ -368,11 +404,16 @@ def enrich_cards_batch(
     Cards are keyed by their position in the input list. Missing
     summary outputs from Stage 1 drop the card from the result entirely
     rather than fabricating a partial CardOutput.
+
+    When `cache_path` is supplied (audit 4.2), Stage 1 and Stage 2 are
+    independently cached. A same-day re-run with identical inputs reads
+    both stages from disk and issues zero API calls.
     """
     if client is None:
         client = anthropic.Anthropic()
     if not cards:
         return {}
+    cache = BatchCache(cache_path) if cache_path is not None else None
 
     # Stage 1: A + C
     stage1: list[dict[str, Any]] = []
@@ -393,7 +434,7 @@ def enrich_cards_batch(
                 ),
             }
         )
-    stage1_results = _submit_and_collect_batch(client, stage1)
+    stage1_results = _submit_and_collect_batch(client, stage1, cache=cache)
 
     # Stage 2: B + D — depend on A's summary
     stage2: list[dict[str, Any]] = []
@@ -418,7 +459,9 @@ def enrich_cards_batch(
                 ),
             }
         )
-    stage2_results = _submit_and_collect_batch(client, stage2) if stage2 else {}
+    stage2_results = (
+        _submit_and_collect_batch(client, stage2, cache=cache) if stage2 else {}
+    )
 
     outputs: dict[int, CardOutput] = {}
     for i, card in enumerate(cards):

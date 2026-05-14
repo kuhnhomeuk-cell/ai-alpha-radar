@@ -7,6 +7,7 @@ Live one-card inspection is a separate one-shot script.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -452,6 +453,56 @@ def test_enrich_cards_batch_two_stage_orchestration() -> None:
 def test_enrich_cards_batch_empty_list_returns_empty_dict() -> None:
     fake = FakeBatchClient({})
     assert summarize.enrich_cards_batch([], client=fake) == {}
+
+
+_STANDARD_BATCH_RESPONSES = {
+    "Write a single-sentence summary": json.dumps(
+        {"summary": "S", "confidence": "high"}
+    ),
+    "Generate three YouTube Shorts angles": json.dumps(
+        {"hook": "H", "contrarian": "C", "tutorial": "T"}
+    ),
+    "Estimate:": json.dumps(
+        {
+            "breakout_likelihood": "medium",
+            "peak_estimate_days": 30,
+            "risk_flag": "none",
+            "rationale": "r",
+        }
+    ),
+    "Explain this trend using one analogy": json.dumps({"eli_creator": "E"}),
+}
+
+
+def test_enrich_cards_batch_same_day_rerun_hits_cache(tmp_path: Path) -> None:
+    """Audit 4.2 — second call with the same cards must not re-submit."""
+    cards = [_make_card(keyword="alpha"), _make_card(keyword="beta")]
+    cache_path = tmp_path / ".batch_state.json"
+
+    fake1 = FakeBatchClient(_STANDARD_BATCH_RESPONSES)
+    out1 = summarize.enrich_cards_batch(cards, client=fake1, cache_path=cache_path)
+    assert set(out1.keys()) == {0, 1}
+    # Two stages = two create calls
+    assert len(fake1._batches) == 2
+
+    fake2 = FakeBatchClient(_STANDARD_BATCH_RESPONSES)
+    out2 = summarize.enrich_cards_batch(cards, client=fake2, cache_path=cache_path)
+    assert set(out2.keys()) == {0, 1}
+    # Same outputs, but zero new submissions because cache served both stages
+    assert len(fake2._batches) == 0
+    # Outputs equivalent
+    for i in (0, 1):
+        assert out1[i].summary == out2[i].summary
+        assert out1[i].angles.hook == out2[i].angles.hook
+
+
+def test_enrich_cards_batch_no_cache_path_is_backwards_compat() -> None:
+    """Without cache_path, behavior matches pre-4.2 — every call resubmits."""
+    cards = [_make_card(keyword="alpha")]
+    fake = FakeBatchClient(_STANDARD_BATCH_RESPONSES)
+    summarize.enrich_cards_batch(cards, client=fake)
+    summarize.enrich_cards_batch(cards, client=fake)
+    assert len(fake._batches) == 4  # 2 stages × 2 calls
 
 
 def test_daily_briefing_calls_sonnet_and_parses() -> None:

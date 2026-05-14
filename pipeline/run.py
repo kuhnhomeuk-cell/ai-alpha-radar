@@ -91,6 +91,10 @@ PLACEHOLDER_SUMMARY = "(awaiting Claude enrichment)"
 PLACEHOLDER_ANGLE = "(awaiting Claude enrichment)"
 PLACEHOLDER_BRIEFING_TEXT = "Daily Movers Briefing pending Claude enrichment."
 
+# Audit 4.2 — idempotency cache for Anthropic Messages Batches.
+# Re-runs on the same day reuse completed results instead of double-spending.
+BATCH_STATE_PATH = ROOT / "data" / ".batch_state.json"
+
 
 # ---------- helpers ----------
 
@@ -475,7 +479,7 @@ def _maybe_enrich_with_claude(
         )
         for t in trends
     ]
-    enriched_by_index = summarize.enrich_cards_batch(cards)
+    enriched_by_index = summarize.enrich_cards_batch(cards, cache_path=BATCH_STATE_PATH)
     out: list[Trend] = []
     for i, t in enumerate(trends):
         e = enriched_by_index.get(i)

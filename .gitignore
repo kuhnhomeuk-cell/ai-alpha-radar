@@ -39,3 +39,4 @@ Thumbs.db
 data/corpus_centroid_60d.npy
 data/bluesky_mentions.sqlite
 data/replicate_run_counts.json
+data/.batch_state.json
