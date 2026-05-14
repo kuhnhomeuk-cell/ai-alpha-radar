@@ -521,6 +521,36 @@ body::after {
 .lb-delta.down { color: var(--bad); }
 .lb-mix { margin-top: 4px; opacity: 0.85; }
 .lb-mix svg { display: block; border-radius: 2px; }
+.lb-meta-header {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  padding: 8px 14px 4px;
+  border-top: 1px solid var(--line);
+  background: rgba(0, 240, 255, 0.02);
+}
+.lb-meta-header:first-child { border-top: none; }
+.forecast {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.forecast .ph {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+.forecast-meta {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+}
 .gem-mix { margin-top: 8px; }
 .gem-mix svg { width: 100%; max-width: 220px; border-radius: 2px; }
 .gem-mix-legend {
@@ -1642,6 +1672,11 @@ footer .quote {
         <div class="text" id="dpPredText">—</div>
         <span class="badge" id="dpPredBadge">—</span>
       </div>
+      <div class="forecast" id="dpForecast" hidden>
+        <div class="ph">14-day actual · forecast to peak · band = Brier</div>
+        <div id="dpForecastChart"></div>
+        <div class="forecast-meta" id="dpForecastMeta"></div>
+      </div>
       <div class="audience-section">
         <div class="audience-eyebrow">◆ What audiences are asking</div>
         <div id="dpAudience"></div>
@@ -2511,10 +2546,73 @@ function openDetailPanel(kw) {
     });
   }
 
+  renderForecast(t);
+
   const panel = document.getElementById('detailPanel');
   panel.classList.add('visible');
   panel.setAttribute('aria-hidden', 'false');
 }
+
+/* ---- audit 3.15: forecast curve with confidence band ---- */
+function renderForecast(t) {
+  const host = document.getElementById('dpForecast');
+  const chart = document.getElementById('dpForecastChart');
+  const meta = document.getElementById('dpForecastMeta');
+  if (!host || !chart) return;
+  const spark = t.sparkline || [];
+  const peakDays = (t.risk && t.risk.peak_estimate_days) || null;
+  if (!spark.length || !peakDays) {
+    host.hidden = true;
+    return;
+  }
+  host.hidden = false;
+  const brier = (META && META.prediction_calibration && typeof META.prediction_calibration.brier === 'number')
+    ? META.prediction_calibration.brier
+    : 0.25;
+  const todayValue = spark[spark.length - 1];
+  // Linear extrapolation from the trailing-7 slope.
+  const tail = spark.slice(-7);
+  const slope = tail.length > 1
+    ? (tail[tail.length - 1] - tail[0]) / (tail.length - 1)
+    : 0;
+  const projected = [];
+  let v = todayValue;
+  for (let i = 1; i <= peakDays; i++) {
+    v = Math.max(0, v + slope);
+    projected.push(v);
+  }
+  const stageColor = STAGE_META[t.stage]?.color || '#8b9cb0';
+  chart.innerHTML = forecastSVG(spark, projected, brier, stageColor);
+  meta.textContent = `peak in ${peakDays}d · Brier ${brier.toFixed(2)} · band ±${Math.round(brier * 100)}%`;
+}
+
+function forecastSVG(history, projection, brier, color) {
+  const w = 360, h = 120, pad = 4;
+  const all = [...history, ...projection];
+  if (!all.length) return '';
+  const min = Math.min(...all, 0);
+  const max = Math.max(...all, 1);
+  const span = max - min || 1;
+  const nTotal = history.length + projection.length;
+  const stepX = (w - 2 * pad) / Math.max(nTotal - 1, 1);
+  const toXY = (v, i) => [pad + i * stepX, h - pad - ((v - min) / span) * (h - 2 * pad)];
+  const historyPts = history.map((v, i) => toXY(v, i).join(',')).join(' ');
+  const projectionPts = projection.map((v, i) => toXY(v, history.length + i).join(',')).join(' ');
+  // Confidence band: ±brier * v around each projected point, clamped to 0.
+  const bandTop = projection.map((v, i) => toXY(Math.min(max, v * (1 + brier)), history.length + i)).map(p => p.join(',')).join(' ');
+  const bandBot = projection.slice().reverse().map((v, j) => {
+    const i = projection.length - 1 - j;
+    return toXY(Math.max(0, v * (1 - brier)), history.length + i);
+  }).map(p => p.join(',')).join(' ');
+  const todayX = (pad + (history.length - 1) * stepX).toFixed(1);
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" aria-label="forecast curve">
+    <polygon points="${bandTop} ${bandBot}" fill="${color}" fill-opacity="0.12" />
+    <line x1="${todayX}" y1="${pad}" x2="${todayX}" y2="${h - pad}" stroke="${color}" stroke-opacity="0.35" stroke-dasharray="3,3"/>
+    <polyline points="${historyPts}" fill="none" stroke="${color}" stroke-width="1.8"/>
+    <polyline points="${projectionPts}" fill="none" stroke="${color}" stroke-width="1.4" stroke-dasharray="4,3" stroke-opacity="0.8"/>
+  </svg>`;
+}
+
 function closeDetailPanel() {
   const panel = document.getElementById('detailPanel');
   panel.classList.remove('visible');
