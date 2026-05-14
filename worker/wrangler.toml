@@ -3,17 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2026-05-01"
 
 # RADAR_KV stores the daily spend counter for /api/deep-dive (key shape:
-# `spend:{YYYY-MM-DD}` → integer cents). Without this binding `/api/deep-dive`
-# crashes on its spend-tracking read.
-#
-# To populate the IDs below:
-#   cd worker
-#   ./setup_kv.sh           # runs the two `wrangler kv:namespace create` calls
-# then paste the returned ids into the two PLACEHOLDER_* values.
+# `spend:{YYYY-MM-DD}` → integer cents). Provisioned via worker/setup_kv.sh
+# against the kuhnhomeuk@gmail.com Cloudflare account on 2026-05-14.
 [[kv_namespaces]]
 binding = "RADAR_KV"
-id = "PLACEHOLDER_RADAR_KV_ID"
-preview_id = "PLACEHOLDER_RADAR_KV_PREVIEW_ID"
+id = "5b3f93edeaaa42b39c0446a918c9d95e"
+preview_id = "4157d20b253947519d676898e68b4ca3"
 
 [vars]
 # Non-secret vars. Secrets land via `wrangler secret put`.
