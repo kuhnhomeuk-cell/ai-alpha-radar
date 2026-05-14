@@ -5,9 +5,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pipeline.fetch import replicate
+import httpx
+import pytest
+import respx
+
+from pipeline.fetch import _retry, replicate
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "replicate_sample.json"
+
+
+@pytest.fixture
+def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_retry.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(replicate.time, "sleep", lambda _s: None)
 
 
 def _load():
@@ -43,3 +53,59 @@ def test_runs_per_term_aggregates_matches() -> None:
     counts = replicate.runs_per_term(models, terms=["flux", "llama"])
     assert counts["flux"] == 152_300_000
     assert counts["llama"] == 48_900_000
+
+
+# ---------- audit 4.5 — HTTP-layer integration tests ----------
+
+
+@respx.mock
+def test_get_200_path_parses_payload(_no_sleep: None) -> None:
+    route = respx.get(replicate.REPLICATE_API_URL).mock(
+        return_value=httpx.Response(200, json=_load()),
+    )
+    payload = replicate._get(replicate.REPLICATE_API_URL, "test-token")
+    assert route.called
+    assert replicate.parse_response(payload) == replicate.parse_response(_load())
+
+
+@respx.mock
+def test_get_honors_retry_after(_no_sleep: None) -> None:
+    route = respx.get(replicate.REPLICATE_API_URL).mock(
+        side_effect=[
+            httpx.Response(429, headers={"retry-after": "1"}),
+            httpx.Response(200, json=_load()),
+        ]
+    )
+    payload = replicate._get(replicate.REPLICATE_API_URL, "test-token")
+    assert route.call_count == 2
+    assert "results" in payload
+
+
+@respx.mock
+def test_get_500_exhausts(_no_sleep: None) -> None:
+    route = respx.get(replicate.REPLICATE_API_URL).mock(
+        return_value=httpx.Response(500),
+    )
+    with pytest.raises(httpx.HTTPStatusError):
+        replicate._get(replicate.REPLICATE_API_URL, "test-token")
+    assert route.call_count == 3
+
+
+@respx.mock
+def test_get_malformed_body_raises_via_caller(_no_sleep: None) -> None:
+    # _get itself doesn't validate the shape — parse_response treats missing
+    # 'results' as empty. End-to-end this means "fetcher returns no models",
+    # not "fetcher raises". Verified at the integration boundary.
+    respx.get(replicate.REPLICATE_API_URL).mock(
+        return_value=httpx.Response(200, json={"unexpected": True}),
+    )
+    payload = replicate._get(replicate.REPLICATE_API_URL, "test-token")
+    assert replicate.parse_response(payload) == []
+
+
+@respx.mock
+def test_fetch_trending_returns_empty_without_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("REPLICATE_API_KEY", raising=False)
+    assert replicate.fetch_trending() == []

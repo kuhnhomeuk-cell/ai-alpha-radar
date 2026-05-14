@@ -9,9 +9,19 @@ with two too-new arxiv IDs that round-trip as null — exercising both paths.
 import json
 from pathlib import Path
 
-from pipeline.fetch import semantic_scholar
+import httpx
+import pytest
+import respx
+
+from pipeline.fetch import _retry, semantic_scholar
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "s2_sample.json"
+
+
+@pytest.fixture
+def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_retry.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(semantic_scholar.time, "sleep", lambda _s: None)
 
 # Order MUST match the order in tests/fixtures/s2_sample.json — the S2 batch
 # endpoint returns entries parallel to the input ids list.
@@ -89,3 +99,49 @@ def test_prefix_arxiv_ids_handles_bare_and_url_and_already_prefixed() -> None:
     inputs = ["1706.03762", "http://arxiv.org/abs/2005.14165v1", "ARXIV:2203.02155"]
     out = semantic_scholar._prefix_arxiv_ids(inputs)
     assert out == ["ARXIV:1706.03762", "ARXIV:2005.14165", "ARXIV:2203.02155"]
+
+
+# ---------- audit 4.5 — HTTP-layer integration tests ----------
+
+
+@respx.mock
+def test_enrich_papers_200_path(_no_sleep: None) -> None:
+    route = respx.post(semantic_scholar.S2_BATCH_URL).mock(
+        return_value=httpx.Response(200, json=_load())
+    )
+    enriched = semantic_scholar.enrich_papers(FIXTURE_IDS)
+    assert route.called
+    assert len(enriched) == 5
+
+
+@respx.mock
+def test_enrich_papers_honors_retry_after(_no_sleep: None) -> None:
+    route = respx.post(semantic_scholar.S2_BATCH_URL).mock(
+        side_effect=[
+            httpx.Response(429, headers={"retry-after": "1"}),
+            httpx.Response(200, json=_load()),
+        ]
+    )
+    enriched = semantic_scholar.enrich_papers(FIXTURE_IDS)
+    assert route.call_count == 2
+    assert len(enriched) == 5
+
+
+@respx.mock
+def test_enrich_papers_500_exhausts(_no_sleep: None) -> None:
+    route = respx.post(semantic_scholar.S2_BATCH_URL).mock(
+        return_value=httpx.Response(500),
+    )
+    with pytest.raises(httpx.HTTPStatusError):
+        semantic_scholar.enrich_papers(FIXTURE_IDS)
+    assert route.call_count == 3
+
+
+@respx.mock
+def test_enrich_papers_malformed_body_returns_empty(_no_sleep: None) -> None:
+    # All-null parallel-array response — every id is "unindexed".
+    respx.post(semantic_scholar.S2_BATCH_URL).mock(
+        return_value=httpx.Response(200, json=[None] * len(FIXTURE_IDS)),
+    )
+    enriched = semantic_scholar.enrich_papers(FIXTURE_IDS)
+    assert enriched == {}
