@@ -29,6 +29,7 @@ from typing import Any, Iterable, Literal, Optional
 import anthropic
 from pydantic import BaseModel
 
+from pipeline.lifecycle_horizons import HORIZONS, clamp_peak_days
 from pipeline.models import CreatorAngles, DailyBriefing, LifecycleStage, RiskFlag
 
 HAIKU_MODEL = "claude-haiku-4-5"
@@ -180,6 +181,17 @@ def _build_prompt_b(card: CardInput, *, summary: str) -> str:
 
 
 def _build_prompt_c(card: CardInput) -> str:
+    lo, hi = HORIZONS.get(card.lifecycle_stage, (None, None))
+    if lo is None or hi is None:
+        peak_constraint = (
+            "- peak_estimate_days: null (commodity-stage trends have already peaked)"
+        )
+    else:
+        peak_constraint = (
+            f"- peak_estimate_days: integer in [{lo}, {hi}] for lifecycle "
+            f"'{card.lifecycle_stage}' (days until mainstream peak). "
+            "Return null if you can't estimate."
+        )
     return (
         f"Trend keyword: {card.keyword}\n"
         f"Lifecycle stage: {card.lifecycle_stage}\n"
@@ -187,7 +199,7 @@ def _build_prompt_c(card: CardInput) -> str:
         f"Convergence event: {card.convergence_detected}\n\n"
         "Estimate:\n"
         '- breakout_likelihood: "low" | "medium" | "high" | "breakout"\n'
-        "- peak_estimate_days: integer (days until mainstream peak; 0 if already peaked)\n"
+        f"{peak_constraint}\n"
         "- risk_flag: short string (\"none\" | \"may be hype cycle\" | \"regulatory risk\" | "
         "\"single-source signal\" | other)\n"
         "- rationale: <=25 words\n\n"
@@ -284,7 +296,9 @@ def enrich_card(
         ),
         risk=RiskFlag(
             breakout_likelihood=c["breakout_likelihood"],
-            peak_estimate_days=c.get("peak_estimate_days"),
+            peak_estimate_days=clamp_peak_days(
+                c.get("peak_estimate_days"), card.lifecycle_stage
+            ),
             risk_flag=c["risk_flag"],
             rationale=c["rationale"],
         ),
@@ -421,7 +435,9 @@ def enrich_cards_batch(
             ),
             risk=RiskFlag(
                 breakout_likelihood=c["breakout_likelihood"],
-                peak_estimate_days=c.get("peak_estimate_days"),
+                peak_estimate_days=clamp_peak_days(
+                    c.get("peak_estimate_days"), card.lifecycle_stage
+                ),
                 risk_flag=c["risk_flag"],
                 rationale=c["rationale"],
             ),
