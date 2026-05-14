@@ -2,13 +2,18 @@ name = "ai-alpha-radar"
 main = "src/index.ts"
 compatibility_date = "2026-05-01"
 
-# Owner must `wrangler kv:namespace create RADAR_KV` and paste the returned
-# id below before first deploy. The preview_id is auto-created by
-# `wrangler dev`.
-# [[kv_namespaces]]
-# binding = "RADAR_KV"
-# id = "REPLACE_WITH_REAL_KV_ID"
-# preview_id = "REPLACE_WITH_REAL_PREVIEW_ID"
+# RADAR_KV stores the daily spend counter for /api/deep-dive (key shape:
+# `spend:{YYYY-MM-DD}` → integer cents). Without this binding `/api/deep-dive`
+# crashes on its spend-tracking read.
+#
+# To populate the IDs below:
+#   cd worker
+#   ./setup_kv.sh           # runs the two `wrangler kv:namespace create` calls
+# then paste the returned ids into the two PLACEHOLDER_* values.
+[[kv_namespaces]]
+binding = "RADAR_KV"
+id = "PLACEHOLDER_RADAR_KV_ID"
+preview_id = "PLACEHOLDER_RADAR_KV_PREVIEW_ID"
 
 [vars]
 # Non-secret vars. Secrets land via `wrangler secret put`.
