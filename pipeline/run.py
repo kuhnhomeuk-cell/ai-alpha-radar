@@ -516,8 +516,13 @@ def main(
     updated_preds = predict.update_all_verdicts(
         preds, current_lifecycles_by_keyword=current_lifecycles, today=today_d
     )
+    # Invariant: update_all_verdicts neither adds nor removes rows.
+    assert len(updated_preds) == len(preds), (
+        f"prediction count drift: loaded {len(preds)} but updated to {len(updated_preds)}"
+    )
     hit_rate = predict.compute_hit_rate(updated_preds)
     past_predictions = [p for p in updated_preds if p.verdict != "pending"]
+    stuck_pending = [p for p in updated_preds if p.verdict == "pending"]
 
     # ---- 9. Briefing + demand (opt-in for Claude) ----
     if use_claude:
@@ -564,6 +569,8 @@ def main(
             "use_claude": use_claude,
             "cold_start": cold_start,
             "history_days_loaded": len(history),
+            "predictions_on_disk": len(preds),
+            "predictions_pending_unmatched": len(stuck_pending),
         },
     )
     snapshot.write_snapshot(snap, public_dir=public_dir)

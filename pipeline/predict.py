@@ -85,6 +85,9 @@ def load_predictions(path: Path) -> list[Prediction]:
         if not line:
             continue
         out.append(adapter.validate_json(line))
+    import sys
+
+    print(f"predict: loaded {len(out)} predictions from {path}", file=sys.stderr)
     return out
 
 
