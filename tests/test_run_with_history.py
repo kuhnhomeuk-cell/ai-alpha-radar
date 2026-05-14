@@ -130,9 +130,12 @@ def test_run_with_no_history_emits_cold_start_meta(tmp_path: Path) -> None:
 
 def test_run_with_synthetic_history_computes_nonzero_velocity(tmp_path: Path) -> None:
     today = date(2026, 5, 13)
-    # Pre-seed 14 days of synthetic snapshots so "llm" carries 5 mentions/day.
+    # Pre-seed 14 days of snapshots with a regime shift mid-window:
+    # days 14..8 carry 1 mention/day; days 7..1 carry 20/day. PELT
+    # should find a breakpoint and report non-zero acceleration.
     for i in range(1, 15):
-        _write_prior_snapshot(tmp_path, today - timedelta(days=i), "llm", 5)
+        mentions = 1 if i > 7 else 20
+        _write_prior_snapshot(tmp_path, today - timedelta(days=i), "llm", mentions)
 
     snap = run.main(
         today=today,
@@ -150,7 +153,8 @@ def test_run_with_synthetic_history_computes_nonzero_velocity(tmp_path: Path) ->
     assert llm.velocity_score > 0.0
     assert len(llm.sparkline_14d) == 14
     assert sum(llm.sparkline_14d) > 0
-    # Yesterday's velocity was 1.0 (synthetic); today's is non-zero and different.
+    # PELT acceleration: with a real step from 1→20 mid-series, the
+    # changepoint-based acceleration should be non-zero.
     assert llm.velocity_acceleration != 0.0
 
 

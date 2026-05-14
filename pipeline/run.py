@@ -28,6 +28,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from pipeline import burst
+from pipeline import changepoint
 from pipeline import cluster as cluster_mod
 from pipeline import cold_start
 from pipeline import demand as demand_mod
@@ -276,8 +277,9 @@ def _build_trend(
             prior_alpha=prior_alpha,
             prior_beta=prior_beta,
         )
-        velocity_acceleration = velocity_score - _prior_velocity(
-            history, term.canonical_form, today
+        # PELT acceleration replaces the day-over-day delta (audit 2.3).
+        velocity_acceleration = changepoint.velocity_acceleration(
+            sparkline, today_count=today_count
         )
     else:
         velocity_score = 0.0
