@@ -119,8 +119,23 @@ def test_lifecycle_builder_when_repos_at_three_sat_under_thirtyfive_signal_stron
         saturation=20,
         velocity=1.5,
         builder_signal=0.8,
+        velocity_significance=2.5,  # passes 95% Mann-Kendall gate
     )
     assert stage == "builder"
+
+
+def test_lifecycle_builder_blocked_when_velocity_not_significant() -> None:
+    """Audit 2.9: builder requires Mann-Kendall significance >= 1.96 (95%)."""
+    stage = score.lifecycle_stage(
+        arxiv_30d=10,
+        github_repos_7d=5,
+        hn_points_7d=50,
+        saturation=20,
+        velocity=1.5,
+        builder_signal=0.8,
+        velocity_significance=1.0,  # below 1.96 threshold
+    )
+    assert stage == "whisper"
 
 
 def test_lifecycle_creator_when_saturation_in_mid_band() -> None:

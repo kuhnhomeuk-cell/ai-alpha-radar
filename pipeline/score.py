@@ -53,6 +53,7 @@ MENTIONS_30D_FLOOR = 10  # kills low-count inflation per PLAN.md §6.1
 CONVERGENCE_WINDOW_HOURS = 72
 CONVERGENCE_MIN_SOURCES = 3
 MANN_KENDALL_MIN_LENGTH = 4
+MANN_KENDALL_SIGNIFICANCE_THRESHOLD = 1.96  # 95% confidence two-sided
 
 
 def velocity(mentions_7d: int, mentions_30d: int) -> float:
@@ -95,11 +96,17 @@ def lifecycle_stage(
     saturation: float,
     velocity: float,
     builder_signal: float,
+    velocity_significance: float = 0.0,
 ) -> LifecycleStage:
     """Rule-based lifecycle classification per PLAN.md §6.4.
 
     Rules evaluated in priority order; first match wins. Defaults to
     'whisper' when no rule matches (semantically: 'we're watching').
+
+    Audit 2.9: builder rule now also requires Mann-Kendall significance
+    ≥ MANN_KENDALL_SIGNIFICANCE_THRESHOLD (1.96, 95% confidence) so a
+    keyword promoting from whisper→builder must show a statistically
+    real upward trend, not just one good day.
     """
     # Commodity — heavy saturation, slow velocity, mature ecosystem
     if saturation > 75 and velocity < 1.1 and github_repos_7d > 100:
@@ -110,8 +117,13 @@ def lifecycle_stage(
     # Creator — mid saturation band, sustaining velocity
     if 35 <= saturation <= 60 and velocity > 1.2 and hn_points_7d > 50:
         return "creator"
-    # Builder — practitioners shipping repos
-    if github_repos_7d >= 3 and saturation < 35 and builder_signal > 0.5:
+    # Builder — practitioners shipping repos with a significant trend
+    if (
+        github_repos_7d >= 3
+        and saturation < 35
+        and builder_signal > 0.5
+        and velocity_significance >= MANN_KENDALL_SIGNIFICANCE_THRESHOLD
+    ):
         return "builder"
     # Whisper — early arxiv signal, few repos, low saturation, real velocity
     if (

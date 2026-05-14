@@ -273,6 +273,10 @@ def _build_trend(
     else:
         velocity_score = 0.0
         velocity_acceleration = 0.0
+    # Mann-Kendall significance over the 14d sparkline (including today).
+    velocity_significance = abs(
+        score.mann_kendall_confidence(sparkline + [today_count])
+    )
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
@@ -281,6 +285,7 @@ def _build_trend(
         saturation=saturation_pct,
         velocity=velocity_score,
         builder_signal=builder_signal,
+        velocity_significance=velocity_significance,
     )
     tbts_score = score.tbts(
         velocity_score=velocity_score,
@@ -296,6 +301,7 @@ def _build_trend(
         sources=sources,
         velocity_score=velocity_score,
         velocity_acceleration=velocity_acceleration,
+        velocity_significance=velocity_significance,
         saturation=saturation_pct,
         hidden_gem_score=hidden_gem_score,
         builder_signal=builder_signal,

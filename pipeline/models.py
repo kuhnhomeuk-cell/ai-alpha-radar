@@ -76,6 +76,7 @@ class Trend(BaseModel):
     sources: SourceCounts
     velocity_score: float
     velocity_acceleration: float
+    velocity_significance: float = 0.0
     saturation: float
     hidden_gem_score: float
     builder_signal: float
