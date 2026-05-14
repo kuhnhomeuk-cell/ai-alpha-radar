@@ -28,6 +28,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from pipeline import burst
+from pipeline import calibration
 from pipeline import changepoint
 from pipeline import cluster as cluster_mod
 from pipeline import cluster_identity
@@ -828,6 +829,9 @@ def main(
             "history_days_loaded": len(history),
             "predictions_on_disk": len(preds),
             "predictions_pending_unmatched": len(stuck_pending),
+            "prediction_calibration": calibration.compute_calibration_summary(
+                updated_preds
+            ),
         },
     )
     snapshot.write_snapshot(snap, public_dir=public_dir)
