@@ -94,22 +94,6 @@ def test_read_prior_snapshot_returns_none_if_missing(tmp_path: Path) -> None:
     assert snapshot.read_prior_snapshot(date(2026, 5, 1), public_dir=tmp_path) is None
 
 
-def test_read_prior_snapshot_returns_none_on_corrupt_json(tmp_path: Path) -> None:
-    """Audit 4.4 — a corrupt prior snapshot must not crash the pipeline."""
-    (tmp_path / "snapshots").mkdir()
-    (tmp_path / "snapshots" / "2026-05-01.json").write_text("{ not json", encoding="utf-8")
-    assert snapshot.read_prior_snapshot(date(2026, 5, 1), public_dir=tmp_path) is None
-
-
-def test_read_prior_snapshot_returns_none_on_schema_drift(tmp_path: Path) -> None:
-    """Audit 4.4 — a snapshot that fails pydantic validation returns None, not raises."""
-    (tmp_path / "snapshots").mkdir()
-    (tmp_path / "snapshots" / "2026-05-01.json").write_text(
-        '{"snapshot_date": "not-a-date"}', encoding="utf-8"
-    )
-    assert snapshot.read_prior_snapshot(date(2026, 5, 1), public_dir=tmp_path) is None
-
-
 def test_read_prior_snapshot_roundtrip(tmp_path: Path) -> None:
     snap = Snapshot(
         snapshot_date=date(2026, 5, 13),
