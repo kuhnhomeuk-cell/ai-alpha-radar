@@ -61,6 +61,30 @@ def test_empty_input_returns_empty_dict() -> None:
     assert semantic_scholar.parse_batch_response([], []) == {}
 
 
+def test_enrich_papers_chunks_batches_over_500(monkeypatch) -> None:
+    """Audit item 2.8: ids beyond the S2 batch cap must be split into chunks
+    and merged, not raise ValueError."""
+    from pipeline.fetch.semantic_scholar import (
+        CitationInfo,
+        S2_BATCH_LIMIT,
+        enrich_papers,
+    )
+
+    big_input = [f"{2200000 + i}" for i in range(S2_BATCH_LIMIT + 100)]  # 600 ids
+    captured_chunks: list[list[str]] = []
+
+    def fake_post_batch(chunk, api_key):
+        captured_chunks.append(list(chunk))
+        return {aid: CitationInfo(citation_count=1, influential_citation_count=0, references_count=0) for aid in chunk}
+
+    monkeypatch.setattr(semantic_scholar, "_post_batch", fake_post_batch)
+    out = enrich_papers(big_input)
+    assert len(captured_chunks) == 2
+    assert len(captured_chunks[0]) == S2_BATCH_LIMIT
+    assert len(captured_chunks[1]) == 100
+    assert len(out) == S2_BATCH_LIMIT + 100
+
+
 def test_prefix_arxiv_ids_handles_bare_and_url_and_already_prefixed() -> None:
     inputs = ["1706.03762", "http://arxiv.org/abs/2005.14165v1", "ARXIV:2203.02155"]
     out = semantic_scholar._prefix_arxiv_ids(inputs)
