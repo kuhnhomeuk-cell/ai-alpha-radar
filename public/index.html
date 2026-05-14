@@ -500,7 +500,7 @@ body::after {
 .leaderboard::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 3px; }
 .lb-row {
   display: grid;
-  grid-template-columns: 28px 1fr 56px 38px 22px;
+  grid-template-columns: 28px 1fr 48px 56px 38px 22px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   align-items: center;
@@ -508,6 +508,17 @@ body::after {
   gap: 8px;
   transition: background 0.1s;
 }
+.lb-spark { display: inline-flex; opacity: 0.85; }
+.lb-spark svg { display: block; }
+.lb-volume {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 9px;
+}
+.lb-delta.up   { color: var(--good); }
+.lb-delta.down { color: var(--bad); }
 .lb-row:hover { background: rgba(0, 240, 255, 0.04); }
 .lb-row .rank { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
 .lb-row .name {
@@ -2294,16 +2305,25 @@ function renderLeaderboard() {
     const kw = t.canonical_form || t.keyword;
     const sel = kw === state.selectedKeyword;
     const conv = hasConvergence(t);
+    const stageColor = STAGE_META[t.stage]?.color || '#8b9cb0';
+    const spark = (t.sparkline || []).length
+      ? `<span class="lb-spark">${sparklineSVG(t.sparkline, 48, 14, stageColor)}</span>`
+      : '';
+    const volume = totalMentions7d(t);
+    const deltaPct = weekDeltaPct(t.sparkline);
+    const deltaCls = deltaPct > 0 ? 'up' : (deltaPct < 0 ? 'down' : '');
     return `
       <div class="lb-row${sel ? ' selected' : ''}" data-kw="${escapeAttr(kw)}">
         <div class="rank">${String(i + 1).padStart(2, '0')}</div>
         <div>
           <div class="name">${escapeHtml(t.keyword)}</div>
-          <div class="stage-mini" style="color:${STAGE_META[t.stage]?.color || '#8b9cb0'}">
+          <div class="stage-mini" style="color:${stageColor}">
             <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
             ${conv ? `<span class="conv-badge" data-conv="${escapeAttr(kw)}" title="View convergence timeline">⚡ CONV</span>` : ''}
+            <span class="lb-volume" title="total mentions across arxiv + GH + HN today">vol ${volume}${deltaPct !== null ? ` <span class="lb-delta ${deltaCls}">${deltaPct > 0 ? '+' : ''}${deltaPct}%</span>` : ''}</span>
           </div>
         </div>
+        ${spark}
         <div class="tbts">${t.tbts}</div>
         <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}">${velArrow(t.velocity)}</div>
         <button class="star-btn${inWatch(kw) ? ' on' : ''}" data-kw="${escapeAttr(kw)}" aria-label="Toggle watchlist" title="Toggle watchlist">★</button>
@@ -2330,6 +2350,41 @@ function velArrow(v) {
   if (!v || v === 0) return '—';
   if (v > 1) return '▲' + v.toFixed(1);
   return '▼' + v.toFixed(1);
+}
+
+/* ---- audit 3.11: inline sparkline + absolute volume ---- */
+function sparklineSVG(values, width, height, color) {
+  if (!values || values.length === 0) return '';
+  const w = width, h = height, pad = 1;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const n = values.length;
+  const stepX = (w - 2 * pad) / Math.max(n - 1, 1);
+  const pts = values.map((v, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - ((v - min) / span) * (h - 2 * pad);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none" aria-hidden="true">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function totalMentions7d(t) {
+  const s = t.sources || {};
+  return (s.arxiv_30d || 0) + (s.github_repos_7d || 0) + (s.hn_posts_7d || 0);
+}
+
+function weekDeltaPct(spark) {
+  if (!spark || spark.length < 8) return null;
+  const tail = spark.slice(-7);
+  const head = spark.slice(0, -7);
+  if (!head.length) return null;
+  const tailMean = tail.reduce((a, b) => a + b, 0) / tail.length;
+  const headMean = head.reduce((a, b) => a + b, 0) / head.length;
+  if (headMean === 0) return tailMean > 0 ? 100 : 0;
+  return Math.round((tailMean / headMean - 1) * 100);
 }
 function renderBriefing() {
   document.getElementById('briefingText').textContent =
