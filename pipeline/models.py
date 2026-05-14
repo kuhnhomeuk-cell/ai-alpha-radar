@@ -121,6 +121,16 @@ class DailyBriefing(BaseModel):
     generated_at: datetime
 
 
+class NewsletterSignal(BaseModel):
+    """Audit 3.2 — a URL surfaced across multiple curated AI newsletters."""
+
+    url: str
+    unique_newsletters_count: int
+    newsletters: list[str]
+    first_seen: datetime
+    last_seen: datetime
+
+
 class HitRate(BaseModel):
     rate: float
     verified: int
@@ -142,3 +152,5 @@ class Snapshot(BaseModel):
     # Per-cluster centroid vectors in UMAP reduced space. Keyed by stable
     # cluster_id (audit 2.6). Empty when fewer terms than HDBSCAN's floor.
     cluster_centroids: dict[int, list[float]] = {}
+    # Audit 3.2 — URLs surfaced across curated AI newsletters.
+    newsletter_signals: list[NewsletterSignal] = []

@@ -34,11 +34,19 @@ from pipeline import cluster_identity
 from pipeline import cold_start
 from pipeline import demand as demand_mod
 from pipeline import predict, score, snapshot, summarize
-from pipeline.fetch import arxiv, github, hackernews, huggingface, semantic_scholar
+from pipeline.fetch import (
+    arxiv,
+    github,
+    hackernews,
+    huggingface,
+    newsletters,
+    semantic_scholar,
+)
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
 from pipeline.fetch.huggingface import HFModel
+from pipeline.fetch.newsletters import NewsletterSignal
 from pipeline.fetch.semantic_scholar import CitationInfo
 from pipeline.models import (
     ConvergenceEvent,
@@ -428,6 +436,7 @@ def main(
     posts: Optional[list[HNPost]] = None,
     repos: Optional[list[RepoStat]] = None,
     hf_models: Optional[list[HFModel]] = None,
+    newsletter_signals: Optional[list[NewsletterSignal]] = None,
     s2_data: Optional[dict[str, CitationInfo]] = None,
     use_claude: bool = False,
     max_cost_cents: Optional[float] = None,
@@ -497,6 +506,16 @@ def main(
             print(f"huggingface fetch failed: {e}", file=sys.stderr)
             hf_models = []
     fetch_health["huggingface"] = len(hf_models) > 0
+
+    # Newsletter RSS cross-mentions — no auth, curated feed list.
+    if newsletter_signals is None:
+        try:
+            newsletter_signals = newsletters.fetch_newsletter_signals(
+                today=today_dt
+            )
+        except Exception as e:
+            print(f"newsletter fetch failed: {e}", file=sys.stderr)
+            newsletter_signals = []
 
     # Semantic Scholar enrichment — runs against arxiv ids we just fetched.
     if s2_data is None:
@@ -687,6 +706,7 @@ def main(
         hit_rate=hit_rate,
         past_predictions=past_predictions[-90:],  # cap retention at 90 entries
         cluster_centroids=canonical_centroids,
+        newsletter_signals=newsletter_signals,
         meta={
             "pipeline_runtime_seconds": round(time.time() - started, 2),
             "fetch_seconds": fetch_seconds,

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Newsletter B</title>
+    <link>https://newsletter-b.example.com</link>
+    <description>Another test feed</description>
+    <item>
+      <title>Daily — May 13</title>
+      <link>https://newsletter-b.example.com/2026-05-13</link>
+      <pubDate>Wed, 13 May 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[
+        Cross-mentioned: <a href="https://github.com/anthropic/mcp">MCP servers</a>
+        and <a href="https://www.latent.space/p/world-model-agents">world-model agents</a>.
+        New tool I'm trying: <a href="https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct">Qwen 2.5 Coder</a>.
+      ]]></description>
+    </item>
+  </channel>
+</rss>

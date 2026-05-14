@@ -174,6 +174,7 @@ frontend interface; any change requires a frontend coordination note.
     "claude_cache_hit_rate": 0.78
   },
   "data_freshness_status": "live",
-  "cluster_centroids": {}
+  "cluster_centroids": {},
+  "newsletter_signals": []
 }
 ```
