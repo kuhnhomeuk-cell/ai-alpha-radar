@@ -56,12 +56,36 @@ MANN_KENDALL_MIN_LENGTH = 4
 MANN_KENDALL_SIGNIFICANCE_THRESHOLD = 1.96  # 95% confidence two-sided
 
 
-def velocity(mentions_7d: int, mentions_30d: int) -> float:
-    """`mentions_7d / max(mentions_30d/30 * 7, 1)` with mentions_30d floored at 10."""
+def velocity(
+    mentions_7d: int,
+    mentions_30d: int,
+    *,
+    prior_alpha: Optional[float] = None,
+    prior_beta: Optional[float] = None,
+) -> float:
+    """`mentions_7d / max(mentions_30d/30 * 7, 1)` with mentions_30d floored at 10.
+
+    Audit 2.1: when prior_alpha/prior_beta are supplied AND mentions_7d <
+    cold_start.SMOOTHING_THRESHOLD, the numerator is replaced with the
+    Beta-Binomial posterior expected count over 7 days. This pulls
+    single-mention spikes toward the historical baseline.
+    """
+    from pipeline import cold_start  # local import to avoid cycle
+
     floored_30d = max(mentions_30d, MENTIONS_30D_FLOOR)
     expected_7d = floored_30d / 30 * 7
     denom = max(expected_7d, 1.0)
-    return mentions_7d / denom
+
+    numerator: float = mentions_7d
+    if (
+        prior_alpha is not None
+        and prior_beta is not None
+        and mentions_7d < cold_start.SMOOTHING_THRESHOLD
+    ):
+        numerator = cold_start.smoothed_count(
+            mentions_7d, prior_alpha, prior_beta, n_days=7
+        )
+    return numerator / denom
 
 
 def saturation(

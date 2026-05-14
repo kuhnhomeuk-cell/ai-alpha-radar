@@ -28,6 +28,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from pipeline import cluster as cluster_mod
+from pipeline import cold_start
 from pipeline import demand as demand_mod
 from pipeline import predict, score, snapshot, summarize
 from pipeline.fetch import arxiv, github, hackernews, semantic_scholar
@@ -253,6 +254,8 @@ def _build_trend(
     convergence: ConvergenceEvent,
     s2_citations_7d: int = 0,
     history: Optional[dict[date, Snapshot]] = None,
+    prior_alpha: Optional[float] = None,
+    prior_beta: Optional[float] = None,
 ) -> Trend:
     sources = _build_source_counts(term, s2_citations_7d=s2_citations_7d)
     history = history or {}
@@ -266,7 +269,12 @@ def _build_trend(
         )
     )
     if history:
-        velocity_score = score.velocity(today_count, prior_30d_total)
+        velocity_score = score.velocity(
+            today_count,
+            prior_30d_total,
+            prior_alpha=prior_alpha,
+            prior_beta=prior_beta,
+        )
         velocity_acceleration = velocity_score - _prior_velocity(
             history, term.canonical_form, today
         )
@@ -382,7 +390,17 @@ def main(
 
     # ---- 0. Load prior snapshots for velocity / sparkline math ----
     history = _load_history(public_dir, today_d, VELOCITY_LOOKBACK_DAYS)
-    cold_start = len(history) == 0
+    is_cold_start = len(history) == 0
+    # Empirical Beta(α, β) prior for low-count smoothing — fitted across
+    # every term-day observed in history.
+    historical_term_day_counts = [
+        _trend_total_mentions(t)
+        for snap in history.values()
+        for t in snap.trends
+    ]
+    prior_alpha, prior_beta = cold_start.compute_empirical_prior(
+        historical_term_day_counts
+    )
 
     # ---- 1. Fetch (or accept injected inputs for tests) ----
     fetch_started = time.time()
@@ -459,7 +477,7 @@ def main(
             meta={
                 "empty": True,
                 "fetch_seconds": fetch_seconds,
-                "cold_start": cold_start,
+                "cold_start": is_cold_start,
                 "history_days_loaded": len(history),
             },
         )
@@ -502,6 +520,8 @@ def main(
                 convergence=convergence,
                 s2_citations_7d=s2_citations,
                 history=history,
+                prior_alpha=prior_alpha,
+                prior_beta=prior_beta,
             )
         )
 
@@ -574,7 +594,7 @@ def main(
             },
             "trends_processed": len(trends),
             "use_claude": use_claude,
-            "cold_start": cold_start,
+            "cold_start": is_cold_start,
             "history_days_loaded": len(history),
             "predictions_on_disk": len(preds),
             "predictions_pending_unmatched": len(stuck_pending),
