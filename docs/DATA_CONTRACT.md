@@ -170,6 +170,7 @@ frontend interface; any change requires a frontend coordination note.
     "claude_cost_usd": 0.043,
     "claude_cache_hit_rate": 0.78
   },
-  "data_freshness_status": "live"
+  "data_freshness_status": "live",
+  "cluster_centroids": {}
 }
 ```

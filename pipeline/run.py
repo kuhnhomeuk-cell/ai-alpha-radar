@@ -30,6 +30,7 @@ from dotenv import load_dotenv
 from pipeline import burst
 from pipeline import changepoint
 from pipeline import cluster as cluster_mod
+from pipeline import cluster_identity
 from pipeline import cold_start
 from pipeline import demand as demand_mod
 from pipeline import predict, score, snapshot, summarize
@@ -494,7 +495,43 @@ def main(
         return snap
 
     # ---- 4. Cluster ----
-    cluster_assignments = cluster_mod.cluster_terms([t.canonical_form for t in top_terms])
+    raw_assignments, raw_centroids = cluster_mod.cluster_terms_with_centroids(
+        [t.canonical_form for t in top_terms]
+    )
+    # Canonicalize today's HDBSCAN ids against yesterday's centroids so
+    # cluster_id is stable across snapshots (audit 2.6).
+    yesterday = today_d - timedelta(days=1)
+    prior_snap = history.get(yesterday)
+    prior_centroids_arr: dict[int, "np.ndarray"] = {}
+    if prior_snap is not None and prior_snap.cluster_centroids:
+        import numpy as np
+
+        prior_centroids_arr = {
+            int(k): np.array(v) for k, v in prior_snap.cluster_centroids.items()
+        }
+    import numpy as np
+
+    new_centroids_arr = {
+        cid: np.array(vec) for cid, vec in raw_centroids.items()
+    }
+    raw_labels = {
+        ca.cluster_id: ca.cluster_label for ca in raw_assignments.values()
+    }
+    id_remap = cluster_identity.canonicalize_cluster_ids(
+        new_centroids_arr,
+        prior_centroids_arr,
+        labels_by_new_id=raw_labels,
+    )
+    cluster_assignments = {
+        term: cluster_mod.ClusterAssignment(
+            cluster_id=id_remap.get(ca.cluster_id, ca.cluster_id),
+            cluster_label=ca.cluster_label,
+        )
+        for term, ca in raw_assignments.items()
+    }
+    canonical_centroids: dict[int, list[float]] = {
+        id_remap[cid]: vec for cid, vec in raw_centroids.items() if cid in id_remap
+    }
 
     # ---- 5. Score (per-source percentiles → saturation) ----
     arxiv_pcts = _percentile_ranks([t.arxiv_mentions for t in top_terms])
@@ -589,6 +626,7 @@ def main(
         briefing=briefing,
         hit_rate=hit_rate,
         past_predictions=past_predictions[-90:],  # cap retention at 90 entries
+        cluster_centroids=canonical_centroids,
         meta={
             "pipeline_runtime_seconds": round(time.time() - started, 2),
             "fetch_seconds": fetch_seconds,

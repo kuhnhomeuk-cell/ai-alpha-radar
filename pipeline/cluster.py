@@ -56,26 +56,44 @@ def cluster_terms(
     velocities: Optional[dict[str, float]] = None,
     random_state: int = 42,
 ) -> dict[str, ClusterAssignment]:
-    """Embed → UMAP → HDBSCAN. Returns {term: ClusterAssignment}.
+    """Embed → UMAP → HDBSCAN. Returns {term: ClusterAssignment}."""
+    assignments, _ = cluster_terms_with_centroids(
+        terms, velocities=velocities, random_state=random_state
+    )
+    return assignments
 
-    With fewer terms than HDBSCAN_MIN_CLUSTER_SIZE every term goes to noise
-    (cluster_id=-1) — HDBSCAN can't form a cluster smaller than its floor.
+
+def cluster_terms_with_centroids(
+    terms: list[str],
+    *,
+    velocities: Optional[dict[str, float]] = None,
+    random_state: int = 42,
+) -> tuple[dict[str, ClusterAssignment], dict[int, list[float]]]:
+    """Embed → UMAP → HDBSCAN. Returns ({term: ClusterAssignment}, {cluster_id: centroid}).
+
+    Audit 2.6: inputs are sorted before embedding so HDBSCAN's order-
+    dependent labelling is deterministic across runs given the same
+    input set. Centroids are computed in the reduced UMAP space so
+    cluster_identity.canonicalize_cluster_ids can match against
+    yesterday's centroids without re-embedding.
     """
     if not terms:
-        return {}
+        return {}, {}
+    # Sort for determinism (audit 2.6).
+    terms = sorted(set(terms))
     if len(terms) < HDBSCAN_MIN_CLUSTER_SIZE:
-        return {
-            t: ClusterAssignment(cluster_id=-1, cluster_label=UNCLUSTERED_LABEL)
-            for t in terms
-        }
+        return (
+            {
+                t: ClusterAssignment(cluster_id=-1, cluster_label=UNCLUSTERED_LABEL)
+                for t in terms
+            },
+            {},
+        )
 
     model = _get_model()
     embeddings = model.encode(terms, show_progress_bar=False)
 
     n_neighbors = min(UMAP_N_NEIGHBORS, len(terms) - 1)
-    # Spectral init needs k < N for its sparse eigendecomposition. For tiny
-    # term lists fall back to random init — same UMAP geometry, just a
-    # different starting point.
     init = "spectral" if len(terms) > UMAP_N_NEIGHBORS else "random"
     reducer = umap.UMAP(
         n_components=min(UMAP_N_COMPONENTS, len(terms) - 1),
@@ -94,8 +112,11 @@ def cluster_terms(
     labels = clusterer.fit_predict(reduced)
 
     cluster_to_terms: dict[int, list[str]] = {}
-    for term, lbl in zip(terms, labels):
-        cluster_to_terms.setdefault(int(lbl), []).append(term)
+    cluster_to_vectors: dict[int, list] = {}
+    for term, lbl, vec in zip(terms, labels, reduced):
+        cid = int(lbl)
+        cluster_to_terms.setdefault(cid, []).append(term)
+        cluster_to_vectors.setdefault(cid, []).append(vec)
 
     cluster_labels: dict[int, str] = {}
     for cluster_id, members in cluster_to_terms.items():
@@ -108,9 +129,18 @@ def cluster_terms(
             label_term = sorted(members)[0]
         cluster_labels[cluster_id] = label_term
 
-    return {
+    import numpy as np
+
+    centroids: dict[int, list[float]] = {}
+    for cluster_id, vecs in cluster_to_vectors.items():
+        if cluster_id == -1:
+            continue
+        centroids[cluster_id] = np.mean(np.array(vecs), axis=0).tolist()
+
+    assignments = {
         term: ClusterAssignment(
             cluster_id=int(lbl), cluster_label=cluster_labels[int(lbl)]
         )
         for term, lbl in zip(terms, labels)
     }
+    return assignments, centroids

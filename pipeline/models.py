@@ -135,3 +135,6 @@ class Snapshot(BaseModel):
     past_predictions: list[Prediction]
     meta: dict[str, Any]
     data_freshness_status: Literal["live", "stale", "error"] = "live"
+    # Per-cluster centroid vectors in UMAP reduced space. Keyed by stable
+    # cluster_id (audit 2.6). Empty when fewer terms than HDBSCAN's floor.
+    cluster_centroids: dict[int, list[float]] = {}
