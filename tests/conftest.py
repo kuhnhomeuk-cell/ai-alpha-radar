@@ -1,0 +1,43 @@
+"""Test isolation: prevent any live HTTP from the orchestrator path.
+
+`run.main()` auto-fetches every source whose input kwarg is None — that's the
+right operator default but the wrong test default. Pytest collection runs
+the orchestrator (directly in test_run_and_snapshot, transitively in tests
+that probe the pipeline-as-a-whole), and without these monkeypatches each
+of huggingface/newsletters/reddit/producthunt/replicate/bluesky fires real
+network requests, exhausting retry budgets and hanging the suite.
+
+Tests that genuinely exercise a fetcher's HTTP layer use respx and import
+the fetcher module directly — they bypass these stubs.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _stub_live_fetchers(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Fetcher-specific HTTP-layer tests (tests/test_fetch_*.py) drive httpx
+    # via respx and need the real function objects. Skip stubbing there.
+    fname = getattr(request.node, "fspath", None)
+    if fname is not None and fname.basename.startswith("test_fetch_"):
+        return
+
+    from pipeline.fetch import (
+        bluesky,
+        huggingface,
+        newsletters,
+        producthunt,
+        reddit,
+        replicate,
+    )
+
+    monkeypatch.setattr(huggingface, "fetch_trending_models", lambda *a, **k: [])
+    monkeypatch.setattr(newsletters, "fetch_newsletter_signals", lambda *a, **k: [])
+    monkeypatch.setattr(reddit, "fetch_top_posts", lambda *a, **k: [])
+    monkeypatch.setattr(producthunt, "fetch_trending_launches", lambda *a, **k: [])
+    monkeypatch.setattr(replicate, "fetch_trending", lambda *a, **k: [])
+    monkeypatch.setattr(bluesky, "read_mention_counts", lambda *a, **k: {})
