@@ -278,20 +278,27 @@ def extract_topics(
         hints_in=min(len({h.strip() for h in candidate_hints if h.strip()}), MAX_CANDIDATE_HINTS_IN_PROMPT),
     )
 
-    response = client.messages.create(
+    with client.messages.stream(
         model=HAIKU_MODEL,
         max_tokens=MAX_OUTPUT_TOKENS,
         system=_system_block(),
         messages=[
             {"role": "user", "content": user_prompt}
         ],
-    )
-    if getattr(response, "stop_reason", None) == "max_tokens":
+    ) as stream:
+        chunks = 0
+        for _ in stream.text_stream:
+            chunks += 1
+            if chunks % 50 == 0:
+                log("topic_extraction_progress", chunks=chunks)
+        final = stream.get_final_message()
+
+    if getattr(final, "stop_reason", None) == "max_tokens":
         raise ClaudeParseError(
             "Claude hit max_tokens mid-output — JSON is truncated. "
             f"Increase MAX_OUTPUT_TOKENS (current: {MAX_OUTPUT_TOKENS})."
         )
-    parsed = _extract_json(response.content[0].text)
+    parsed = _extract_json(final.content[0].text)
     entries = parsed.get("topics") or []
     log("topic_extraction_done", model=HAIKU_MODEL, topics=len(entries))
     return [_parse_topic_entry(e) for e in entries]

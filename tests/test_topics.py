@@ -56,21 +56,44 @@ def _repo(full_name: str, description: str = "") -> RepoStat:
     )
 
 
+class _FakeStream:
+    """Mimics anthropic SDK's MessageStream — yields text chunks and exposes
+    get_final_message(). Acts as its own context manager.
+    """
+
+    def __init__(self, response_text: str, stop_reason: str) -> None:
+        self._response_text = response_text
+        self._stop_reason = stop_reason
+
+    def __enter__(self) -> "_FakeStream":
+        return self
+
+    def __exit__(self, *_exc: Any) -> None:
+        return None
+
+    @property
+    def text_stream(self) -> Any:
+        yield self._response_text
+
+    def get_final_message(self) -> Any:
+        return SimpleNamespace(
+            content=[SimpleNamespace(text=self._response_text)],
+            stop_reason=self._stop_reason,
+        )
+
+
 class FakeAnthropic:
-    """Stub Anthropic client. Records calls and returns canned response text."""
+    """Stub Anthropic client. Records stream() calls and yields canned response text."""
 
     def __init__(self, response_text: str, *, stop_reason: str = "end_turn") -> None:
         self.calls: list[dict[str, Any]] = []
         self._response_text = response_text
         self._stop_reason = stop_reason
-        self.messages = SimpleNamespace(create=self._create)
+        self.messages = SimpleNamespace(stream=self._stream)
 
-    def _create(self, **kwargs: Any) -> Any:
+    def _stream(self, **kwargs: Any) -> _FakeStream:
         self.calls.append(kwargs)
-        return SimpleNamespace(
-            content=[SimpleNamespace(text=self._response_text)],
-            stop_reason=self._stop_reason,
-        )
+        return _FakeStream(self._response_text, self._stop_reason)
 
 
 # ---------- one-call contract ----------
@@ -280,17 +303,14 @@ def test_extract_topics_raises_on_max_tokens_truncation() -> None:
     """If Claude hit max_tokens mid-output the JSON is incomplete — fail loudly,
     not silently parse a partial result.
     """
-    class TruncatedFake:
-        messages = SimpleNamespace(
-            create=lambda **kw: SimpleNamespace(
-                content=[SimpleNamespace(text='```json\n{"topics": [{"canonical_name": "incomplete')],
-                stop_reason="max_tokens",
-            )
-        )
+    fake = FakeAnthropic(
+        '```json\n{"topics": [{"canonical_name": "incomplete',
+        stop_reason="max_tokens",
+    )
     with pytest.raises(topics.ClaudeParseError, match="max_tokens"):
         topics.extract_topics(
             papers=[_paper("arx/1", "X")], posts=[], repos=[],
-            candidate_hints=[], client=TruncatedFake(),
+            candidate_hints=[], client=fake,
         )
 
 
