@@ -141,6 +141,12 @@ const DEEP_DIVE_SYSTEM =
   "what the trend is, why it matters now, two concrete content angles. " +
   "Be punchy, no jargon, no fluff. Niche: {niche}.";
 
+// Audit 4.1 — refuse anything that would cost more than ~50 cents to forward.
+// 5000 bytes ≈ 1250 tokens, well under Sonnet's 200k window but already large
+// for a deep-dive prompt where 200 tokens is plenty.
+const MAX_BODY_BYTES = 5000;
+const MAX_ESTIMATED_INPUT_TOKENS = 200;
+
 async function deepDive(req: Request, env: Env, origin: string | null): Promise<Response> {
   const day = todayUtcIsoDate();
   const cap = parseInt(env.DAILY_SPEND_CAP_CENTS || "30", 10);
@@ -152,11 +158,38 @@ async function deepDive(req: Request, env: Env, origin: string | null): Promise<
       origin,
     );
   }
+  const contentLength = parseInt(req.headers.get("content-length") ?? "0", 10);
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonResponse(
+      { error: "payload too large", limit_bytes: MAX_BODY_BYTES },
+      { status: 413 },
+      origin,
+    );
+  }
   let body: DeepDiveRequest;
+  let rawText: string;
   try {
-    body = (await req.json()) as DeepDiveRequest;
+    rawText = await req.text();
+    body = JSON.parse(rawText) as DeepDiveRequest;
   } catch {
     return jsonResponse({ error: "invalid JSON body" }, { status: 400 }, origin);
+  }
+  // Belt-and-suspenders against missing/spoofed content-length: re-check the
+  // actual byte length and estimate the token cost the body would impose.
+  if (rawText.length > MAX_BODY_BYTES) {
+    return jsonResponse(
+      { error: "payload too large", limit_bytes: MAX_BODY_BYTES },
+      { status: 413 },
+      origin,
+    );
+  }
+  const estimatedInputTokens = Math.ceil(rawText.length / 4);
+  if (estimatedInputTokens > MAX_ESTIMATED_INPUT_TOKENS) {
+    return jsonResponse(
+      { error: "request too large", estimated_tokens: estimatedInputTokens },
+      { status: 413 },
+      origin,
+    );
   }
   if (!body.keyword) {
     return jsonResponse({ error: "missing keyword" }, { status: 400 }, origin);
