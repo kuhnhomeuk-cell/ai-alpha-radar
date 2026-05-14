@@ -906,8 +906,18 @@ def main(
                 break
         t.top_questions = list(dict.fromkeys(topic_qs))[:5]
 
-    # ---- 9. Claude enrichment (opt-in) ----
+    # ---- 9. Claude enrichment (opt-in, behind cost cap — audit 1.2) ----
     if use_claude:
+        estimated_cents = summarize.estimate_batch_cost_cents(len(trends))
+        if max_cost_cents is not None and estimated_cents > max_cost_cents:
+            log(
+                "claude_cost_cap_exceeded",
+                level="error",
+                estimated_cents=round(estimated_cents, 2),
+                cap_cents=round(max_cost_cents, 2),
+                num_cards=len(trends),
+            )
+            sys.exit(3)
         trends = _maybe_enrich_with_claude(trends, niche=niche)
 
     # ---- 10. Predictions update ----
@@ -1017,10 +1027,16 @@ def _cli() -> int:
         action="store_true",
         help="Enable live Claude calls (topic extraction is required as of v0.1.1)",
     )
+    parser.add_argument(
+        "--max-cost-cents",
+        type=float,
+        default=None,
+        help="Audit 1.2 — abort with exit code 3 if the estimated batch cost exceeds this cap.",
+    )
     args = parser.parse_args()
 
     load_dotenv(ROOT / ".env.local", override=True)
-    snap = main(use_claude=args.claude)
+    snap = main(use_claude=args.claude, max_cost_cents=args.max_cost_cents)
     print(
         f"snapshot written: {len(snap.trends)} trends, "
         f"{len(snap.demand_clusters)} demand clusters, "
