@@ -1,0 +1,67 @@
+v0.1.1 — topics pipeline frontend verification
+================================================
+
+Source: read_page accessibility tree dump from
+http://localhost:8765/index.html, after running
+
+    poetry run python -c "from pipeline import run, topics; \
+        run.main(use_claude=False, extract_topics_fn=topics.extract_topics)"
+
+(One live haiku-4-5 call. ~$0.03. Fetcher health degraded:
+arxiv 429 rate-limited, github 401 stale PAT — HN alone contributed
+474 posts which still yielded 30 named topics.)
+
+The frontend, served from public/, rendered the new keywords in every
+UI surface that used to show n-gram noise.
+
+------------------------------------------------------------
+TBTS leaderboard (top 20) — before v0.1.1 these would have been
+"ai, models, model, claude, language, llm, hn, llms, learning, large,
+propose, data, language-models, results, existing, training, agent,
+agents, large-language, performance"
+------------------------------------------------------------
+
+  1. AI coding agents                            WHISPER · sat 30% · ▲2.6
+  2. Model context protocol (MCP)                WHISPER · sat 23% · ▲1.7
+  3. LLM token optimization                      WHISPER · sat 23% · ▲1.7
+  4. LLM observability and evaluation            WHISPER · sat 23% · ▲1.7
+  5. Small language models on edge               WHISPER · sat 23% · ▲1.7
+  6. Semantic memory for agents                  WHISPER · sat 15% · ▲1.3
+  7. Multimodal world models                     WHISPER · sat 15% · ▲1.3
+  8. LLM-generated code security                 WHISPER · sat 15% · ▲1.3
+  9. Post-training and fine-tuning optimization  WHISPER · sat 15% · ▲1.3
+ 10. Private LLM deployment                      WHISPER · sat 15% · ▲1.3
+ 11. Open-source LLM ecosystems                  WHISPER · sat 15% · ▲1.3
+ 12. State machine-driven agents                 WHISPER · sat 8%  · ▼0.9
+ 13. LLM hallucination mitigation                WHISPER · sat 8%  · ▼0.9
+ 14. Agentic search and retrieval                WHISPER · sat 8%  · ▼0.9
+ 15. Natural language autoencoders               WHISPER · sat 8%  · ▼0.9
+ 16. Continuous learning in LLMs                 WHISPER · sat 8%  · ▼0.9
+ 17. Browser-based LLM execution                 WHISPER · sat 8%  · ▼0.9
+ 18. AI model drift detection                    WHISPER · sat 8%  · ▼0.9
+ 19. Jailbreak detection for LLMs                WHISPER · sat 8%  · ▼0.9
+ 20. Multi-turn conversation handling            WHISPER · sat 8%  · ▼0.9
+
+Themes panel:
+  - AI coding agents          16 trends · avg 19 TBTS
+  - Browser-based LLM execution  14 trends · avg 18 TBTS
+
+Hidden Gems panel — Speculative KV caching, Tabular data foundation
+models, Prompt caching and optimization, Synthetic data generation
+with LLMs, Cross-model ensemble agents, Zero-shot prompting
+techniques, State machine-driven agents, LLM hallucination
+mitigation, Agentic search and retrieval, Natural language
+autoencoders, Continuous learning in LLMs, Browser-based LLM
+execution.
+
+Almanac panel — three angles per topic, still showing
+"(awaiting Claude enrichment)" since the live run was --no-claude
+(topics-only). Downstream summarize/demand/briefing prompts are
+deferred to the prompt-tuning pass per the 2026-05-13 session
+summary.
+
+Note on binary PNG: a screencapture-style PNG was not captured —
+the Chrome MCP tab was in a non-focused window so the macOS-level
+screenshot would have framed the wrong tab. The accessibility tree
+above is functionally equivalent proof that the dashboard rendered
+the new topic-based leaderboard correctly.

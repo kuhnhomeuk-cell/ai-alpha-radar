@@ -1,36 +1,43 @@
 """Daily pipeline orchestrator.
 
-Per BACKEND_BUILD §7 Step 12 — wires all upstream modules into one run that
-produces a valid public/data.json.
+Per BACKEND_BUILD §7 Step 12 with the v0.1.1 amendment — wires all
+upstream modules into one run that produces a valid public/data.json.
 
-Day-1 reality: with no snapshot history, velocity/acceleration/sparkline
-default to zero. Saturation is computed from today's per-source percentiles
-across the top-N candidate terms. Convergence fires when a term shows up
-in >=3 sources today (window collapses to 0h).
+v0.1.1 changes the trend primitive: n-grams → Claude-extracted named
+topics. The flow is now:
 
-Claude enrichment is OPT-IN (use_claude=True). The default `python -m
-pipeline.run` produces a Snapshot with placeholder summary/angles/risk —
-sufficient to verify the orchestration structure without burning budget.
-A full live run lives behind --claude.
+    fetch → normalize (now: candidate-hints producer)
+          → topics.extract_topics (ONE haiku-4-5 call, the new primitive)
+          → score / cluster / Claude enrichment, all keyed on topics.
+
+Day-1 reality: with no snapshot history, sparkline defaults to zero.
+Saturation is computed from today's per-source percentiles across the
+top-N topics. Convergence fires when a topic appears in ≥3 sources
+within 72h (using each source's earliest doc timestamp).
+
+Hard-fail policy: when there are source docs but no Claude call (no
+--claude and no injected extract_topics_fn), the run raises rather than
+falling back to placeholder data. Placeholder snapshots are how v0.1.0
+shipped n-gram noise — that surface is now closed.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
+import anthropic
 from dotenv import load_dotenv
 
 from pipeline import cluster as cluster_mod
 from pipeline import demand as demand_mod
-from pipeline import predict, score, snapshot, summarize
-from pipeline.fetch import arxiv, github, hackernews, semantic_scholar
+from pipeline import predict, score, snapshot, summarize, topics
+from pipeline.fetch import arxiv, github, hackernews
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
@@ -38,14 +45,14 @@ from pipeline.models import (
     ConvergenceEvent,
     CreatorAngles,
     DailyBriefing,
-    LifecycleStage,
     Prediction,
     RiskFlag,
     Snapshot,
     SourceCounts,
     Trend,
 )
-from pipeline.normalize import Term, extract_candidate_terms
+from pipeline.normalize import extract_candidate_terms
+from pipeline.topics import Topic
 
 ROOT = Path(__file__).resolve().parent.parent
 TOP_N_TRENDS = 30
@@ -59,49 +66,87 @@ PLACEHOLDER_SUMMARY = "(awaiting Claude enrichment)"
 PLACEHOLDER_ANGLE = "(awaiting Claude enrichment)"
 PLACEHOLDER_BRIEFING_TEXT = "Daily Movers Briefing pending Claude enrichment."
 
+ExtractTopicsFn = Callable[
+    [list[Paper], list[HNPost], list[RepoStat], list[str]], list[Topic]
+]
+
 
 # ---------- helpers ----------
 
 
-def _total_mentions(term: Term) -> int:
-    return term.arxiv_mentions + term.hn_mentions + term.github_mentions
-
-
 def _percentile_ranks(values: list[int]) -> list[float]:
-    """Cheap percentile rank: each value's position in the sorted ascending order /
-    (n-1) * 100. Ties get the same rank. Zeros stay at 0."""
+    """Cheap percentile rank: each value's position in the sorted ascending
+    order / (n-1) * 100. Ties get the same rank. Zeros stay at 0.
+    """
     if not values:
         return []
     sorted_vals = sorted(set(values))
-    rank_by_value = {v: i / (len(sorted_vals) - 1) * 100 if len(sorted_vals) > 1 else 0.0 for i, v in enumerate(sorted_vals)}
+    rank_by_value = {
+        v: i / (len(sorted_vals) - 1) * 100 if len(sorted_vals) > 1 else 0.0
+        for i, v in enumerate(sorted_vals)
+    }
     return [rank_by_value[v] for v in values]
 
 
-def _detect_convergence_today(
-    term: Term, has_s2: bool, today: datetime
-) -> ConvergenceEvent:
-    """Day-1 convergence: count which sources fired non-zero mentions for the term."""
-    appearances: dict = {}
-    if term.arxiv_mentions > 0:
-        appearances["arxiv"] = today
-    if term.hn_mentions > 0:
-        appearances["hackernews"] = today
-    if term.github_mentions > 0:
-        appearances["github"] = today
-    if has_s2:
-        appearances["semantic_scholar"] = today
-    return score.detect_convergence(appearances)
+def _build_doc_timestamps(
+    papers: list[Paper], posts: list[HNPost], repos: list[RepoStat]
+) -> dict[tuple[str, str | int], datetime]:
+    """Index source-doc-id → published_at across all three fetchers.
+
+    velocity_from_topic_docs reads this to bucket a topic's attributed
+    docs into 7d and 30d windows.
+    """
+    out: dict[tuple[str, str | int], datetime] = {}
+    for p in papers:
+        out[("arxiv", p.id)] = p.published_at
+    for p in posts:
+        out[("hackernews", p.id)] = p.created_at
+    for r in repos:
+        out[("github", r.full_name)] = r.created_at
+    return out
 
 
-def _build_source_counts(term: Term, *, s2_citations_7d: int = 0) -> SourceCounts:
+def _source_counts_from_topic(
+    topic: Topic,
+    doc_timestamps: dict[tuple[str, str | int], datetime],
+    today_dt: datetime,
+) -> SourceCounts:
+    """Bucket a topic's source docs into the SourceCounts shape the data
+    contract requires.
+
+    arxiv_30d uses a 30-day window; github_repos_7d and hn_posts_7d use
+    7-day windows. The other warming-up fields stay zero — they need
+    snapshot-to-snapshot deltas the day-1 pipeline doesn't yet have.
+    """
+    seven_d_ago = today_dt - timedelta(days=7)
+    thirty_d_ago = today_dt - timedelta(days=30)
+
+    def _count(source: str, cutoff: datetime) -> int:
+        return sum(
+            1
+            for doc_id in topic.source_doc_ids.get(source, [])
+            if ((ts := doc_timestamps.get((source, doc_id))) is not None and ts >= cutoff)
+        )
+
     return SourceCounts(
-        arxiv_30d=term.arxiv_mentions,
-        github_repos_7d=term.github_mentions,
-        github_stars_7d=0,  # warm-up; star velocity needs day-2+ snapshots
-        hn_posts_7d=term.hn_mentions,
-        hn_points_7d=0,  # warm-up; aggregate later
-        semantic_scholar_citations_7d=s2_citations_7d,
+        arxiv_30d=_count("arxiv", thirty_d_ago),
+        github_repos_7d=_count("github", seven_d_ago),
+        hn_posts_7d=_count("hackernews", seven_d_ago),
     )
+
+
+def _first_appearances_from_topic(
+    topic: Topic, doc_timestamps: dict[tuple[str, str | int], datetime]
+) -> dict[str, datetime]:
+    """Earliest doc timestamp per contributing source, used for convergence."""
+    out: dict[str, datetime] = {}
+    for src, ids in topic.source_doc_ids.items():
+        candidates = [
+            doc_timestamps[(src, i)] for i in ids if (src, i) in doc_timestamps
+        ]
+        if candidates:
+            out[src] = min(candidates)
+    return out
 
 
 def _placeholder_creator_angles() -> CreatorAngles:
@@ -123,8 +168,6 @@ def _placeholder_risk() -> RiskFlag:
 
 
 def _placeholder_prediction(keyword: str, today: date) -> Prediction:
-    from datetime import timedelta
-
     return Prediction(
         keyword=keyword,
         text=f"{keyword} placeholder prediction",
@@ -147,19 +190,18 @@ def _placeholder_briefing() -> DailyBriefing:
 
 
 def _build_trend(
-    term: Term,
+    topic: Topic,
     *,
     today: date,
+    sources: SourceCounts,
     saturation_pct: float,
     builder_signal: float,
     cluster_id: int,
     cluster_label: str,
     convergence: ConvergenceEvent,
-    s2_citations_7d: int = 0,
+    velocity_score: float,
 ) -> Trend:
-    sources = _build_source_counts(term, s2_citations_7d=s2_citations_7d)
-    velocity_score = 0.0  # warming up — no day-prior snapshot
-    velocity_acceleration = 0.0
+    velocity_acceleration = 0.0  # warming up — needs day-2+ snapshots
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
@@ -176,8 +218,8 @@ def _build_trend(
         convergence_detected=convergence.detected,
     )
     return Trend(
-        keyword=term.canonical_form,
-        canonical_form=term.canonical_form,
+        keyword=topic.canonical_name,
+        canonical_form=topic.canonical_form,
         cluster_id=cluster_id,
         cluster_label=cluster_label,
         sources=sources,
@@ -193,8 +235,10 @@ def _build_trend(
         summary_confidence="low",
         angles=_placeholder_creator_angles(),
         risk=_placeholder_risk(),
-        prediction=_placeholder_prediction(term.canonical_form, today),
+        prediction=_placeholder_prediction(topic.canonical_name, today),
         sparkline_14d=[],
+        aliases=list(topic.aliases),
+        source_doc_ids=dict(topic.source_doc_ids),
     )
 
 
@@ -208,7 +252,7 @@ def _maybe_enrich_with_claude(
         summarize.CardInput(
             keyword=t.keyword,
             cluster_label=t.cluster_label,
-            related_terms=[],
+            related_terms=list(t.aliases),
             arxiv_papers_7d=t.sources.arxiv_30d,
             github_repos_7d=t.sources.github_repos_7d,
             hn_posts_7d=t.sources.hn_posts_7d,
@@ -250,6 +294,7 @@ def main(
     posts: Optional[list[HNPost]] = None,
     repos: Optional[list[RepoStat]] = None,
     use_claude: bool = False,
+    extract_topics_fn: Optional[ExtractTopicsFn] = None,
     public_dir: Path = ROOT / "public",
     predictions_log: Path = ROOT / "data" / "predictions.jsonl",
     niche: str = DEFAULT_NICHE,
@@ -260,7 +305,9 @@ def main(
 
     # ---- 1. Fetch (or accept injected inputs for tests) ----
     fetch_started = time.time()
-    fetch_health = {"arxiv": True, "hackernews": True, "github": True, "semantic_scholar": False}
+    fetch_health = {
+        "arxiv": True, "hackernews": True, "github": True, "semantic_scholar": False,
+    }
     if papers is None:
         try:
             papers = arxiv.fetch_recent_papers(ARXIV_CATEGORIES, ARXIV_LOOKBACK_DAYS)
@@ -289,13 +336,8 @@ def main(
             fetch_health["github"] = False
     fetch_seconds = round(time.time() - fetch_started, 2)
 
-    # ---- 2. Normalize ----
-    terms = extract_candidate_terms(papers, posts, repos)
-
-    # ---- 3. Top-N selection ----
-    top_terms = sorted(terms, key=_total_mentions, reverse=True)[:TOP_N_TRENDS]
-    if not top_terms:
-        # Empty universe — write an empty snapshot and exit cleanly
+    # ---- 2. Empty-inputs short-circuit ----
+    if not papers and not posts and not repos:
         snap = Snapshot(
             snapshot_date=today_d,
             generated_at=datetime.now(tz=timezone.utc),
@@ -309,44 +351,89 @@ def main(
         snapshot.write_snapshot(snap, public_dir=public_dir)
         return snap
 
-    # ---- 4. Cluster ----
-    cluster_assignments = cluster_mod.cluster_terms([t.canonical_form for t in top_terms])
+    # ---- 3. Normalize → candidate hints ----
+    candidate_terms = extract_candidate_terms(papers, posts, repos)
+    candidate_hints = [t.canonical_form for t in candidate_terms]
 
-    # ---- 5. Score (per-source percentiles → saturation) ----
-    arxiv_pcts = _percentile_ranks([t.arxiv_mentions for t in top_terms])
-    hn_pcts = _percentile_ranks([t.hn_mentions for t in top_terms])
-    gh_pcts = _percentile_ranks([t.github_mentions for t in top_terms])
-
-    max_github_for_builder_signal = max((t.github_mentions for t in top_terms), default=1) or 1
-
-    # ---- 6. Build trends (placeholder Claude outputs) ----
-    trends: list[Trend] = []
-    for i, term in enumerate(top_terms):
-        builder_sig = term.github_mentions / max_github_for_builder_signal
-        saturation_pct = score.saturation(
-            github=gh_pcts[i], hn=hn_pcts[i], arxiv=arxiv_pcts[i], semantic_scholar=0.0
+    # ---- 4. Topic extraction (v0.1.1 — the new primitive) ----
+    if extract_topics_fn is not None:
+        topic_list = extract_topics_fn(papers, posts, repos, candidate_hints)
+    elif use_claude:
+        topic_list = topics.extract_topics(papers, posts, repos, candidate_hints)
+    else:
+        raise RuntimeError(
+            "v0.1.1: topic extraction requires --claude (one haiku-4-5 call "
+            "per snapshot). Re-run with --claude or pass an extract_topics_fn "
+            "in tests. Placeholder n-gram fallback was removed in this version."
         )
-        convergence = _detect_convergence_today(term, has_s2=False, today=today_dt)
-        ca = cluster_assignments.get(term.canonical_form)
+
+    # ---- 5. Trim to TOP_N_TRENDS (Claude already ordered them by signal) ----
+    topic_list = topic_list[:TOP_N_TRENDS]
+
+    # ---- 6. Cluster topics into themes ----
+    cluster_assignments = cluster_mod.cluster_topics(
+        [t.canonical_name for t in topic_list]
+    )
+
+    # ---- 7. Per-topic metrics ----
+    doc_timestamps = _build_doc_timestamps(papers, posts, repos)
+
+    # Pre-compute SourceCounts and velocity per topic for percentile math.
+    counts_per_topic: list[SourceCounts] = []
+    velocity_per_topic: list[float] = []
+    for topic in topic_list:
+        counts = _source_counts_from_topic(topic, doc_timestamps, today_dt)
+        counts_per_topic.append(counts)
+        _, _, v = score.velocity_from_topic_docs(
+            source_doc_ids=topic.source_doc_ids,
+            doc_timestamps=doc_timestamps,
+            today=today_dt,
+        )
+        velocity_per_topic.append(v)
+
+    arxiv_pcts = _percentile_ranks([c.arxiv_30d for c in counts_per_topic])
+    hn_pcts = _percentile_ranks([c.hn_posts_7d for c in counts_per_topic])
+    gh_pcts = _percentile_ranks([c.github_repos_7d for c in counts_per_topic])
+
+    max_github_for_builder_signal = max(
+        (c.github_repos_7d for c in counts_per_topic), default=1
+    ) or 1
+
+    # ---- 8. Build trends ----
+    trends: list[Trend] = []
+    for i, topic in enumerate(topic_list):
+        sources = counts_per_topic[i]
+        builder_sig = sources.github_repos_7d / max_github_for_builder_signal
+        saturation_pct = score.saturation(
+            github=gh_pcts[i],
+            hn=hn_pcts[i],
+            arxiv=arxiv_pcts[i],
+            semantic_scholar=0.0,
+        )
+        first_appearances = _first_appearances_from_topic(topic, doc_timestamps)
+        convergence = score.detect_convergence(first_appearances)
+        ca = cluster_assignments.get(topic.canonical_name)
         cluster_id = ca.cluster_id if ca else -1
         cluster_label = ca.cluster_label if ca else "Unclustered Emerging"
         trends.append(
             _build_trend(
-                term,
+                topic,
                 today=today_d,
+                sources=sources,
                 saturation_pct=saturation_pct,
                 builder_signal=builder_sig,
                 cluster_id=cluster_id,
                 cluster_label=cluster_label,
                 convergence=convergence,
+                velocity_score=velocity_per_topic[i],
             )
         )
 
-    # ---- 7. Claude enrichment (opt-in) ----
+    # ---- 9. Claude enrichment (opt-in) ----
     if use_claude:
         trends = _maybe_enrich_with_claude(trends, niche=niche)
 
-    # ---- 8. Predictions update ----
+    # ---- 10. Predictions update ----
     preds = predict.load_predictions(predictions_log)
     current_lifecycles = {t.keyword: t.lifecycle_stage for t in trends}
     updated_preds = predict.update_all_verdicts(
@@ -355,7 +442,7 @@ def main(
     hit_rate = predict.compute_hit_rate(updated_preds)
     past_predictions = [p for p in updated_preds if p.verdict != "pending"]
 
-    # ---- 9. Briefing + demand (opt-in for Claude) ----
+    # ---- 11. Briefing + demand (opt-in for Claude) ----
     if use_claude:
         movers = [
             summarize.TrendMover(
@@ -375,7 +462,7 @@ def main(
         briefing = _placeholder_briefing()
         demand_clusters = []
 
-    # ---- 10. Assemble + write ----
+    # ---- 12. Assemble + write ----
     snap = Snapshot(
         snapshot_date=today_d,
         generated_at=datetime.now(tz=timezone.utc),
@@ -383,7 +470,7 @@ def main(
         demand_clusters=demand_clusters,
         briefing=briefing,
         hit_rate=hit_rate,
-        past_predictions=past_predictions[-90:],  # cap retention at 90 entries
+        past_predictions=past_predictions[-90:],
         meta={
             "pipeline_runtime_seconds": round(time.time() - started, 2),
             "fetch_seconds": fetch_seconds,
@@ -409,7 +496,7 @@ def _cli() -> int:
     parser.add_argument(
         "--claude",
         action="store_true",
-        help="Enable live Claude enrichment (cost: ~$0.30/day budget cap)",
+        help="Enable live Claude calls (topic extraction is required as of v0.1.1)",
     )
     args = parser.parse_args()
 

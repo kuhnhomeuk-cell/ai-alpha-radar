@@ -291,3 +291,77 @@ def test_mann_kendall_short_series_returns_zero() -> None:
     # Mann-Kendall needs at least ~4 points to be meaningful
     assert score.mann_kendall_confidence([1, 2]) == 0.0
     assert score.mann_kendall_confidence([]) == 0.0
+
+
+# -------- velocity_from_topic_docs (v0.1.1) -------------------------------
+
+
+def test_velocity_from_topic_docs_counts_7d_and_30d_windows() -> None:
+    today = datetime(2026, 5, 14, tzinfo=timezone.utc)
+    source_doc_ids = {"arxiv": ["a/1", "a/2", "a/3"]}
+    doc_timestamps = {
+        ("arxiv", "a/1"): datetime(2026, 5, 13, tzinfo=timezone.utc),  # 1d ago
+        ("arxiv", "a/2"): datetime(2026, 5, 10, tzinfo=timezone.utc),  # 4d ago
+        ("arxiv", "a/3"): datetime(2026, 4, 25, tzinfo=timezone.utc),  # 19d ago
+    }
+    m7, m30, v = score.velocity_from_topic_docs(
+        source_doc_ids=source_doc_ids,
+        doc_timestamps=doc_timestamps,
+        today=today,
+    )
+    assert m7 == 2
+    assert m30 == 3
+    # floored_30d=max(3,10)=10; expected=10/30*7≈2.333; v=2/2.333≈0.857
+    assert v == pytest.approx(2 / (10 / 30 * 7))
+
+
+def test_velocity_from_topic_docs_aggregates_across_sources() -> None:
+    today = datetime(2026, 5, 14, tzinfo=timezone.utc)
+    one_day_ago = datetime(2026, 5, 13, tzinfo=timezone.utc)
+    m7, m30, _ = score.velocity_from_topic_docs(
+        source_doc_ids={
+            "arxiv": ["a/1"],
+            "hackernews": [42],
+            "github": ["acme/foo"],
+        },
+        doc_timestamps={
+            ("arxiv", "a/1"): one_day_ago,
+            ("hackernews", 42): one_day_ago,
+            ("github", "acme/foo"): one_day_ago,
+        },
+        today=today,
+    )
+    assert m7 == 3
+    assert m30 == 3
+
+
+def test_velocity_from_topic_docs_missing_timestamp_ignored() -> None:
+    today = datetime(2026, 5, 14, tzinfo=timezone.utc)
+    m7, m30, v = score.velocity_from_topic_docs(
+        source_doc_ids={"arxiv": ["unknown"]},
+        doc_timestamps={},
+        today=today,
+    )
+    assert m7 == 0
+    assert m30 == 0
+    assert v == 0.0
+
+
+def test_velocity_from_topic_docs_empty_source_doc_ids() -> None:
+    today = datetime(2026, 5, 14, tzinfo=timezone.utc)
+    m7, m30, v = score.velocity_from_topic_docs(
+        source_doc_ids={}, doc_timestamps={}, today=today,
+    )
+    assert (m7, m30, v) == (0, 0, 0.0)
+
+
+def test_velocity_from_topic_docs_doc_outside_30d_window_excluded() -> None:
+    today = datetime(2026, 5, 14, tzinfo=timezone.utc)
+    old = datetime(2026, 3, 1, tzinfo=timezone.utc)  # >60d ago
+    m7, m30, _ = score.velocity_from_topic_docs(
+        source_doc_ids={"arxiv": ["a/old"]},
+        doc_timestamps={("arxiv", "a/old"): old},
+        today=today,
+    )
+    assert m7 == 0
+    assert m30 == 0

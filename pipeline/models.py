@@ -91,6 +91,12 @@ class Trend(BaseModel):
     risk: RiskFlag
     prediction: Prediction
     sparkline_14d: list[int]
+    # v0.1.1: topic-extraction additions. Both optional + default empty so
+    # older snapshots round-trip. The frontend search box reads aliases;
+    # source_doc_ids stays backend-internal until the convergence-event
+    # timeline modal (v0.2 Commit 5) consumes it for source attribution.
+    aliases: list[str] = []
+    source_doc_ids: dict[str, list[str | int]] = {}
 
 
 class DemandQuote(BaseModel):

@@ -18,7 +18,7 @@ Two spec deviations, both surfaced not silent:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import pymannkendall as mk
@@ -186,6 +186,39 @@ def detect_convergence(
         window_hours=CONVERGENCE_WINDOW_HOURS,
         first_appearance=appearances,
     )
+
+
+def velocity_from_topic_docs(
+    *,
+    source_doc_ids: dict[str, list[str | int]],
+    doc_timestamps: dict[tuple[str, str | int], datetime],
+    today: datetime,
+) -> tuple[int, int, float]:
+    """v0.1.1: count how many of a topic's attributed source docs fall in
+    the 7d and 30d windows, then apply the existing velocity() floor math.
+
+    `doc_timestamps` maps `(source_name, doc_id) → published_at`. Missing
+    timestamps are skipped — better to under-count than to fabricate dates
+    from a missing source.
+
+    Returns `(mentions_7d, mentions_30d, velocity_score)`.
+    """
+    seven_d_ago = today - timedelta(days=7)
+    thirty_d_ago = today - timedelta(days=30)
+
+    mentions_7d = 0
+    mentions_30d = 0
+    for src, ids in source_doc_ids.items():
+        for doc_id in ids:
+            ts = doc_timestamps.get((src, doc_id))
+            if ts is None:
+                continue
+            if ts >= thirty_d_ago:
+                mentions_30d += 1
+                if ts >= seven_d_ago:
+                    mentions_7d += 1
+
+    return mentions_7d, mentions_30d, velocity(mentions_7d, mentions_30d)
 
 
 def mann_kendall_confidence(daily_series: list[int]) -> float:

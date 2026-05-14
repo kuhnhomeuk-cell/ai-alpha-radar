@@ -12,10 +12,37 @@ def test_empty_input_returns_empty_dict() -> None:
     assert cluster.cluster_terms([]) == {}
 
 
-def test_too_few_terms_all_unclustered() -> None:
-    out = cluster.cluster_terms(["alpha", "beta"])
+def test_single_term_unclustered() -> None:
+    # min_cluster_size=2 (v0.1.1) means a single term can't form a cluster.
+    out = cluster.cluster_terms(["alpha"])
     assert all(a.cluster_id == -1 for a in out.values())
     assert all(a.cluster_label == "Unclustered Emerging" for a in out.values())
+
+
+def test_min_cluster_size_is_two_for_topics() -> None:
+    """v0.1.1: input is now 30-50 named topics, not hundreds of n-grams; the
+    HDBSCAN floor drops from 3 to 2 so smaller semantic groupings can form.
+    """
+    assert cluster.HDBSCAN_MIN_CLUSTER_SIZE == 2
+
+
+def test_cluster_topics_thin_wrapper_returns_same_shape() -> None:
+    """cluster_topics is a semantic alias of cluster_terms for the new pipeline."""
+    names = [
+        "world model",
+        "predictive world model",
+        "world simulator",
+        "internal world model",
+        "supervised fine-tuning",
+        "instruction tuning",
+        "low-rank adaptation",
+        "LoRA fine-tuning",
+    ]
+    out = cluster.cluster_topics(names)
+    assert set(out.keys()) == set(names)
+    for ca in out.values():
+        assert isinstance(ca.cluster_id, int)
+        assert isinstance(ca.cluster_label, str)
 
 
 def test_two_semantic_groups_cluster_separately() -> None:

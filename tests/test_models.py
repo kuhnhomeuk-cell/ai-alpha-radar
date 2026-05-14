@@ -129,6 +129,39 @@ def test_risk_flag_allows_null_peak_estimate() -> None:
     assert risk.peak_estimate_days is None
 
 
+def test_trend_aliases_default_empty_list() -> None:
+    """v0.1.1: Trend.aliases is an optional list, default []."""
+    trend = _example_trend()
+    assert trend.aliases == []
+
+
+def test_trend_source_doc_ids_default_empty_dict() -> None:
+    """v0.1.1: Trend.source_doc_ids is an optional dict, default {}."""
+    trend = _example_trend()
+    assert trend.source_doc_ids == {}
+
+
+def test_trend_roundtrips_with_aliases_and_source_doc_ids() -> None:
+    """v0.1.1: both new fields survive JSON round-trip including mixed-type id lists."""
+    base = _example_trend()
+    trend = base.model_copy(update={
+        "aliases": ["WMA", "world models"],
+        "source_doc_ids": {
+            "arxiv": ["http://arxiv.org/abs/2604.15597", "http://arxiv.org/abs/2605.05419"],
+            "hackernews": [48073246, 48065429],
+            "github": ["acme/world-models"],
+        },
+    })
+    parsed = models.Trend.model_validate_json(trend.model_dump_json())
+    assert parsed.aliases == ["WMA", "world models"]
+    assert parsed.source_doc_ids["arxiv"] == [
+        "http://arxiv.org/abs/2604.15597",
+        "http://arxiv.org/abs/2605.05419",
+    ]
+    assert parsed.source_doc_ids["hackernews"] == [48073246, 48065429]
+    assert parsed.source_doc_ids["github"] == ["acme/world-models"]
+
+
 def test_snapshot_roundtrip() -> None:
     trend = _example_trend()
     snapshot = models.Snapshot(

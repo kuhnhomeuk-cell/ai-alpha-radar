@@ -30,7 +30,7 @@ UMAP_N_NEIGHBORS = 15
 UMAP_MIN_DIST = 0.0
 UMAP_METRIC = "cosine"
 
-HDBSCAN_MIN_CLUSTER_SIZE = 3
+HDBSCAN_MIN_CLUSTER_SIZE = 2  # v0.1.1: input is 30-50 topics, not hundreds of n-grams
 HDBSCAN_METRIC = "euclidean"
 
 UNCLUSTERED_LABEL = "Unclustered Emerging"
@@ -114,3 +114,19 @@ def cluster_terms(
         )
         for term, lbl in zip(terms, labels)
     }
+
+
+def cluster_topics(
+    canonical_names: list[str],
+    *,
+    velocities: Optional[dict[str, float]] = None,
+    random_state: int = 42,
+) -> dict[str, ClusterAssignment]:
+    """v0.1.1 semantic alias for cluster_terms — the embedding pipeline is
+    identical, but the input is now 30-50 named topics instead of a long
+    tail of n-grams. The new HDBSCAN_MIN_CLUSTER_SIZE=2 floor lets
+    smaller cohesive themes form.
+    """
+    return cluster_terms(
+        canonical_names, velocities=velocities, random_state=random_state
+    )
