@@ -128,6 +128,55 @@ def test_orchestrator_empty_inputs_writes_empty_snapshot(tmp_path: Path) -> None
     assert snap.meta.get("empty") is True
 
 
+def test_run_aborts_on_multi_source_failure(monkeypatch, tmp_path: Path) -> None:
+    """When ≥2 sources fail, the pipeline must exit(2) before writing data.json."""
+    import pytest
+
+    from pipeline.fetch import arxiv as arxiv_mod
+    from pipeline.fetch import hackernews as hn_mod
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("simulated fetch failure")
+
+    monkeypatch.setattr(arxiv_mod, "fetch_recent_papers", boom)
+    monkeypatch.setattr(hn_mod, "fetch_ai_posts", boom)
+    monkeypatch.delenv("GH_PAT", raising=False)
+    monkeypatch.delenv("SEMANTIC_SCHOLAR_KEY", raising=False)
+
+    with pytest.raises(SystemExit) as excinfo:
+        run.main(
+            today=date(2026, 5, 13),
+            use_claude=False,
+            public_dir=tmp_path,
+            predictions_log=tmp_path / "predictions.jsonl",
+        )
+    assert excinfo.value.code == 2
+    assert not (tmp_path / "data.json").exists()
+
+
+def test_run_tolerates_single_source_failure(monkeypatch, tmp_path: Path) -> None:
+    """Exactly one source down (GH missing, S2 has data) should NOT abort the run."""
+    from pipeline.fetch.semantic_scholar import CitationInfo
+
+    monkeypatch.delenv("GH_PAT", raising=False)
+    papers = _load_papers()
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=papers,
+        posts=_load_posts(),
+        s2_data={
+            papers[0].id: CitationInfo(
+                citation_count=10, influential_citation_count=1, references_count=2
+            )
+        },
+        use_claude=False,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+    assert snap.meta["sources"]["github"]["ok"] is False
+    assert (tmp_path / "data.json").exists()
+
+
 def test_orchestrator_wires_semantic_scholar_when_s2_data_provided(tmp_path: Path) -> None:
     from pipeline.fetch.semantic_scholar import CitationInfo
 

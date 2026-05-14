@@ -58,6 +58,7 @@ HN_LOOKBACK_DAYS = 7
 
 SPARKLINE_DAYS = 14
 VELOCITY_LOOKBACK_DAYS = 30
+MIN_OK_SOURCES = 3
 
 PLACEHOLDER_SUMMARY = "(awaiting Claude enrichment)"
 PLACEHOLDER_ANGLE = "(awaiting Claude enrichment)"
@@ -420,6 +421,17 @@ def main(
             s2_data = {}
     fetch_health["semantic_scholar"] = bool(s2_data)
     fetch_seconds = round(time.time() - fetch_started, 2)
+
+    # Truthfulness gate — refuse to ship a snapshot built on <3 live sources.
+    ok_sources = sum(1 for h in fetch_health.values() if h)
+    if ok_sources < MIN_OK_SOURCES:
+        failed = sorted(k for k, v in fetch_health.items() if not v)
+        print(
+            f"FATAL: {ok_sources}/{len(fetch_health)} sources ok "
+            f"(failed: {failed}); aborting without writing data.json",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     # ---- 2. Normalize ----
     terms = extract_candidate_terms(papers, posts, repos)
