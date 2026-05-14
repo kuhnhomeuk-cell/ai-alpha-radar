@@ -34,6 +34,7 @@ from pipeline.fetch import arxiv, github, hackernews, semantic_scholar
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
+from pipeline.fetch.semantic_scholar import CitationInfo
 from pipeline.models import (
     ConvergenceEvent,
     CreatorAngles,
@@ -147,6 +148,33 @@ def _placeholder_briefing() -> DailyBriefing:
         emerging=[],
         generated_at=datetime.now(tz=timezone.utc),
     )
+
+
+def _s2_citations_by_term(
+    papers: list[Paper], terms: list[Term], s2_data: dict[str, CitationInfo]
+) -> dict[str, int]:
+    """For each canonical term, sum citation_count over papers whose text contains a raw form.
+
+    Returns {canonical_form: int}. The S2 API only exposes a total citation
+    count, not a 7-day window — populating `semantic_scholar_citations_7d`
+    with the total is a deliberate misnomer flagged for a later rename.
+    """
+    if not s2_data:
+        return {}
+    # Pre-lowercase paper text once.
+    paper_text = [(p.id, (p.title + " " + p.abstract).lower()) for p in papers]
+    out: dict[str, int] = {}
+    for term in terms:
+        total = 0
+        for raw in term.raw_forms:
+            needle = raw.lower()
+            for pid, text in paper_text:
+                if needle in text and pid in s2_data:
+                    total += s2_data[pid].citation_count
+                    break  # one match per (term, paper) — don't double-count across raw_forms
+        if total:
+            out[term.canonical_form] = total
+    return out
 
 
 def _trend_total_mentions(t: Trend) -> int:
@@ -333,6 +361,7 @@ def main(
     papers: Optional[list[Paper]] = None,
     posts: Optional[list[HNPost]] = None,
     repos: Optional[list[RepoStat]] = None,
+    s2_data: Optional[dict[str, CitationInfo]] = None,
     use_claude: bool = False,
     public_dir: Path = ROOT / "public",
     predictions_log: Path = ROOT / "data" / "predictions.jsonl",
@@ -375,6 +404,21 @@ def main(
         else:
             repos = []
             fetch_health["github"] = False
+
+    # Semantic Scholar enrichment — runs against arxiv ids we just fetched.
+    if s2_data is None:
+        if papers:
+            try:
+                s2_data = semantic_scholar.enrich_papers(
+                    [p.id for p in papers],
+                    api_key=os.environ.get("SEMANTIC_SCHOLAR_KEY") or None,
+                )
+            except Exception as e:
+                print(f"semantic scholar fetch failed: {e}", file=sys.stderr)
+                s2_data = {}
+        else:
+            s2_data = {}
+    fetch_health["semantic_scholar"] = bool(s2_data)
     fetch_seconds = round(time.time() - fetch_started, 2)
 
     # ---- 2. Normalize ----
@@ -413,13 +457,17 @@ def main(
     max_github_for_builder_signal = max((t.github_mentions for t in top_terms), default=1) or 1
 
     # ---- 6. Build trends (placeholder Claude outputs) ----
+    s2_by_term = _s2_citations_by_term(papers, top_terms, s2_data)
     trends: list[Trend] = []
     for i, term in enumerate(top_terms):
         builder_sig = term.github_mentions / max_github_for_builder_signal
         saturation_pct = score.saturation(
             github=gh_pcts[i], hn=hn_pcts[i], arxiv=arxiv_pcts[i], semantic_scholar=0.0
         )
-        convergence = _detect_convergence_today(term, has_s2=False, today=today_dt)
+        s2_citations = s2_by_term.get(term.canonical_form, 0)
+        convergence = _detect_convergence_today(
+            term, has_s2=s2_citations > 0, today=today_dt
+        )
         ca = cluster_assignments.get(term.canonical_form)
         cluster_id = ca.cluster_id if ca else -1
         cluster_label = ca.cluster_label if ca else "Unclustered Emerging"
@@ -432,6 +480,7 @@ def main(
                 cluster_id=cluster_id,
                 cluster_label=cluster_label,
                 convergence=convergence,
+                s2_citations_7d=s2_citations,
                 history=history,
             )
         )
@@ -486,7 +535,7 @@ def main(
                 "github": {"fetched": len(repos), "ok": fetch_health["github"]},
                 "hackernews": {"fetched": len(posts), "ok": fetch_health["hackernews"]},
                 "semantic_scholar": {
-                    "fetched": 0,
+                    "fetched": len(s2_data),
                     "ok": fetch_health["semantic_scholar"],
                 },
             },

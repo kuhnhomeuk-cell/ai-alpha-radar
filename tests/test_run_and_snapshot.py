@@ -128,6 +128,56 @@ def test_orchestrator_empty_inputs_writes_empty_snapshot(tmp_path: Path) -> None
     assert snap.meta.get("empty") is True
 
 
+def test_orchestrator_wires_semantic_scholar_when_s2_data_provided(tmp_path: Path) -> None:
+    from pipeline.fetch.semantic_scholar import CitationInfo
+
+    papers = _load_papers()
+    # Stub S2 citation data for the first 3 fetched papers.
+    s2_data = {
+        papers[0].id: CitationInfo(
+            citation_count=100, influential_citation_count=10, references_count=20
+        ),
+        papers[1].id: CitationInfo(
+            citation_count=50, influential_citation_count=5, references_count=15
+        ),
+        papers[2].id: CitationInfo(
+            citation_count=25, influential_citation_count=2, references_count=10
+        ),
+    }
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=papers,
+        posts=_load_posts(),
+        repos=_load_repos(),
+        s2_data=s2_data,
+        use_claude=False,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+    assert snap.meta["sources"]["semantic_scholar"]["ok"] is True
+    assert snap.meta["sources"]["semantic_scholar"]["fetched"] == 3
+    # At least one trend should carry a non-zero citation aggregation.
+    assert any(t.sources.semantic_scholar_citations_7d > 0 for t in snap.trends)
+
+
+def test_orchestrator_marks_s2_failure_when_no_data(tmp_path: Path) -> None:
+    # Empty s2_data dict (passed explicitly) = S2 reached but no papers indexed.
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        s2_data={},
+        use_claude=False,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+    assert snap.meta["sources"]["semantic_scholar"]["ok"] is False
+    assert snap.meta["sources"]["semantic_scholar"]["fetched"] == 0
+    for t in snap.trends:
+        assert t.sources.semantic_scholar_citations_7d == 0
+
+
 def test_orchestrator_loads_existing_predictions_into_hit_rate(tmp_path: Path) -> None:
     # Pre-seed a tiny predictions log
     log = tmp_path / "predictions.jsonl"
