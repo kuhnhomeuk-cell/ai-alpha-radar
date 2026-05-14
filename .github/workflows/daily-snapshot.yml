@@ -36,13 +36,13 @@ jobs:
 
       - run: poetry install --no-interaction --no-root
 
-      - name: Run pipeline (no Claude; flip to --claude after prompt tuning)
+      - name: Run pipeline (Claude enrichment on; 50¢ cost cap)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GH_PAT: ${{ secrets.GH_PAT }}
           SEMANTIC_SCHOLAR_KEY: ${{ secrets.SEMANTIC_SCHOLAR_KEY }}
-        run: poetry run python -m pipeline.run
+        run: poetry run python -m pipeline.run --claude --max-cost-cents 50
 
       - name: Commit snapshot
         run: |
