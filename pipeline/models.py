@@ -36,6 +36,8 @@ class SourceCounts(BaseModel):
     huggingface_spaces_7d: int = 0  # populated in a later wave (/api/spaces)
     # Audit 3.6 — Bluesky firehose mention count (operator-scheduled subscriber)
     bluesky_mentions_7d: int = 0
+    # Audit 3.3 — Reddit (re-added; was removed in 1.4 pre-fetcher)
+    reddit_mentions_7d: int = 0
 
 
 class ConvergenceEvent(BaseModel):
@@ -80,6 +82,7 @@ class Trend(BaseModel):
     cluster_id: int
     cluster_label: str
     meta_trend: Optional[str] = None
+    reddit_top_subreddit: Optional[str] = None
     sources: SourceCounts
     velocity_score: float
     velocity_acceleration: float

@@ -14,6 +14,7 @@ frontend interface; any change requires a frontend coordination note.
       "cluster_id": 3,
       "cluster_label": "Autonomous Reasoning",
       "meta_trend": null,
+      "reddit_top_subreddit": null,
       "sources": {
         "arxiv_30d": 42,
         "github_repos_7d": 8,
@@ -24,7 +25,8 @@ frontend interface; any change requires a frontend coordination note.
         "huggingface_likes_7d": 0,
         "huggingface_downloads_7d": 0,
         "huggingface_spaces_7d": 0,
-        "bluesky_mentions_7d": 0
+        "bluesky_mentions_7d": 0,
+        "reddit_mentions_7d": 0
       },
       "velocity_score": 3.8,
       "velocity_acceleration": 1.2,

@@ -78,16 +78,20 @@ def test_source_counts_defaults_zero() -> None:
 
 
 def test_source_counts_drops_unimplemented_fields() -> None:
-    """Audit item 1.4: youtube_videos_7d, reddit_mentions_7d, x_posts_7d
-    were ghost fields (always 0, no fetcher). They are no longer attributes
-    on SourceCounts."""
+    """Audit item 1.4: youtube_videos_7d and x_posts_7d were ghost fields
+    (always 0, no fetcher). They are no longer attributes on SourceCounts.
+
+    reddit_mentions_7d was removed in 1.4 then re-added in 3.3 once the
+    Reddit fetcher landed — so it's expected here.
+    """
     counts = models.SourceCounts()
-    for ghost in ("youtube_videos_7d", "reddit_mentions_7d", "x_posts_7d"):
+    for ghost in ("youtube_videos_7d", "x_posts_7d"):
         assert not hasattr(counts, ghost), f"{ghost} should be removed"
-    # The fields no longer surface in the dumped JSON either.
     dumped = counts.model_dump()
-    for ghost in ("youtube_videos_7d", "reddit_mentions_7d", "x_posts_7d"):
+    for ghost in ("youtube_videos_7d", "x_posts_7d"):
         assert ghost not in dumped
+    # reddit_mentions_7d is back per audit 3.3.
+    assert hasattr(counts, "reddit_mentions_7d")
 
 
 def test_lifecycle_stage_rejects_unknown_value() -> None:

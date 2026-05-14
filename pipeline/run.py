@@ -45,8 +45,10 @@ from pipeline.fetch import (
     hackernews,
     huggingface,
     newsletters,
+    reddit as reddit_fetcher,
     semantic_scholar,
 )
+from pipeline.fetch.reddit import RedditPost
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
@@ -125,6 +127,7 @@ def _build_source_counts(
     hf_likes: int = 0,
     hf_downloads: int = 0,
     bluesky_count: int = 0,
+    reddit_count: int = 0,
 ) -> SourceCounts:
     return SourceCounts(
         arxiv_30d=term.arxiv_mentions,
@@ -137,6 +140,7 @@ def _build_source_counts(
         huggingface_downloads_7d=hf_downloads,
         huggingface_spaces_7d=0,  # /api/spaces not yet wired
         bluesky_mentions_7d=bluesky_count,
+        reddit_mentions_7d=reddit_count,
     )
 
 
@@ -329,6 +333,8 @@ def _build_trend(
     hf_likes: int = 0,
     hf_downloads: int = 0,
     bluesky_count: int = 0,
+    reddit_count: int = 0,
+    reddit_top: Optional[str] = None,
     rrf: float = 0.0,
     novelty: float = 0.0,
     meta_trend: Optional[str] = None,
@@ -342,6 +348,7 @@ def _build_trend(
         hf_likes=hf_likes,
         hf_downloads=hf_downloads,
         bluesky_count=bluesky_count,
+        reddit_count=reddit_count,
     )
     history = history or {}
     today_count = _total_mentions(term)
@@ -406,6 +413,7 @@ def _build_trend(
         cluster_id=cluster_id,
         cluster_label=cluster_label,
         meta_trend=meta_trend,
+        reddit_top_subreddit=reddit_top,
         sources=sources,
         velocity_score=velocity_score,
         velocity_acceleration=velocity_acceleration,
@@ -483,6 +491,7 @@ def main(
     repos: Optional[list[RepoStat]] = None,
     hf_models: Optional[list[HFModel]] = None,
     newsletter_signals: Optional[list[NewsletterSignal]] = None,
+    reddit_posts: Optional[list[RedditPost]] = None,
     s2_data: Optional[dict[str, CitationInfo]] = None,
     use_claude: bool = False,
     max_cost_cents: Optional[float] = None,
@@ -518,6 +527,7 @@ def main(
         "github": True,
         "semantic_scholar": False,
         "huggingface": False,
+        "reddit": False,
     }
     if papers is None:
         try:
@@ -564,6 +574,15 @@ def main(
         except Exception as e:
             print(f"newsletter fetch failed: {e}", file=sys.stderr)
             newsletter_signals = []
+
+    # Reddit — needs creds; empty list on miss.
+    if reddit_posts is None:
+        try:
+            reddit_posts = reddit_fetcher.fetch_top_posts()
+        except Exception as e:
+            print(f"reddit fetch failed: {e}", file=sys.stderr)
+            reddit_posts = []
+    fetch_health["reddit"] = len(reddit_posts) > 0
 
     # Semantic Scholar enrichment — runs against arxiv ids we just fetched.
     if s2_data is None:
@@ -710,6 +729,14 @@ def main(
         keywords={t.canonical_form for t in top_terms},
         since=today_dt - timedelta(days=7),
     )
+    # Reddit per-term counts + top-subreddit (audit 3.3).
+    reddit_keyword_terms = [t.canonical_form for t in top_terms]
+    reddit_mentions = reddit_fetcher.mentions_per_term(
+        reddit_posts, terms=reddit_keyword_terms
+    )
+    reddit_tops = reddit_fetcher.top_subreddit_per_term(
+        reddit_posts, terms=reddit_keyword_terms
+    )
     # Reciprocal Rank Fusion across per-source counts (audit 3.7).
     rrf_input = {
         "arxiv": rrf.ranks_from_counts(
@@ -756,6 +783,8 @@ def main(
                 hf_likes=hf_agg["likes"],
                 hf_downloads=hf_agg["downloads"],
                 bluesky_count=bluesky_counts.get(term.canonical_form, 0),
+                reddit_count=reddit_mentions.get(term.canonical_form, 0),
+                reddit_top=reddit_tops.get(term.canonical_form),
                 rrf=rrf_by_term.get(term.canonical_form, 0.0),
                 novelty=novelty_by_term.get(term.canonical_form, 0.0),
                 meta_trend=meta_trend_label,
@@ -836,6 +865,10 @@ def main(
                 "huggingface": {
                     "fetched": len(hf_models),
                     "ok": fetch_health["huggingface"],
+                },
+                "reddit": {
+                    "fetched": len(reddit_posts),
+                    "ok": fetch_health["reddit"],
                 },
             },
             "trends_processed": len(trends),
