@@ -30,9 +30,6 @@ class SourceCounts(BaseModel):
     hn_posts_7d: int = 0
     hn_points_7d: int = 0
     semantic_scholar_citations_7d: int = 0
-    youtube_videos_7d: int = 0
-    reddit_mentions_7d: int = 0
-    x_posts_7d: int = 0
 
 
 class ConvergenceEvent(BaseModel):

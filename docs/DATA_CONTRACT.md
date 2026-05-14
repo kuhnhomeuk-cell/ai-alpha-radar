@@ -19,10 +19,7 @@ frontend interface; any change requires a frontend coordination note.
         "github_stars_7d": 240,
         "hn_posts_7d": 11,
         "hn_points_7d": 560,
-        "semantic_scholar_citations_7d": 15,
-        "youtube_videos_7d": 0,
-        "reddit_mentions_7d": 0,
-        "x_posts_7d": 0
+        "semantic_scholar_citations_7d": 15
       },
       "velocity_score": 3.8,
       "velocity_acceleration": 1.2,
@@ -170,6 +167,7 @@ frontend interface; any change requires a frontend coordination note.
     },
     "claude_cost_usd": 0.043,
     "claude_cache_hit_rate": 0.78
-  }
+  },
+  "data_freshness_status": "live"
 }
 ```
