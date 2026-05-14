@@ -331,6 +331,7 @@ def _maybe_enrich_with_claude(
             arxiv_papers_7d=t.sources.arxiv_30d,
             github_repos_7d=t.sources.github_repos_7d,
             hn_posts_7d=t.sources.hn_posts_7d,
+            s2_citations_7d=t.sources.semantic_scholar_citations_7d,
             velocity_score=t.velocity_score,
             saturation=t.saturation,
             convergence_detected=t.convergence.detected,

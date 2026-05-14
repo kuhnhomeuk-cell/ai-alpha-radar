@@ -145,6 +145,78 @@ def test_enrich_card_makes_four_sequential_haiku_calls() -> None:
     assert output.risk.peak_estimate_days == 21
 
 
+def test_summary_confidence_clamped_to_low_when_signal_below_three() -> None:
+    """Audit 2.4: post-LLM hard clamp — total_signal<3 forces confidence=low
+    even if the model returns 'high'."""
+    card = _make_card(
+        arxiv_papers_7d=1,
+        github_repos_7d=0,
+        hn_posts_7d=0,
+        s2_citations_7d=0,
+    )
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "tiny signal trend", "confidence": "high"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "h", "contrarian": "c", "tutorial": "t"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "low",
+                    "peak_estimate_days": None,
+                    "risk_flag": "single-source signal",
+                    "rationale": "tiny",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "e"}),
+        }
+    )
+    output = summarize.enrich_card(card, client=fake)
+    assert output.summary_confidence == "low", \
+        "total_signal=1 must clamp model 'high' to 'low'"
+
+
+def test_summary_confidence_unchanged_when_signal_sufficient() -> None:
+    card = _make_card(
+        arxiv_papers_7d=8,
+        github_repos_7d=5,
+        hn_posts_7d=12,
+        s2_citations_7d=5,  # total_signal = 30
+    )
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "real signal", "confidence": "high"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "h", "contrarian": "c", "tutorial": "t"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "high",
+                    "peak_estimate_days": 21,
+                    "risk_flag": "none",
+                    "rationale": "broad",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "e"}),
+        }
+    )
+    output = summarize.enrich_card(card, client=fake)
+    assert output.summary_confidence == "high"
+
+
+def test_prompt_a_includes_evidence_floor_instruction_when_low_signal() -> None:
+    """Audit 2.4: pre-LLM injection — prompt tells the model what total_signal
+    is and what the confidence floor is."""
+    card = _make_card(arxiv_papers_7d=0, github_repos_7d=1, hn_posts_7d=0, s2_citations_7d=0)
+    p = summarize._build_prompt_a(card)
+    assert "total_signal" in p
+    assert "high" in p.lower()  # threshold language for high-confidence band
+
+
 def test_enrich_card_strips_markdown_json_fences() -> None:
     card = _make_card()
     fake = FakeAnthropic(

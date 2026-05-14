@@ -91,11 +91,49 @@ class CardInput(BaseModel):
     arxiv_papers_7d: int
     github_repos_7d: int
     hn_posts_7d: int
+    s2_citations_7d: int = 0
     velocity_score: float
     saturation: float
     convergence_detected: bool
     lifecycle_stage: LifecycleStage
     user_niche: str = DEFAULT_NICHE
+
+
+# Audit 2.4 — evidence-grounded confidence calibration.
+LOW_SIGNAL_FLOOR = 3  # total_signal < this → force confidence='low'
+HIGH_SIGNAL_FLOOR = 10  # total_signal must clear this AND have convergence for 'high'
+
+
+def _total_signal(card: CardInput) -> int:
+    return (
+        card.arxiv_papers_7d
+        + card.github_repos_7d
+        + card.hn_posts_7d
+        + card.s2_citations_7d
+    )
+
+
+def _clamp_confidence(
+    raw: str, *, total_signal: int, convergence_detected: bool, keyword: str = ""
+) -> Literal["high", "medium", "low"]:
+    """Apply the evidence-grounded calibration to the model's raw confidence."""
+    cleaned = raw if raw in ("high", "medium", "low") else "low"
+    if total_signal < LOW_SIGNAL_FLOOR:
+        if cleaned != "low":
+            print(
+                f"summary_confidence clamp: {keyword!r} model={cleaned!r} → 'low' "
+                f"(total_signal={total_signal} < {LOW_SIGNAL_FLOOR})",
+                file=__import__("sys").stderr,
+            )
+        return "low"
+    if cleaned == "high" and not (total_signal > HIGH_SIGNAL_FLOOR and convergence_detected):
+        print(
+            f"summary_confidence clamp: {keyword!r} model='high' → 'medium' "
+            f"(total_signal={total_signal}, convergence={convergence_detected})",
+            file=__import__("sys").stderr,
+        )
+        return "medium"
+    return cleaned  # type: ignore[return-value]
 
 
 class CardOutput(BaseModel):
@@ -110,13 +148,20 @@ class CardOutput(BaseModel):
 
 def _build_prompt_a(card: CardInput) -> str:
     related = ", ".join(card.related_terms) if card.related_terms else "(none)"
+    total = _total_signal(card)
     return (
         f"Trend keyword: {card.keyword}\n"
         f"Cluster context: {card.cluster_label}; related terms: {related}\n"
         f"Signal data: arxiv_papers_7d={card.arxiv_papers_7d}, "
-        f"github_repos_7d={card.github_repos_7d}, hn_posts_7d={card.hn_posts_7d}\n\n"
+        f"github_repos_7d={card.github_repos_7d}, hn_posts_7d={card.hn_posts_7d}, "
+        f"s2_citations_7d={card.s2_citations_7d}, "
+        f"total_signal={total}, convergence_detected={card.convergence_detected}\n\n"
         "Task: Write a single-sentence summary of this trend in plain English, max 18 words.\n"
         "No jargon. A smart non-engineer should understand it.\n\n"
+        "Confidence calibration rules (HARD):\n"
+        f"- If total_signal < {LOW_SIGNAL_FLOOR}: return confidence='low'.\n"
+        f"- Only return confidence='high' if total_signal > {HIGH_SIGNAL_FLOOR} AND convergence_detected=true.\n"
+        "- Otherwise return confidence='medium'.\n\n"
         'Return JSON: {"summary": string, "confidence": "high"|"medium"|"low"}'
     )
 
@@ -225,7 +270,12 @@ def enrich_card(
 
     return CardOutput(
         summary=summary,
-        summary_confidence=a["confidence"],
+        summary_confidence=_clamp_confidence(
+            a.get("confidence", "low"),
+            total_signal=_total_signal(card),
+            convergence_detected=card.convergence_detected,
+            keyword=card.keyword,
+        ),
         angles=CreatorAngles(
             hook=b["hook"],
             contrarian=b["contrarian"],
@@ -357,7 +407,12 @@ def enrich_cards_batch(
             continue
         outputs[i] = CardOutput(
             summary=a["summary"],
-            summary_confidence=a["confidence"],
+            summary_confidence=_clamp_confidence(
+                a.get("confidence", "low"),
+                total_signal=_total_signal(card),
+                convergence_detected=card.convergence_detected,
+                keyword=card.keyword,
+            ),
             angles=CreatorAngles(
                 hook=b["hook"],
                 contrarian=b["contrarian"],
