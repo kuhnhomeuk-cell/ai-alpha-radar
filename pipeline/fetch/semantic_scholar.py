@@ -19,6 +19,8 @@ from typing import Any, Iterable, Optional
 import httpx
 from pydantic import BaseModel
 
+from pipeline.fetch._retry import with_retry
+
 S2_BATCH_URL = "https://api.semanticscholar.org/graph/v1/paper/batch"
 S2_BATCH_LIMIT = 500
 S2_FIELDS = "citationCount,influentialCitationCount,referenceCount"
@@ -70,6 +72,7 @@ def _prefix_arxiv_ids(arxiv_ids: Iterable[str]) -> list[str]:
     return out
 
 
+@with_retry(attempts=3, base_delay=1.0)
 def enrich_papers(
     arxiv_ids: list[str], *, api_key: Optional[str] = None
 ) -> dict[str, CitationInfo]:

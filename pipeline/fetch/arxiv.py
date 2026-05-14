@@ -15,6 +15,8 @@ import feedparser
 import httpx
 from pydantic import BaseModel
 
+from pipeline.fetch._retry import with_retry
+
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
 ARXIV_REQUEST_INTERVAL_SECONDS = 3.0
 ARXIV_MAX_RESULTS = 200
@@ -63,6 +65,7 @@ def parse_atom_feed(xml_text: str, *, categories: Iterable[str]) -> list[Paper]:
     return papers
 
 
+@with_retry(attempts=3, base_delay=1.0)
 def fetch_recent_papers(categories: list[str], lookback_days: int = 2) -> list[Paper]:
     """Live arXiv query. One request, then a 3-second hard sleep per the rate cap.
 
