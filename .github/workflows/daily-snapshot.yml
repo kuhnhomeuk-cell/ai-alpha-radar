@@ -56,6 +56,15 @@ jobs:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GH_PAT: ${{ secrets.GH_PAT }}
           SEMANTIC_SCHOLAR_KEY: ${{ secrets.SEMANTIC_SCHOLAR_KEY }}
+          # Wave 3a fetcher credentials — optional. Empty values cause the
+          # corresponding fetcher to return [] silently; the truthfulness
+          # gate (MIN_OK_SOURCES=3) still passes on arxiv/hn/github/hf alone.
+          # Operator action: `gh secret set REDDIT_CLIENT_ID` etc. to enable.
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+          PRODUCT_HUNT_TOKEN: ${{ secrets.PRODUCT_HUNT_TOKEN }}
+          REPLICATE_API_KEY: ${{ secrets.REPLICATE_API_KEY }}
         run: poetry run python -m pipeline.run --claude --max-cost-cents 50
 
       - name: Commit snapshot
