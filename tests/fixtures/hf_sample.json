@@ -1,0 +1,80 @@
+[
+  {
+    "_id": "67100a1c0000000000000001",
+    "id": "meta-llama/Llama-3.3-70B-Instruct",
+    "likes": 2340,
+    "trendingScore": 145.2,
+    "private": false,
+    "downloads": 1456000,
+    "tags": ["transformers", "safetensors", "llama", "text-generation", "conversational", "en"],
+    "pipeline_tag": "text-generation",
+    "library_name": "transformers",
+    "createdAt": "2024-12-06T16:00:00.000Z",
+    "modelId": "meta-llama/Llama-3.3-70B-Instruct"
+  },
+  {
+    "_id": "67100a1c0000000000000002",
+    "id": "Qwen/Qwen2.5-Coder-32B-Instruct",
+    "likes": 1820,
+    "trendingScore": 132.6,
+    "private": false,
+    "downloads": 892000,
+    "tags": ["transformers", "safetensors", "qwen2", "text-generation", "code"],
+    "pipeline_tag": "text-generation",
+    "library_name": "transformers",
+    "createdAt": "2024-11-10T12:00:00.000Z",
+    "modelId": "Qwen/Qwen2.5-Coder-32B-Instruct"
+  },
+  {
+    "_id": "67100a1c0000000000000003",
+    "id": "black-forest-labs/FLUX.1-dev",
+    "likes": 7600,
+    "trendingScore": 110.1,
+    "private": false,
+    "downloads": 5320000,
+    "tags": ["diffusers", "image-generation", "flux", "text-to-image"],
+    "pipeline_tag": "text-to-image",
+    "library_name": "diffusers",
+    "createdAt": "2024-08-01T10:00:00.000Z",
+    "modelId": "black-forest-labs/FLUX.1-dev"
+  },
+  {
+    "_id": "67100a1c0000000000000004",
+    "id": "openai/whisper-large-v3-turbo",
+    "likes": 1200,
+    "trendingScore": 85.0,
+    "private": false,
+    "downloads": 2100000,
+    "tags": ["transformers", "safetensors", "whisper", "audio", "automatic-speech-recognition"],
+    "pipeline_tag": "automatic-speech-recognition",
+    "library_name": "transformers",
+    "createdAt": "2024-10-01T09:00:00.000Z",
+    "modelId": "openai/whisper-large-v3-turbo"
+  },
+  {
+    "_id": "67100a1c0000000000000005",
+    "id": "stabilityai/stable-diffusion-3.5-large",
+    "likes": 3400,
+    "trendingScore": 78.4,
+    "private": false,
+    "downloads": 980000,
+    "tags": ["diffusers", "stable-diffusion", "text-to-image"],
+    "pipeline_tag": "text-to-image",
+    "library_name": "diffusers",
+    "createdAt": "2024-10-22T14:00:00.000Z",
+    "modelId": "stabilityai/stable-diffusion-3.5-large"
+  },
+  {
+    "_id": "67100a1c0000000000000006",
+    "id": "private/secret-model",
+    "private": true,
+    "likes": 5,
+    "trendingScore": 0.1,
+    "downloads": 10,
+    "tags": [],
+    "pipeline_tag": null,
+    "library_name": null,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "modelId": "private/secret-model"
+  }
+]
