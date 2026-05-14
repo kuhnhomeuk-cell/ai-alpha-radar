@@ -38,6 +38,32 @@ MAX_OUTPUT_TOKENS_CARD = 300
 MAX_OUTPUT_TOKENS_BRIEFING = 600
 MAX_INPUT_TOKENS_BUDGET = 600  # BACKEND_BUILD §9 per-request ceiling
 
+# Approximate Haiku 4.5 list-rate pricing (cents per million tokens).
+# Conservative — operator should refine against the current Anthropic
+# pricing page if billing diverges materially.
+HAIKU_INPUT_CENTS_PER_MTOK = 100.0
+HAIKU_OUTPUT_CENTS_PER_MTOK = 500.0
+BATCH_DISCOUNT = 0.5
+PROMPTS_PER_CARD = 4
+
+
+def estimate_batch_cost_cents(num_cards: int) -> float:
+    """Upper-bound cost estimate for `enrich_cards_batch(num_cards)` in cents.
+
+    Assumes Haiku 4.5 batch pricing and a worst-case fill of both input
+    and output token budgets per call. Doesn't account for prompt cache
+    hits — actual cost should be lower.
+    """
+    if num_cards <= 0:
+        return 0.0
+    total_input_tokens = num_cards * PROMPTS_PER_CARD * MAX_INPUT_TOKENS_BUDGET
+    total_output_tokens = num_cards * PROMPTS_PER_CARD * MAX_OUTPUT_TOKENS_CARD
+    sync_cents = (
+        total_input_tokens / 1_000_000 * HAIKU_INPUT_CENTS_PER_MTOK
+        + total_output_tokens / 1_000_000 * HAIKU_OUTPUT_CENTS_PER_MTOK
+    )
+    return sync_cents * BATCH_DISCOUNT
+
 DEFAULT_NICHE = "AI tools for solo creators"
 
 BATCH_POLL_INTERVAL_SECONDS = 30.0

@@ -364,6 +364,7 @@ def main(
     repos: Optional[list[RepoStat]] = None,
     s2_data: Optional[dict[str, CitationInfo]] = None,
     use_claude: bool = False,
+    max_cost_cents: Optional[float] = None,
     public_dir: Path = ROOT / "public",
     predictions_log: Path = ROOT / "data" / "predictions.jsonl",
     niche: str = DEFAULT_NICHE,
@@ -497,8 +498,16 @@ def main(
             )
         )
 
-    # ---- 7. Claude enrichment (opt-in) ----
+    # ---- 7. Claude enrichment (opt-in, behind cost cap) ----
     if use_claude:
+        estimated_cents = summarize.estimate_batch_cost_cents(len(trends))
+        if max_cost_cents is not None and estimated_cents > max_cost_cents:
+            print(
+                f"FATAL: estimated Claude cost {estimated_cents:.2f}c > cap "
+                f"{max_cost_cents:.2f}c for {len(trends)} cards; aborting before any paid call",
+                file=sys.stderr,
+            )
+            sys.exit(3)
         trends = _maybe_enrich_with_claude(trends, niche=niche)
 
     # ---- 8. Predictions update ----
@@ -568,10 +577,16 @@ def _cli() -> int:
         action="store_true",
         help="Enable live Claude enrichment (cost: ~$0.30/day budget cap)",
     )
+    parser.add_argument(
+        "--max-cost-cents",
+        type=float,
+        default=None,
+        help="Abort with exit code 3 if the estimated batch cost exceeds this cap.",
+    )
     args = parser.parse_args()
 
     load_dotenv(ROOT / ".env.local", override=True)
-    snap = main(use_claude=args.claude)
+    snap = main(use_claude=args.claude, max_cost_cents=args.max_cost_cents)
     print(
         f"snapshot written: {len(snap.trends)} trends, "
         f"{len(snap.demand_clusters)} demand clusters, "

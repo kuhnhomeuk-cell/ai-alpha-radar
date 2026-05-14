@@ -53,6 +53,23 @@ class FakeAnthropic:
         raise AssertionError(f"FakeAnthropic: no canned response matches prompt: {prompt_text[:80]}")
 
 
+def test_estimate_batch_cost_cents_zero_for_no_cards() -> None:
+    assert summarize.estimate_batch_cost_cents(0) == 0.0
+
+
+def test_estimate_batch_cost_cents_scales_linearly() -> None:
+    one = summarize.estimate_batch_cost_cents(1)
+    thirty = summarize.estimate_batch_cost_cents(30)
+    assert one > 0
+    assert abs(thirty - 30 * one) < 1e-9
+
+
+def test_estimate_batch_cost_cents_30_cards_under_dollar() -> None:
+    # Sanity check — 30 cards should never estimate above $1.00 with current
+    # pricing assumptions. If pricing ever spikes, this test is the trip wire.
+    assert summarize.estimate_batch_cost_cents(30) < 100.0
+
+
 def test_prompt_a_contains_keyword_and_signal_counts() -> None:
     card = _make_card()
     p = summarize._build_prompt_a(card)

@@ -128,6 +128,40 @@ def test_orchestrator_empty_inputs_writes_empty_snapshot(tmp_path: Path) -> None
     assert snap.meta.get("empty") is True
 
 
+def test_run_aborts_when_estimated_cost_exceeds_cap(tmp_path: Path) -> None:
+    """When --max-cost-cents is exceeded, refuse to invoke Claude (exit 3)."""
+    import pytest
+
+    with pytest.raises(SystemExit) as excinfo:
+        run.main(
+            today=date(2026, 5, 13),
+            papers=_load_papers(),
+            posts=_load_posts(),
+            repos=_load_repos(),
+            use_claude=True,
+            max_cost_cents=0.0,  # impossible — any positive estimate exceeds it
+            public_dir=tmp_path,
+            predictions_log=tmp_path / "predictions.jsonl",
+        )
+    assert excinfo.value.code == 3
+    assert not (tmp_path / "data.json").exists()
+
+
+def test_run_skips_cost_gate_without_claude(tmp_path: Path) -> None:
+    """max_cost_cents has no effect when use_claude is False."""
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        use_claude=False,
+        max_cost_cents=0.0,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+    assert snap.trends  # ran to completion
+
+
 def test_run_aborts_on_multi_source_failure(monkeypatch, tmp_path: Path) -> None:
     """When ≥2 sources fail, the pipeline must exit(2) before writing data.json."""
     import pytest
