@@ -21,7 +21,7 @@ import json
 import os
 import sys
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -54,6 +54,9 @@ DEFAULT_NICHE = "AI tools for solo creators"
 ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL"]
 ARXIV_LOOKBACK_DAYS = 2
 HN_LOOKBACK_DAYS = 7
+
+SPARKLINE_DAYS = 14
+VELOCITY_LOOKBACK_DAYS = 30
 
 PLACEHOLDER_SUMMARY = "(awaiting Claude enrichment)"
 PLACEHOLDER_ANGLE = "(awaiting Claude enrichment)"
@@ -146,6 +149,70 @@ def _placeholder_briefing() -> DailyBriefing:
     )
 
 
+def _trend_total_mentions(t: Trend) -> int:
+    """Aggregate per-day mention count stored in a Snapshot's Trend."""
+    return (
+        t.sources.arxiv_30d
+        + t.sources.github_repos_7d
+        + t.sources.hn_posts_7d
+    )
+
+
+def _load_history(
+    public_dir: Path, today: date, days: int
+) -> dict[date, Snapshot]:
+    """Read prior dated snapshots from public_dir/snapshots/.
+
+    Corrupt or missing files are skipped silently (logged to stderr). The
+    returned dict only contains successfully-parsed snapshots.
+    """
+    history: dict[date, Snapshot] = {}
+    for i in range(1, days + 1):
+        d = today - timedelta(days=i)
+        try:
+            snap = snapshot.read_prior_snapshot(d, public_dir=public_dir)
+        except Exception as e:
+            print(f"prior snapshot read failed for {d}: {e}", file=sys.stderr)
+            continue
+        if snap is not None:
+            history[d] = snap
+    return history
+
+
+def _keyword_daily_counts(
+    history: dict[date, Snapshot], keyword: str, today: date, days: int
+) -> list[int]:
+    """Return [count_per_day] over the last `days` days (chronological, ending yesterday).
+
+    Days without a snapshot or without the keyword contribute 0.
+    """
+    series: list[int] = []
+    for i in range(days, 0, -1):
+        d = today - timedelta(days=i)
+        snap = history.get(d)
+        count = 0
+        if snap is not None:
+            for t in snap.trends:
+                if t.keyword == keyword or t.canonical_form == keyword:
+                    count = _trend_total_mentions(t)
+                    break
+        series.append(count)
+    return series
+
+
+def _prior_velocity(
+    history: dict[date, Snapshot], keyword: str, today: date
+) -> float:
+    """Look up yesterday's velocity_score for keyword, default 0.0."""
+    snap = history.get(today - timedelta(days=1))
+    if snap is None:
+        return 0.0
+    for t in snap.trends:
+        if t.keyword == keyword or t.canonical_form == keyword:
+            return t.velocity_score
+    return 0.0
+
+
 def _build_trend(
     term: Term,
     *,
@@ -156,10 +223,27 @@ def _build_trend(
     cluster_label: str,
     convergence: ConvergenceEvent,
     s2_citations_7d: int = 0,
+    history: Optional[dict[date, Snapshot]] = None,
 ) -> Trend:
     sources = _build_source_counts(term, s2_citations_7d=s2_citations_7d)
-    velocity_score = 0.0  # warming up — no day-prior snapshot
-    velocity_acceleration = 0.0
+    history = history or {}
+    today_count = _total_mentions(term)
+    sparkline = _keyword_daily_counts(
+        history, term.canonical_form, today, SPARKLINE_DAYS
+    )
+    prior_30d_total = sum(
+        _keyword_daily_counts(
+            history, term.canonical_form, today, VELOCITY_LOOKBACK_DAYS
+        )
+    )
+    if history:
+        velocity_score = score.velocity(today_count, prior_30d_total)
+        velocity_acceleration = velocity_score - _prior_velocity(
+            history, term.canonical_form, today
+        )
+    else:
+        velocity_score = 0.0
+        velocity_acceleration = 0.0
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
@@ -194,7 +278,7 @@ def _build_trend(
         angles=_placeholder_creator_angles(),
         risk=_placeholder_risk(),
         prediction=_placeholder_prediction(term.canonical_form, today),
-        sparkline_14d=[],
+        sparkline_14d=sparkline,
     )
 
 
@@ -258,6 +342,10 @@ def main(
     today_d = today or date.today()
     today_dt = datetime.combine(today_d, datetime.min.time()).replace(tzinfo=timezone.utc)
 
+    # ---- 0. Load prior snapshots for velocity / sparkline math ----
+    history = _load_history(public_dir, today_d, VELOCITY_LOOKBACK_DAYS)
+    cold_start = len(history) == 0
+
     # ---- 1. Fetch (or accept injected inputs for tests) ----
     fetch_started = time.time()
     fetch_health = {"arxiv": True, "hackernews": True, "github": True, "semantic_scholar": False}
@@ -304,7 +392,12 @@ def main(
             briefing=_placeholder_briefing(),
             hit_rate=predict.compute_hit_rate([]),
             past_predictions=[],
-            meta={"empty": True, "fetch_seconds": fetch_seconds},
+            meta={
+                "empty": True,
+                "fetch_seconds": fetch_seconds,
+                "cold_start": cold_start,
+                "history_days_loaded": len(history),
+            },
         )
         snapshot.write_snapshot(snap, public_dir=public_dir)
         return snap
@@ -339,6 +432,7 @@ def main(
                 cluster_id=cluster_id,
                 cluster_label=cluster_label,
                 convergence=convergence,
+                history=history,
             )
         )
 
@@ -398,6 +492,8 @@ def main(
             },
             "trends_processed": len(trends),
             "use_claude": use_claude,
+            "cold_start": cold_start,
+            "history_days_loaded": len(history),
         },
     )
     snapshot.write_snapshot(snap, public_dir=public_dir)
