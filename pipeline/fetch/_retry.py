@@ -79,7 +79,11 @@ def with_retry(
                         e.response.headers.get("retry-after", "")
                     )
                     if retry_after is not None:
-                        delay = retry_after
+                        # Honor server's Retry-After but never wait longer
+                        # than max_delay — observed in production: tldr.tech
+                        # returned Retry-After: 15013 (~4h), which would have
+                        # parked the daily pipeline indefinitely.
+                        delay = min(max_delay, retry_after)
                     else:
                         delay = min(max_delay, base_delay * (2 ** (attempt - 1)))
                     delay = delay * (1 + random.uniform(0, jitter))

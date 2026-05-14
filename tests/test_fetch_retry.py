@@ -93,6 +93,29 @@ def test_with_retry_honors_retry_after_numeric(monkeypatch) -> None:
     assert 1.9 <= slept[0] <= 2.1
 
 
+def test_with_retry_caps_retry_after_at_max_delay(monkeypatch) -> None:
+    """Observed in production: tldr.tech returned Retry-After: 15013 (~4h),
+    which would have parked the daily pipeline. The wrapper must cap any
+    Retry-After to max_delay (default 60s)."""
+    slept: list[float] = []
+    monkeypatch.setattr(_retry.time, "sleep", lambda s: slept.append(s))
+    calls = {"n": 0}
+
+    @_retry.with_retry(
+        attempts=3, base_delay=1.0, max_delay=60.0, retry_on={429}, jitter=0.0
+    )
+    def rate_limited() -> str:
+        calls["n"] += 1
+        if calls["n"] < 2:
+            raise _make_status_error(429, headers={"retry-after": "15013"})
+        return "ok"
+
+    assert rate_limited() == "ok"
+    assert len(slept) == 1
+    # Sleep should be capped at max_delay (60s), not the literal 15013s.
+    assert slept[0] <= 60.0
+
+
 def test_with_retry_propagates_non_httpx_errors() -> None:
     @_retry.with_retry(attempts=3, base_delay=0.0)
     def boom() -> None:
