@@ -37,6 +37,7 @@ from pipeline import novelty as novelty_mod
 from pipeline import predict, rrf, score, snapshot, summarize
 from pipeline.fetch import (
     arxiv,
+    bluesky,
     github,
     hackernews,
     huggingface,
@@ -120,6 +121,7 @@ def _build_source_counts(
     s2_citations_7d: int = 0,
     hf_likes: int = 0,
     hf_downloads: int = 0,
+    bluesky_count: int = 0,
 ) -> SourceCounts:
     return SourceCounts(
         arxiv_30d=term.arxiv_mentions,
@@ -131,6 +133,7 @@ def _build_source_counts(
         huggingface_likes_7d=hf_likes,
         huggingface_downloads_7d=hf_downloads,
         huggingface_spaces_7d=0,  # /api/spaces not yet wired
+        bluesky_mentions_7d=bluesky_count,
     )
 
 
@@ -300,6 +303,7 @@ def _build_trend(
     s2_citations_7d: int = 0,
     hf_likes: int = 0,
     hf_downloads: int = 0,
+    bluesky_count: int = 0,
     rrf: float = 0.0,
     novelty: float = 0.0,
     history: Optional[dict[date, Snapshot]] = None,
@@ -311,6 +315,7 @@ def _build_trend(
         s2_citations_7d=s2_citations_7d,
         hf_likes=hf_likes,
         hf_downloads=hf_downloads,
+        bluesky_count=bluesky_count,
     )
     history = history or {}
     today_count = _total_mentions(term)
@@ -448,6 +453,7 @@ def main(
     public_dir: Path = ROOT / "public",
     predictions_log: Path = ROOT / "data" / "predictions.jsonl",
     corpus_centroid_path: Optional[Path] = None,
+    bluesky_db_path: Optional[Path] = None,
     niche: str = DEFAULT_NICHE,
 ) -> Snapshot:
     started = time.time()
@@ -652,6 +658,13 @@ def main(
     # ---- 6. Build trends (placeholder Claude outputs) ----
     s2_by_term = _s2_citations_by_term(papers, top_terms, s2_data)
     hf_by_term = _hf_per_term(hf_models, top_terms)
+    # Bluesky firehose mentions — reader only; subscriber runs separately.
+    bsky_path = bluesky_db_path if bluesky_db_path is not None else bluesky.DEFAULT_DB_PATH
+    bluesky_counts = bluesky.read_mention_counts(
+        bsky_path,
+        keywords={t.canonical_form for t in top_terms},
+        since=today_dt - timedelta(days=7),
+    )
     # Reciprocal Rank Fusion across per-source counts (audit 3.7).
     rrf_input = {
         "arxiv": rrf.ranks_from_counts(
@@ -695,6 +708,7 @@ def main(
                 s2_citations_7d=s2_citations,
                 hf_likes=hf_agg["likes"],
                 hf_downloads=hf_agg["downloads"],
+                bluesky_count=bluesky_counts.get(term.canonical_form, 0),
                 rrf=rrf_by_term.get(term.canonical_form, 0.0),
                 novelty=novelty_by_term.get(term.canonical_form, 0.0),
                 history=history,

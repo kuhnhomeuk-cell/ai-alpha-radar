@@ -34,6 +34,8 @@ class SourceCounts(BaseModel):
     huggingface_likes_7d: int = 0
     huggingface_downloads_7d: int = 0
     huggingface_spaces_7d: int = 0  # populated in a later wave (/api/spaces)
+    # Audit 3.6 — Bluesky firehose mention count (operator-scheduled subscriber)
+    bluesky_mentions_7d: int = 0
 
 
 class ConvergenceEvent(BaseModel):
