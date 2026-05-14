@@ -35,6 +35,7 @@ from pipeline import cluster_identity
 from pipeline import cold_start
 from pipeline import demand as demand_mod
 from pipeline import leadlag
+from pipeline import meta_trends
 from pipeline import novelty as novelty_mod
 from pipeline import predict, rrf, score, snapshot, summarize
 from pipeline.fetch import (
@@ -330,6 +331,7 @@ def _build_trend(
     bluesky_count: int = 0,
     rrf: float = 0.0,
     novelty: float = 0.0,
+    meta_trend: Optional[str] = None,
     history: Optional[dict[date, Snapshot]] = None,
     prior_alpha: Optional[float] = None,
     prior_beta: Optional[float] = None,
@@ -403,6 +405,7 @@ def _build_trend(
         canonical_form=term.canonical_form,
         cluster_id=cluster_id,
         cluster_label=cluster_label,
+        meta_trend=meta_trend,
         sources=sources,
         velocity_score=velocity_score,
         velocity_acceleration=velocity_acceleration,
@@ -681,6 +684,15 @@ def main(
         id_remap[cid]: vec for cid, vec in raw_centroids.items() if cid in id_remap
     }
 
+    # Meta-trends — 2nd-pass HDBSCAN over the canonical centroids (audit 3.13).
+    cluster_to_meta = meta_trends.cluster_centroids(canonical_centroids)
+    canonical_cluster_labels = {
+        ca.cluster_id: ca.cluster_label for ca in cluster_assignments.values()
+    }
+    meta_labels = meta_trends.build_meta_trend_labels(
+        cluster_to_meta, canonical_cluster_labels
+    )
+
     # ---- 5. Score (per-source percentiles → saturation) ----
     arxiv_pcts = _percentile_ranks([t.arxiv_mentions for t in top_terms])
     hn_pcts = _percentile_ranks([t.hn_mentions for t in top_terms])
@@ -729,6 +741,8 @@ def main(
         ca = cluster_assignments.get(term.canonical_form)
         cluster_id = ca.cluster_id if ca else -1
         cluster_label = ca.cluster_label if ca else "Unclustered Emerging"
+        meta_id = cluster_to_meta.get(cluster_id, -1)
+        meta_trend_label = meta_labels.get(meta_id) if meta_id != -1 else None
         trends.append(
             _build_trend(
                 term,
@@ -744,6 +758,7 @@ def main(
                 bluesky_count=bluesky_counts.get(term.canonical_form, 0),
                 rrf=rrf_by_term.get(term.canonical_form, 0.0),
                 novelty=novelty_by_term.get(term.canonical_form, 0.0),
+                meta_trend=meta_trend_label,
                 history=history,
                 prior_alpha=prior_alpha,
                 prior_beta=prior_beta,

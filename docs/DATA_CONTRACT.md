@@ -13,6 +13,7 @@ frontend interface; any change requires a frontend coordination note.
       "canonical_form": "world-model-agents",
       "cluster_id": 3,
       "cluster_label": "Autonomous Reasoning",
+      "meta_trend": null,
       "sources": {
         "arxiv_30d": 42,
         "github_repos_7d": 8,

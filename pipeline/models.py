@@ -79,6 +79,7 @@ class Trend(BaseModel):
     canonical_form: str
     cluster_id: int
     cluster_label: str
+    meta_trend: Optional[str] = None
     sources: SourceCounts
     velocity_score: float
     velocity_acceleration: float

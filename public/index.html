@@ -544,6 +544,16 @@ body::after {
 .lb-delta.down { color: var(--bad); }
 .lb-mix { margin-top: 4px; opacity: 0.85; }
 .lb-mix svg { display: block; border-radius: 2px; }
+.lb-meta-header {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  padding: 8px 14px 4px;
+  border-top: 1px solid var(--line);
+  background: rgba(0, 240, 255, 0.02);
+}
+.lb-meta-header:first-child { border-top: none; }
 .gem-mix { margin-top: 8px; }
 .gem-mix svg { width: 100%; max-width: 220px; border-radius: 2px; }
 .gem-mix-legend {
@@ -1856,6 +1866,7 @@ async function loadData() {
       risk: t.risk || {},
       prediction: t.prediction || null,
       sparkline: t.sparkline_14d || [],
+      meta_trend: t.meta_trend || null,
     }));
     DEMAND        = snap.demand_clusters || [];
     PREDICTIONS   = snap.past_predictions || [];
@@ -2398,7 +2409,20 @@ function renderLeaderboard() {
     return b.tbts - a.tbts;
   }).slice(0, 20);
 
+  // Audit 3.13: re-order so trends in the same meta-trend appear together,
+  // and emit a header chip when the meta-trend label changes.
+  sorted.sort((a, b) => {
+    if (a.meta_trend === b.meta_trend) return 0;
+    if (!a.meta_trend) return 1;
+    if (!b.meta_trend) return -1;
+    return a.meta_trend.localeCompare(b.meta_trend);
+  });
+  let lastMeta = '__sentinel__';
   const html = sorted.map((t, i) => {
+    const metaHeader = (t.meta_trend && t.meta_trend !== lastMeta)
+      ? `<div class="lb-meta-header">META · ${escapeHtml(t.meta_trend)}</div>`
+      : '';
+    if (t.meta_trend) lastMeta = t.meta_trend;
     const kw = t.canonical_form || t.keyword;
     const sel = kw === state.selectedKeyword;
     const conv = hasConvergence(t);
@@ -2411,6 +2435,7 @@ function renderLeaderboard() {
     const deltaCls = deltaPct > 0 ? 'up' : (deltaPct < 0 ? 'down' : '');
     const mixBar = channelMixBar(t.sources, 80);
     return `
+      ${metaHeader}
       <div class="lb-row${sel ? ' selected' : ''}" data-kw="${escapeAttr(kw)}">
         <div class="rank">${String(i + 1).padStart(2, '0')}</div>
         <div>
