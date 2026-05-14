@@ -519,6 +519,26 @@ body::after {
 }
 .lb-delta.up   { color: var(--good); }
 .lb-delta.down { color: var(--bad); }
+.lb-mix { margin-top: 4px; opacity: 0.85; }
+.lb-mix svg { display: block; border-radius: 2px; }
+.gem-mix { margin-top: 8px; }
+.gem-mix svg { width: 100%; max-width: 220px; border-radius: 2px; }
+.gem-mix-legend {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.cm-leg { display: inline-flex; align-items: center; gap: 4px; }
+.cm-leg::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--cm);
+  border-radius: 1px;
+  display: inline-block;
+}
 .lb-row:hover { background: rgba(0, 240, 255, 0.04); }
 .lb-row .rank { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
 .lb-row .name {
@@ -2312,6 +2332,7 @@ function renderLeaderboard() {
     const volume = totalMentions7d(t);
     const deltaPct = weekDeltaPct(t.sparkline);
     const deltaCls = deltaPct > 0 ? 'up' : (deltaPct < 0 ? 'down' : '');
+    const mixBar = channelMixBar(t.sources, 80);
     return `
       <div class="lb-row${sel ? ' selected' : ''}" data-kw="${escapeAttr(kw)}">
         <div class="rank">${String(i + 1).padStart(2, '0')}</div>
@@ -2322,6 +2343,7 @@ function renderLeaderboard() {
             ${conv ? `<span class="conv-badge" data-conv="${escapeAttr(kw)}" title="View convergence timeline">⚡ CONV</span>` : ''}
             <span class="lb-volume" title="total mentions across arxiv + GH + HN today">vol ${volume}${deltaPct !== null ? ` <span class="lb-delta ${deltaCls}">${deltaPct > 0 ? '+' : ''}${deltaPct}%</span>` : ''}</span>
           </div>
+          ${mixBar ? `<div class="lb-mix">${mixBar}</div>` : ''}
         </div>
         ${spark}
         <div class="tbts">${t.tbts}</div>
@@ -2374,6 +2396,49 @@ function sparklineSVG(values, width, height, color) {
 function totalMentions7d(t) {
   const s = t.sources || {};
   return (s.arxiv_30d || 0) + (s.github_repos_7d || 0) + (s.hn_posts_7d || 0);
+}
+
+/* ---- audit 3.12: channel-mix breakdown ---- */
+const CHANNEL_COLORS = {
+  arxiv:       '#5b8def',
+  github:      '#d1d5db',
+  hackernews:  '#ff8c42',
+  huggingface: '#f1c40f',
+  bluesky:     '#1da1f2',
+};
+
+function channelMix(sources) {
+  if (!sources) return [];
+  const raw = [
+    { name: 'arxiv',       v: sources.arxiv_30d || 0 },
+    { name: 'github',      v: sources.github_repos_7d || 0 },
+    { name: 'hackernews',  v: sources.hn_posts_7d || 0 },
+    { name: 'huggingface', v: Math.round((sources.huggingface_likes_7d || 0) / 100) },
+    { name: 'bluesky',     v: sources.bluesky_mentions_7d || 0 },
+  ].filter(s => s.v > 0);
+  const total = raw.reduce((a, s) => a + s.v, 0);
+  if (total === 0) return [];
+  return raw.map(s => ({ name: s.name, pct: s.v / total, color: CHANNEL_COLORS[s.name] }));
+}
+
+function channelMixBar(sources, width) {
+  const mix = channelMix(sources);
+  if (!mix.length) return '';
+  const w = width || 80, h = 4;
+  let x = 0;
+  const segs = mix.map(s => {
+    const segW = s.pct * w;
+    const r = `<rect x="${x.toFixed(2)}" y="0" width="${segW.toFixed(2)}" height="${h}" fill="${s.color}"><title>${s.name} ${Math.round(s.pct * 100)}%</title></rect>`;
+    x += segW;
+    return r;
+  }).join('');
+  return `<svg class="channel-mix" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none" aria-label="channel mix">${segs}</svg>`;
+}
+
+function channelMixLegend(sources) {
+  const mix = channelMix(sources);
+  if (!mix.length) return '';
+  return mix.map(s => `<span class="cm-leg" style="--cm:${s.color}">${s.name} ${Math.round(s.pct * 100)}%</span>`).join(' ');
 }
 
 function weekDeltaPct(spark) {
@@ -2642,6 +2707,7 @@ function renderGems() {
             <span class="badge">TBTS ${t.tbts}</span>
             <span class="badge">${sourceBadge(t.sources || {})}</span>
           </div>
+          ${channelMixBar(t.sources, 200) ? `<div class="gem-mix">${channelMixBar(t.sources, 200)}<div class="gem-mix-legend">${channelMixLegend(t.sources)}</div></div>` : ''}
           <div class="gem-summary">${escapeHtml(t.summary || '—')}</div>
           ${sparkEmpty
             ? `<div class="gem-sparkline empty">no 14d series yet</div>`
