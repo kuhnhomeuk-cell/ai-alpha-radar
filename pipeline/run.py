@@ -34,7 +34,7 @@ from typing import Callable, Optional
 import anthropic
 from dotenv import load_dotenv
 
-from pipeline import burst, changepoint, cluster as cluster_mod
+from pipeline import burst, changepoint, cluster as cluster_mod, cluster_identity
 from pipeline import demand as demand_mod
 from pipeline import novelty as novelty_mod
 from pipeline import predict, score, snapshot, summarize, topics
@@ -665,18 +665,48 @@ def main(
     # ---- 5. Trim to TOP_N_TRENDS (Claude already ordered them by signal) ----
     topic_list = topic_list[:TOP_N_TRENDS]
 
-    # ---- 6. Cluster topics into themes ----
-    cluster_assignments = cluster_mod.cluster_topics(
+    # Load history early — cluster_identity needs yesterday's centroids
+    # before the cluster step runs.
+    history = _load_history(public_dir, today_d, VELOCITY_LOOKBACK_DAYS)
+
+    # ---- 6. Cluster topics into themes + stabilize IDs against yesterday ----
+    cluster_assignments, raw_centroids = cluster_mod.cluster_topics_with_centroids(
         [t.canonical_name for t in topic_list]
     )
 
+    # Audit 2.6 — map this run's HDBSCAN-assigned cluster ids back onto
+    # yesterday's stable ids when centroids are within threshold.
+    import numpy as np
+
+    new_centroids_np = {cid: np.asarray(v) for cid, v in raw_centroids.items()}
+    prior_snapshot_for_clusters = history.get(today_d - timedelta(days=1)) if history else None
+    prior_centroids_np: dict[int, "np.ndarray"] = {}
+    if prior_snapshot_for_clusters is not None:
+        prior_centroids_np = {
+            cid: np.asarray(vec)
+            for cid, vec in prior_snapshot_for_clusters.cluster_centroids.items()
+        }
+    labels_by_new_id: dict[int, str] = {}
+    for name, ca in cluster_assignments.items():
+        labels_by_new_id.setdefault(ca.cluster_id, ca.cluster_label)
+    id_remap = cluster_identity.canonicalize_cluster_ids(
+        new_centroids_np,
+        prior_centroids_np,
+        labels_by_new_id=labels_by_new_id,
+    )
+    # Apply the remap to each assignment + the centroids that ship in the
+    # snapshot.
+    for name, ca in cluster_assignments.items():
+        cluster_assignments[name] = cluster_mod.ClusterAssignment(
+            cluster_id=id_remap.get(ca.cluster_id, ca.cluster_id),
+            cluster_label=ca.cluster_label,
+        )
+    canonical_centroids: dict[int, list[float]] = {
+        id_remap.get(cid, cid): vec for cid, vec in raw_centroids.items()
+    }
+
     # ---- 7. Per-topic metrics ----
     doc_timestamps = _build_doc_timestamps(papers, posts, repos)
-
-    # Audit 1.1, 2.1, 2.2, 2.3, 2.9, 3.10 — load up to 30 prior snapshots
-    # so velocity/burst/changepoint/novelty have history to work with. With
-    # zero history (day-1) the algorithms degrade to zero scores gracefully.
-    history = _load_history(public_dir, today_d, VELOCITY_LOOKBACK_DAYS)
 
     # External-source aggregations per topic (new in this phase).
     hf_per_topic = _huggingface_per_topic(hf_models, topic_list)
@@ -849,6 +879,7 @@ def main(
         hit_rate=hit_rate,
         past_predictions=past_predictions[-90:],
         newsletter_signals=ns_payload,
+        cluster_centroids=canonical_centroids,
         meta={
             "pipeline_runtime_seconds": round(time.time() - started, 2),
             "fetch_seconds": fetch_seconds,

@@ -130,3 +130,37 @@ def cluster_topics(
     return cluster_terms(
         canonical_names, velocities=velocities, random_state=random_state
     )
+
+
+def cluster_topics_with_centroids(
+    canonical_names: list[str],
+    *,
+    velocities: Optional[dict[str, float]] = None,
+    random_state: int = 42,
+) -> tuple[dict[str, ClusterAssignment], dict[int, list[float]]]:
+    """Same as cluster_topics, plus a {cluster_id: centroid_vector} dict.
+
+    Centroids are the mean of the cluster members' raw 384-D sentence
+    embeddings (NOT the UMAP-reduced space). Audit 2.6's
+    canonicalize_cluster_ids compares centroids by cosine distance,
+    which is well-defined in the embedding space.
+    """
+    assignments = cluster_terms(
+        canonical_names, velocities=velocities, random_state=random_state
+    )
+    if not canonical_names:
+        return assignments, {}
+    model = _get_model()
+    import numpy as np
+
+    embeddings = np.asarray(model.encode(canonical_names, show_progress_bar=False))
+    by_cluster: dict[int, list[np.ndarray]] = {}
+    for name, embedding in zip(canonical_names, embeddings):
+        cid = assignments[name].cluster_id
+        by_cluster.setdefault(cid, []).append(embedding)
+    centroids: dict[int, list[float]] = {
+        cid: list(map(float, np.mean(vecs, axis=0)))
+        for cid, vecs in by_cluster.items()
+        if cid != -1
+    }
+    return assignments, centroids

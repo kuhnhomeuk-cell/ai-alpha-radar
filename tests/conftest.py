@@ -33,6 +33,7 @@ def _stub_live_fetchers(
         producthunt,
         reddit,
         replicate,
+        semantic_scholar,
     )
 
     monkeypatch.setattr(huggingface, "fetch_trending_models", lambda *a, **k: [])
@@ -41,3 +42,12 @@ def _stub_live_fetchers(
     monkeypatch.setattr(producthunt, "fetch_trending_launches", lambda *a, **k: [])
     monkeypatch.setattr(replicate, "fetch_trending", lambda *a, **k: [])
     monkeypatch.setattr(bluesky, "read_mention_counts", lambda *a, **k: {})
+    monkeypatch.setattr(semantic_scholar, "enrich_papers", lambda *a, **k: {})
+
+    # Novelty embeds + writes data/corpus_centroid_60d.npy as a side-effect.
+    # Stub to empty dict so tests don't pollute the repo or pay the MiniLM cost.
+    from pipeline import novelty as novelty_mod
+
+    monkeypatch.setattr(
+        novelty_mod, "score_topics_against_corpus", lambda topic_canonical_names, **k: {n: 0.0 for n in topic_canonical_names}
+    )
