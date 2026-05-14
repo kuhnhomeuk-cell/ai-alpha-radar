@@ -82,6 +82,7 @@ class Trend(BaseModel):
     velocity_acceleration: float
     velocity_significance: float = 0.0
     burst_score: float = 0.0
+    rrf_score: float = 0.0
     saturation: float
     hidden_gem_score: float
     builder_signal: float

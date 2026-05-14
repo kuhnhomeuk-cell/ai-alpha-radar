@@ -33,7 +33,7 @@ from pipeline import cluster as cluster_mod
 from pipeline import cluster_identity
 from pipeline import cold_start
 from pipeline import demand as demand_mod
-from pipeline import predict, score, snapshot, summarize
+from pipeline import predict, rrf, score, snapshot, summarize
 from pipeline.fetch import (
     arxiv,
     github,
@@ -299,6 +299,7 @@ def _build_trend(
     s2_citations_7d: int = 0,
     hf_likes: int = 0,
     hf_downloads: int = 0,
+    rrf: float = 0.0,
     history: Optional[dict[date, Snapshot]] = None,
     prior_alpha: Optional[float] = None,
     prior_beta: Optional[float] = None,
@@ -368,6 +369,7 @@ def _build_trend(
         velocity_acceleration=velocity_acceleration,
         velocity_significance=velocity_significance,
         burst_score=burst_score_val,
+        rrf_score=rrf,
         saturation=saturation_pct,
         hidden_gem_score=hidden_gem_score,
         builder_signal=builder_signal,
@@ -618,6 +620,23 @@ def main(
     # ---- 6. Build trends (placeholder Claude outputs) ----
     s2_by_term = _s2_citations_by_term(papers, top_terms, s2_data)
     hf_by_term = _hf_per_term(hf_models, top_terms)
+    # Reciprocal Rank Fusion across per-source counts (audit 3.7).
+    rrf_input = {
+        "arxiv": rrf.ranks_from_counts(
+            {t.canonical_form: t.arxiv_mentions for t in top_terms}
+        ),
+        "github": rrf.ranks_from_counts(
+            {t.canonical_form: t.github_mentions for t in top_terms}
+        ),
+        "hackernews": rrf.ranks_from_counts(
+            {t.canonical_form: t.hn_mentions for t in top_terms}
+        ),
+        "huggingface": rrf.ranks_from_counts(
+            {t.canonical_form: t.huggingface_mentions for t in top_terms}
+        ),
+        "s2": rrf.ranks_from_counts(s2_by_term),
+    }
+    rrf_by_term = rrf.rrf_score(rrf_input)
     trends: list[Trend] = []
     for i, term in enumerate(top_terms):
         builder_sig = term.github_mentions / max_github_for_builder_signal
@@ -644,6 +663,7 @@ def main(
                 s2_citations_7d=s2_citations,
                 hf_likes=hf_agg["likes"],
                 hf_downloads=hf_agg["downloads"],
+                rrf=rrf_by_term.get(term.canonical_form, 0.0),
                 history=history,
                 prior_alpha=prior_alpha,
                 prior_beta=prior_beta,
