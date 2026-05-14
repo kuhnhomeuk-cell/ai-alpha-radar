@@ -27,6 +27,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
+from pipeline import burst
 from pipeline import cluster as cluster_mod
 from pipeline import cold_start
 from pipeline import demand as demand_mod
@@ -285,6 +286,11 @@ def _build_trend(
     velocity_significance = abs(
         score.mann_kendall_confidence(sparkline + [today_count])
     )
+    # Kleinberg burst score over the 30d window (or as much as we have).
+    burst_window = _keyword_daily_counts(
+        history, term.canonical_form, today, VELOCITY_LOOKBACK_DAYS
+    ) + [today_count]
+    burst_score_val = burst.burst_score(burst_window)
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
@@ -310,6 +316,7 @@ def _build_trend(
         velocity_score=velocity_score,
         velocity_acceleration=velocity_acceleration,
         velocity_significance=velocity_significance,
+        burst_score=burst_score_val,
         saturation=saturation_pct,
         hidden_gem_score=hidden_gem_score,
         builder_signal=builder_signal,

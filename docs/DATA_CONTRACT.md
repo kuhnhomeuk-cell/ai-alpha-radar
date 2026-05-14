@@ -24,6 +24,7 @@ frontend interface; any change requires a frontend coordination note.
       "velocity_score": 3.8,
       "velocity_acceleration": 1.2,
       "velocity_significance": 0.0,
+      "burst_score": 0.0,
       "saturation": 27.5,
       "hidden_gem_score": 0.74,
       "builder_signal": 0.62,
