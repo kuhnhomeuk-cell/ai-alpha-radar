@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-BASELINE=24
+BASELINE=22
 TARGET="public/index.html"
 
 if [[ ! -f "$TARGET" ]]; then
