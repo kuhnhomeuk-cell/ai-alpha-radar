@@ -41,11 +41,6 @@ def test_smoothed_count_high_count_close_to_raw() -> None:
     assert smoothed > 5.0
 
 
-@pytest.mark.xfail(
-    reason="Tests score.velocity's prior_alpha/prior_beta kwargs which land in "
-    "Phase 3 (score.py redesign on topics primitive).",
-    strict=True,
-)
 def test_velocity_smoothing_kicks_in_under_threshold() -> None:
     """score.velocity with prior < threshold count → smaller value than raw."""
     raw = score.velocity(1, 30)
@@ -53,11 +48,6 @@ def test_velocity_smoothing_kicks_in_under_threshold() -> None:
     assert smoothed < raw
 
 
-@pytest.mark.xfail(
-    reason="Tests score.velocity's prior_alpha/prior_beta kwargs which land in "
-    "Phase 3 (score.py redesign on topics primitive).",
-    strict=True,
-)
 def test_velocity_smoothing_no_effect_above_threshold() -> None:
     """today_count >= 3 means use raw count even with prior."""
     raw = score.velocity(5, 30)
