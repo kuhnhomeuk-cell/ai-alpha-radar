@@ -166,6 +166,41 @@ def test_user_prompt_includes_candidate_hints() -> None:
     assert "test-time-training" in user_prompt
 
 
+def test_user_prompt_caps_candidate_hints_before_claude_call() -> None:
+    fake = FakeAnthropic('{"topics": []}')
+    hints = [f"hint-{i:04d}" for i in range(topics.MAX_CANDIDATE_HINTS_IN_PROMPT + 50)]
+    topics.extract_topics(
+        papers=[_paper("arx/1", "X")],
+        posts=[],
+        repos=[],
+        candidate_hints=hints,
+        client=fake,
+    )
+    user_prompt = fake.calls[0]["messages"][0]["content"]
+    assert "hint-0000" in user_prompt
+    assert f"hint-{topics.MAX_CANDIDATE_HINTS_IN_PROMPT - 1:04d}" in user_prompt
+    assert f"hint-{topics.MAX_CANDIDATE_HINTS_IN_PROMPT:04d}" not in user_prompt
+    assert '"candidate_hints": 50' in user_prompt
+
+
+def test_user_prompt_has_hard_character_budget() -> None:
+    prompt = topics._build_user_prompt(
+        papers=[
+            _paper(
+                f"arx/{i}",
+                "X" * 5000,
+                abstract="Y" * 5000,
+            )
+            for i in range(500)
+        ],
+        posts=[_post(i, "Z" * 5000) for i in range(500)],
+        repos=[_repo(f"acme/repo-{i}", "D" * 5000) for i in range(500)],
+        candidate_hints=["h" * 5000 for _ in range(500)],
+    )
+    assert len(prompt) <= topics.MAX_USER_PROMPT_CHARS
+    assert "topic-extraction input budget" in prompt
+
+
 # ---------- response parsing ----------
 
 
