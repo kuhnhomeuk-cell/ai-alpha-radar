@@ -38,6 +38,7 @@ from pipeline import leadlag
 from pipeline import meta_trends
 from pipeline import novelty as novelty_mod
 from pipeline import predict, questions as question_mining, rrf, score, snapshot, summarize
+from pipeline.log import log
 from pipeline.fetch import (
     arxiv,
     bluesky,
@@ -265,7 +266,7 @@ def _load_history(
         try:
             snap = snapshot.read_prior_snapshot(d, public_dir=public_dir)
         except Exception as e:
-            print(f"prior snapshot read failed for {d}: {e}", file=sys.stderr)
+            log("prior_snapshot_read_failed", level="warning", date=str(d), error=str(e))
             continue
         if snap is not None:
             history[d] = snap
@@ -551,14 +552,14 @@ def main(
         try:
             papers = arxiv.fetch_recent_papers(ARXIV_CATEGORIES, ARXIV_LOOKBACK_DAYS)
         except Exception as e:
-            print(f"arxiv fetch failed: {e}", file=sys.stderr)
+            log("fetch_failed", level="warning", source="arxiv", error=str(e))
             papers = []
             fetch_health["arxiv"] = False
     if posts is None:
         try:
             posts = hackernews.fetch_ai_posts(HN_LOOKBACK_DAYS)
         except Exception as e:
-            print(f"hackernews fetch failed: {e}", file=sys.stderr)
+            log("fetch_failed", level="warning", source="hackernews", error=str(e))
             posts = []
             fetch_health["hackernews"] = False
     if repos is None:
@@ -567,7 +568,7 @@ def main(
             try:
                 repos = github.fetch_trending_repos(gh_pat)
             except Exception as e:
-                print(f"github fetch failed: {e}", file=sys.stderr)
+                log("fetch_failed", level="warning", source="github", error=str(e))
                 repos = []
                 fetch_health["github"] = False
         else:
@@ -579,7 +580,7 @@ def main(
         try:
             hf_models = huggingface.fetch_trending_models()
         except Exception as e:
-            print(f"huggingface fetch failed: {e}", file=sys.stderr)
+            log("fetch_failed", level="warning", source="huggingface", error=str(e))
             hf_models = []
     fetch_health["huggingface"] = len(hf_models) > 0
 
@@ -590,7 +591,7 @@ def main(
                 today=today_dt
             )
         except Exception as e:
-            print(f"newsletter fetch failed: {e}", file=sys.stderr)
+            log("fetch_failed", level="warning", source="newsletters", error=str(e))
             newsletter_signals = []
 
     # Reddit — needs creds; empty list on miss.
@@ -598,7 +599,7 @@ def main(
         try:
             reddit_posts = reddit_fetcher.fetch_top_posts()
         except Exception as e:
-            print(f"reddit fetch failed: {e}", file=sys.stderr)
+            log("fetch_failed", level="warning", source="reddit", error=str(e))
             reddit_posts = []
     fetch_health["reddit"] = len(reddit_posts) > 0
 
@@ -607,7 +608,7 @@ def main(
         try:
             producthunt_launches = producthunt_fetcher.fetch_trending_launches()
         except Exception as e:
-            print(f"producthunt fetch failed: {e}", file=sys.stderr)
+            log("fetch_failed", level="warning", source="producthunt", error=str(e))
             producthunt_launches = []
     fetch_health["producthunt"] = len(producthunt_launches) > 0
 
@@ -616,7 +617,7 @@ def main(
         try:
             replicate_models = replicate_fetcher.fetch_trending()
         except Exception as e:
-            print(f"replicate fetch failed: {e}", file=sys.stderr)
+            log("fetch_failed", level="warning", source="replicate", error=str(e))
             replicate_models = []
     fetch_health["replicate"] = len(replicate_models) > 0
 
@@ -629,7 +630,7 @@ def main(
                     api_key=os.environ.get("SEMANTIC_SCHOLAR_KEY") or None,
                 )
             except Exception as e:
-                print(f"semantic scholar fetch failed: {e}", file=sys.stderr)
+                log("fetch_failed", level="warning", source="semantic_scholar", error=str(e))
                 s2_data = {}
         else:
             s2_data = {}
@@ -640,10 +641,13 @@ def main(
     ok_sources = sum(1 for h in fetch_health.values() if h)
     if ok_sources < MIN_OK_SOURCES:
         failed = sorted(k for k, v in fetch_health.items() if not v)
-        print(
-            f"FATAL: {ok_sources}/{len(fetch_health)} sources ok "
-            f"(failed: {failed}); aborting without writing data.json",
-            file=sys.stderr,
+        log(
+            "fetch_health_below_floor",
+            level="error",
+            ok_sources=ok_sources,
+            total_sources=len(fetch_health),
+            min_ok_sources=MIN_OK_SOURCES,
+            failed=failed,
         )
         sys.exit(2)
 
@@ -882,10 +886,12 @@ def main(
     if use_claude:
         estimated_cents = summarize.estimate_batch_cost_cents(len(trends))
         if max_cost_cents is not None and estimated_cents > max_cost_cents:
-            print(
-                f"FATAL: estimated Claude cost {estimated_cents:.2f}c > cap "
-                f"{max_cost_cents:.2f}c for {len(trends)} cards; aborting before any paid call",
-                file=sys.stderr,
+            log(
+                "claude_cost_cap_exceeded",
+                level="error",
+                estimated_cents=round(estimated_cents, 2),
+                cap_cents=round(max_cost_cents, 2),
+                num_cards=len(trends),
             )
             sys.exit(3)
         trends = _maybe_enrich_with_claude(trends, niche=niche)

@@ -30,6 +30,7 @@ from typing import Any, Optional
 import anthropic
 from pydantic import TypeAdapter
 
+from pipeline.log import log
 from pipeline.models import HitRate, LifecycleStage, Prediction
 from pipeline.summarize import (
     HAIKU_MODEL,
@@ -85,9 +86,7 @@ def load_predictions(path: Path) -> list[Prediction]:
         if not line:
             continue
         out.append(adapter.validate_json(line))
-    import sys
-
-    print(f"predict: loaded {len(out)} predictions from {path}", file=sys.stderr)
+    log("predictions_loaded", count=len(out), path=str(path))
     return out
 
 

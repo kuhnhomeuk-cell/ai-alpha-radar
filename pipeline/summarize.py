@@ -30,6 +30,7 @@ import anthropic
 from pydantic import BaseModel
 
 from pipeline.lifecycle_horizons import HORIZONS, clamp_peak_days
+from pipeline.log import log
 from pipeline.models import CreatorAngles, DailyBriefing, LifecycleStage, RiskFlag
 
 HAIKU_MODEL = "claude-haiku-4-5"
@@ -121,17 +122,25 @@ def _clamp_confidence(
     cleaned = raw if raw in ("high", "medium", "low") else "low"
     if total_signal < LOW_SIGNAL_FLOOR:
         if cleaned != "low":
-            print(
-                f"summary_confidence clamp: {keyword!r} model={cleaned!r} → 'low' "
-                f"(total_signal={total_signal} < {LOW_SIGNAL_FLOOR})",
-                file=__import__("sys").stderr,
+            log(
+                "summary_confidence_clamp",
+                level="info",
+                keyword=keyword,
+                model_value=cleaned,
+                clamped_to="low",
+                total_signal=total_signal,
+                floor=LOW_SIGNAL_FLOOR,
             )
         return "low"
     if cleaned == "high" and not (total_signal > HIGH_SIGNAL_FLOOR and convergence_detected):
-        print(
-            f"summary_confidence clamp: {keyword!r} model='high' → 'medium' "
-            f"(total_signal={total_signal}, convergence={convergence_detected})",
-            file=__import__("sys").stderr,
+        log(
+            "summary_confidence_clamp",
+            level="info",
+            keyword=keyword,
+            model_value="high",
+            clamped_to="medium",
+            total_signal=total_signal,
+            convergence=convergence_detected,
         )
         return "medium"
     return cleaned  # type: ignore[return-value]
