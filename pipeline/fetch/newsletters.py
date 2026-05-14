@@ -143,7 +143,10 @@ def load_curated_feed_list(path: Path = NEWSLETTERS_CONFIG_PATH) -> list[dict[st
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-@with_retry(attempts=3, base_delay=1.0)
+# Newsletters are best-effort enrichment, not a core signal — a single feed
+# being down (or rate-limiting us with a multi-hour Retry-After) shouldn't
+# park the daily pipeline. Tighter retry budget than the core fetchers.
+@with_retry(attempts=2, base_delay=1.0, max_delay=10.0)
 def _fetch_one(url: str) -> str:
     headers = {"User-Agent": NL_USER_AGENT}
     with httpx.Client(timeout=30, headers=headers, follow_redirects=True) as client:
