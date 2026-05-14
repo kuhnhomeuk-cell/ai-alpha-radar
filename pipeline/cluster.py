@@ -57,7 +57,7 @@ def cluster_terms(
     random_state: int = 42,
 ) -> dict[str, ClusterAssignment]:
     """Embed → UMAP → HDBSCAN. Returns {term: ClusterAssignment}."""
-    assignments, _ = cluster_terms_with_centroids(
+    assignments, _, _ = cluster_terms_with_centroids(
         terms, velocities=velocities, random_state=random_state
     )
     return assignments
@@ -68,17 +68,21 @@ def cluster_terms_with_centroids(
     *,
     velocities: Optional[dict[str, float]] = None,
     random_state: int = 42,
-) -> tuple[dict[str, ClusterAssignment], dict[int, list[float]]]:
-    """Embed → UMAP → HDBSCAN. Returns ({term: ClusterAssignment}, {cluster_id: centroid}).
+) -> tuple[dict[str, ClusterAssignment], dict[int, list[float]], dict[str, list[float]]]:
+    """Embed → UMAP → HDBSCAN. Returns (assignments, cluster_centroids, term_embeddings).
 
     Audit 2.6: inputs are sorted before embedding so HDBSCAN's order-
     dependent labelling is deterministic across runs given the same
-    input set. Centroids are computed in the reduced UMAP space so
+    input set. Cluster centroids are in the reduced UMAP space so
     cluster_identity.canonicalize_cluster_ids can match against
     yesterday's centroids without re-embedding.
+
+    Audit 3.10: also returns the high-dim sentence embeddings so the
+    novelty module can compute distance from the rolling corpus
+    centroid without re-encoding.
     """
     if not terms:
-        return {}, {}
+        return {}, {}, {}
     # Sort for determinism (audit 2.6).
     terms = sorted(set(terms))
     if len(terms) < HDBSCAN_MIN_CLUSTER_SIZE:
@@ -88,10 +92,12 @@ def cluster_terms_with_centroids(
                 for t in terms
             },
             {},
+            {},
         )
 
     model = _get_model()
     embeddings = model.encode(terms, show_progress_bar=False)
+    term_embeddings = {t: embeddings[i].tolist() for i, t in enumerate(terms)}
 
     n_neighbors = min(UMAP_N_NEIGHBORS, len(terms) - 1)
     init = "spectral" if len(terms) > UMAP_N_NEIGHBORS else "random"
@@ -143,4 +149,4 @@ def cluster_terms_with_centroids(
         )
         for term, lbl in zip(terms, labels)
     }
-    return assignments, centroids
+    return assignments, centroids, term_embeddings

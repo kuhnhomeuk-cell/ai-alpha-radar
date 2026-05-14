@@ -33,6 +33,7 @@ from pipeline import cluster as cluster_mod
 from pipeline import cluster_identity
 from pipeline import cold_start
 from pipeline import demand as demand_mod
+from pipeline import novelty as novelty_mod
 from pipeline import predict, rrf, score, snapshot, summarize
 from pipeline.fetch import (
     arxiv,
@@ -300,6 +301,7 @@ def _build_trend(
     hf_likes: int = 0,
     hf_downloads: int = 0,
     rrf: float = 0.0,
+    novelty: float = 0.0,
     history: Optional[dict[date, Snapshot]] = None,
     prior_alpha: Optional[float] = None,
     prior_beta: Optional[float] = None,
@@ -370,6 +372,7 @@ def _build_trend(
         velocity_significance=velocity_significance,
         burst_score=burst_score_val,
         rrf_score=rrf,
+        novelty_score=novelty,
         saturation=saturation_pct,
         hidden_gem_score=hidden_gem_score,
         builder_signal=builder_signal,
@@ -444,6 +447,7 @@ def main(
     max_cost_cents: Optional[float] = None,
     public_dir: Path = ROOT / "public",
     predictions_log: Path = ROOT / "data" / "predictions.jsonl",
+    corpus_centroid_path: Optional[Path] = None,
     niche: str = DEFAULT_NICHE,
 ) -> Snapshot:
     started = time.time()
@@ -572,9 +576,37 @@ def main(
         return snap
 
     # ---- 4. Cluster ----
-    raw_assignments, raw_centroids = cluster_mod.cluster_terms_with_centroids(
-        [t.canonical_form for t in top_terms]
+    raw_assignments, raw_centroids, term_embeddings = (
+        cluster_mod.cluster_terms_with_centroids(
+            [t.canonical_form for t in top_terms]
+        )
     )
+    # Diachronic novelty (audit 3.10): cosine distance to rolling corpus centroid.
+    import numpy as np
+
+    centroid_path = (
+        corpus_centroid_path
+        if corpus_centroid_path is not None
+        else novelty_mod.DEFAULT_CENTROID_PATH
+    )
+    prior_corpus_centroid = novelty_mod.load_centroid(centroid_path)
+    if term_embeddings:
+        emb_matrix = np.array([term_embeddings[t.canonical_form] for t in top_terms if t.canonical_form in term_embeddings])
+        today_centroid = novelty_mod.compute_centroid(emb_matrix)
+        novelty_by_term = {
+            t.canonical_form: novelty_mod.cosine_distance(
+                np.array(term_embeddings[t.canonical_form]),
+                prior_corpus_centroid if prior_corpus_centroid is not None else today_centroid,
+            )
+            for t in top_terms
+            if t.canonical_form in term_embeddings
+        }
+        updated_corpus_centroid = novelty_mod.update_rolling_centroid(
+            prior_corpus_centroid, today_centroid
+        )
+        novelty_mod.save_centroid(updated_corpus_centroid, centroid_path)
+    else:
+        novelty_by_term = {}
     # Canonicalize today's HDBSCAN ids against yesterday's centroids so
     # cluster_id is stable across snapshots (audit 2.6).
     yesterday = today_d - timedelta(days=1)
@@ -664,6 +696,7 @@ def main(
                 hf_likes=hf_agg["likes"],
                 hf_downloads=hf_agg["downloads"],
                 rrf=rrf_by_term.get(term.canonical_form, 0.0),
+                novelty=novelty_by_term.get(term.canonical_form, 0.0),
                 history=history,
                 prior_alpha=prior_alpha,
                 prior_beta=prior_beta,
