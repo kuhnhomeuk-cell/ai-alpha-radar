@@ -34,10 +34,11 @@ from typing import Callable, Optional
 import anthropic
 from dotenv import load_dotenv
 
-from pipeline import burst, changepoint, cluster as cluster_mod, cluster_identity
+from pipeline import burst, calibration, changepoint, cluster as cluster_mod, cluster_identity
 from pipeline import demand as demand_mod
+from pipeline import leadlag, meta_trends
 from pipeline import novelty as novelty_mod
-from pipeline import predict, score, snapshot, summarize, topics
+from pipeline import predict, questions as question_mining, rrf, score, snapshot, summarize, topics
 from pipeline.fetch import arxiv, github, hackernews
 from pipeline.fetch import bluesky, huggingface, newsletters
 from pipeline.fetch import producthunt as producthunt_fetcher
@@ -117,6 +118,15 @@ def _build_doc_timestamps(
     for r in repos:
         out[("github", r.full_name)] = r.created_at
     return out
+
+
+def _topic_match_strings_for_form(t: Trend) -> list[str]:
+    """Same idea as _topic_match_strings but reads from a fully-built Trend."""
+    out = {t.canonical_form.lower(), t.keyword.lower()}
+    for a in t.aliases:
+        if a:
+            out.add(a.lower())
+    return [s for s in out if len(s) >= 3]
 
 
 def _topic_match_strings(topic: Topic) -> list[str]:
@@ -824,6 +834,78 @@ def main(
             )
         )
 
+    # ---- 8a. Meta-trends (audit 3.13) — HDBSCAN over canonical centroids ----
+    cluster_to_meta = meta_trends.cluster_centroids(canonical_centroids)
+    cluster_labels_for_meta: dict[int, str] = {}
+    for t in trends:
+        cluster_labels_for_meta.setdefault(t.cluster_id, t.cluster_label)
+    meta_labels = meta_trends.build_meta_trend_labels(
+        cluster_to_meta, cluster_labels_for_meta
+    )
+    cluster_to_meta_label = {
+        cid: meta_labels.get(meta_id) for cid, meta_id in cluster_to_meta.items()
+    }
+    for t in trends:
+        label = cluster_to_meta_label.get(t.cluster_id)
+        if label:
+            t.meta_trend = label
+
+    # ---- 8b. RRF (audit 3.7) — fuse rankings across burst/novelty/velocity ----
+    rankings = {
+        "velocity": rrf.ranks_from_counts(
+            {t.canonical_form: int(t.velocity_score * 100) for t in trends}
+        ),
+        "burst": rrf.ranks_from_counts(
+            {t.canonical_form: int(t.burst_score * 100) for t in trends}
+        ),
+        "novelty": rrf.ranks_from_counts(
+            {t.canonical_form: int(t.novelty_score * 100) for t in trends}
+        ),
+        "hidden_gem": rrf.ranks_from_counts(
+            {t.canonical_form: int(t.hidden_gem_score * 100) for t in trends}
+        ),
+    }
+    fused = rrf.rrf_score(rankings)
+    for t in trends:
+        t.rrf_score = fused.get(t.canonical_form, 0.0)
+
+    # ---- 8c. Lead-lag still_early_gate (audit 3.8) ----
+    for t in trends:
+        arxiv_series = []
+        hn_series = []
+        for i_d in range(VELOCITY_LOOKBACK_DAYS, 0, -1):
+            d = today_d - timedelta(days=i_d)
+            snap_d = history.get(d)
+            if snap_d is None:
+                arxiv_series.append(0)
+                hn_series.append(0)
+                continue
+            match = next(
+                (tt for tt in snap_d.trends if tt.canonical_form == t.canonical_form),
+                None,
+            )
+            arxiv_series.append(match.sources.arxiv_30d if match else 0)
+            hn_series.append(match.sources.hn_posts_7d if match else 0)
+        arxiv_series.append(t.sources.arxiv_30d)
+        hn_series.append(t.sources.hn_posts_7d)
+        t.still_early_gate = leadlag.still_early_gate(arxiv_series, hn_series)
+
+    # ---- 8d. Top questions (audit 3.14) — mine HN comments per topic ----
+    hn_text_corpus = [
+        " ".join([p.title or ""] + [c.text or "" for c in (p.comments or [])])
+        for p in posts
+    ]
+    for t in trends:
+        topic_qs: list[str] = []
+        for needle in _topic_match_strings_for_form(t):
+            qs = question_mining.top_questions_for_term(
+                hn_text_corpus, term=needle, top_n=5
+            )
+            topic_qs.extend(qs)
+            if len(topic_qs) >= 5:
+                break
+        t.top_questions = list(dict.fromkeys(topic_qs))[:5]
+
     # ---- 9. Claude enrichment (opt-in) ----
     if use_claude:
         trends = _maybe_enrich_with_claude(trends, niche=niche)
@@ -858,6 +940,10 @@ def main(
         demand_clusters = []
 
     # ---- 12. Assemble + write ----
+    # Audit 3.9 — Brier + reliability bins over past predictions for the
+    # frontend's forecast confidence band.
+    calibration_summary = calibration.compute_calibration_summary(past_predictions)
+
     # Map fetched newsletter signals into the contract type.
     ns_payload = [
         NewsletterSignal(
@@ -909,6 +995,8 @@ def main(
             },
             "trends_processed": len(trends),
             "use_claude": use_claude,
+            "history_days_loaded": len(history),
+            "prediction_calibration": calibration_summary,
         },
     )
     snapshot.write_snapshot(snap, public_dir=public_dir)
