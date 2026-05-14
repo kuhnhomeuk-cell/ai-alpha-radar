@@ -60,3 +60,42 @@ def load_centroid(path: Path = DEFAULT_CENTROID_PATH) -> Optional[np.ndarray]:
     if not path.exists():
         return None
     return np.load(path)
+
+
+def score_topics_against_corpus(
+    topic_canonical_names: list[str],
+    *,
+    corpus_centroid_path: Path = DEFAULT_CENTROID_PATH,
+) -> dict[str, float]:
+    """High-level wrapper used by the orchestrator.
+
+    Embeds each topic name once, looks up the persisted 60d rolling
+    centroid, returns {topic_name: cosine_distance_from_centroid}, and
+    blends today's mean embedding into the centroid for tomorrow.
+
+    Day-1 (no prior centroid): every topic gets distance 0.0 and the
+    centroid is seeded from today's embeddings.
+    """
+    if not topic_canonical_names:
+        return {}
+    # Lazy import — sentence-transformers is a heavy dep we don't want at
+    # module import time (matters for fast unit-test collection).
+    from sentence_transformers import SentenceTransformer
+
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = np.asarray(
+        model.encode(topic_canonical_names, show_progress_bar=False, normalize_embeddings=True)
+    )
+    prior = load_centroid(corpus_centroid_path)
+    out: dict[str, float] = {}
+    if prior is None:
+        # Day-1: no comparison possible; seed centroid + return zeros.
+        for name in topic_canonical_names:
+            out[name] = 0.0
+    else:
+        for i, name in enumerate(topic_canonical_names):
+            out[name] = cosine_distance(embeddings[i], prior)
+    today_centroid = compute_centroid(embeddings)
+    updated = update_rolling_centroid(prior, today_centroid)
+    save_centroid(updated, corpus_centroid_path)
+    return out

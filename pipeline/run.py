@@ -34,8 +34,9 @@ from typing import Callable, Optional
 import anthropic
 from dotenv import load_dotenv
 
-from pipeline import cluster as cluster_mod
+from pipeline import burst, changepoint, cluster as cluster_mod
 from pipeline import demand as demand_mod
+from pipeline import novelty as novelty_mod
 from pipeline import predict, score, snapshot, summarize, topics
 from pipeline.fetch import arxiv, github, hackernews
 from pipeline.fetch import bluesky, huggingface, newsletters
@@ -339,8 +340,12 @@ def _build_trend(
     convergence: ConvergenceEvent,
     velocity_score: float,
     reddit_top_subreddit: Optional[str] = None,
+    velocity_acceleration: float = 0.0,
+    velocity_significance: float = 0.0,
+    burst_score_val: float = 0.0,
+    novelty_score_val: float = 0.0,
+    sparkline: Optional[list[int]] = None,
 ) -> Trend:
-    velocity_acceleration = 0.0  # warming up — needs day-2+ snapshots
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
@@ -365,6 +370,9 @@ def _build_trend(
         sources=sources,
         velocity_score=velocity_score,
         velocity_acceleration=velocity_acceleration,
+        velocity_significance=velocity_significance,
+        burst_score=burst_score_val,
+        novelty_score=novelty_score_val,
         saturation=saturation_pct,
         hidden_gem_score=hidden_gem_score,
         builder_signal=builder_signal,
@@ -376,7 +384,7 @@ def _build_trend(
         angles=_placeholder_creator_angles(),
         risk=_placeholder_risk(),
         prediction=_placeholder_prediction(topic.canonical_name, today),
-        sparkline_14d=[],
+        sparkline_14d=sparkline or [],
         aliases=list(topic.aliases),
         source_doc_ids=dict(topic.source_doc_ids),
     )
@@ -428,6 +436,50 @@ def _maybe_enrich_with_claude(
 
 
 MIN_OK_SOURCES = 3  # Audit 1.5 — refuse to ship a snapshot built on fewer.
+VELOCITY_LOOKBACK_DAYS = 30  # how many prior snapshots feed velocity/burst
+SPARKLINE_DAYS = 14
+
+
+def _load_history(
+    public_dir: Path, today: date, days: int
+) -> dict[date, Snapshot]:
+    """Load up to `days` prior snapshots before today, dropping bad files."""
+    history: dict[date, Snapshot] = {}
+    for i in range(1, days + 1):
+        d = today - timedelta(days=i)
+        snap = snapshot.read_prior_snapshot(d, public_dir=public_dir)
+        if snap is not None:
+            history[d] = snap
+    return history
+
+
+def _topic_daily_total_series(
+    history: dict[date, Snapshot],
+    canonical_form: str,
+    today: date,
+    days: int,
+) -> list[int]:
+    """Daily series of (arxiv_30d + github_repos_7d + hn_posts_7d) for one topic.
+
+    Used to feed burst, changepoint, mann-kendall, and the sparkline. Missing
+    days slot in as zero so the series length always equals `days`.
+    """
+    out: list[int] = []
+    for i in range(days, 0, -1):
+        d = today - timedelta(days=i)
+        snap = history.get(d)
+        total = 0
+        if snap is not None:
+            for t in snap.trends:
+                if t.canonical_form == canonical_form:
+                    total = (
+                        t.sources.arxiv_30d
+                        + t.sources.github_repos_7d
+                        + t.sources.hn_posts_7d
+                    )
+                    break
+        out.append(total)
+    return out
 
 
 def main(
@@ -621,6 +673,11 @@ def main(
     # ---- 7. Per-topic metrics ----
     doc_timestamps = _build_doc_timestamps(papers, posts, repos)
 
+    # Audit 1.1, 2.1, 2.2, 2.3, 2.9, 3.10 — load up to 30 prior snapshots
+    # so velocity/burst/changepoint/novelty have history to work with. With
+    # zero history (day-1) the algorithms degrade to zero scores gracefully.
+    history = _load_history(public_dir, today_d, VELOCITY_LOOKBACK_DAYS)
+
     # External-source aggregations per topic (new in this phase).
     hf_per_topic = _huggingface_per_topic(hf_models, topic_list)
     reddit_per_topic = _reddit_per_topic(reddit_posts, topic_list)
@@ -672,6 +729,14 @@ def main(
         (c.github_repos_7d for c in counts_per_topic), default=1
     ) or 1
 
+    # Novelty: build today's centroid from topic canonical_names and compare
+    # to the persisted 60d rolling corpus centroid. Day-1 with no centroid
+    # yet returns 0.0 distance and seeds the file for tomorrow.
+    novelty_scores = novelty_mod.score_topics_against_corpus(
+        topic_canonical_names=[t.canonical_name for t in topic_list],
+        corpus_centroid_path=ROOT / "data" / "corpus_centroid_60d.npy",
+    )
+
     # ---- 8. Build trends ----
     trends: list[Trend] = []
     for i, topic in enumerate(topic_list):
@@ -689,6 +754,26 @@ def main(
         cluster_id = ca.cluster_id if ca else -1
         cluster_label = ca.cluster_label if ca else "Unclustered Emerging"
         reddit_info = reddit_per_topic.get(topic.canonical_form, {})
+
+        # Audit 1.1, 2.2, 2.3, 2.9, 3.11 — history-derived per-topic series.
+        daily_series_30d = _topic_daily_total_series(
+            history, topic.canonical_form, today_d, VELOCITY_LOOKBACK_DAYS
+        )
+        today_total = (
+            sources.arxiv_30d + sources.github_repos_7d + sources.hn_posts_7d
+        )
+        # Sparkline trims to last 14 days then appends today.
+        sparkline = daily_series_30d[-SPARKLINE_DAYS + 1 :] + [today_total]
+        # Burst on the 30d series + today.
+        full_series = daily_series_30d + [today_total]
+        burst_val = burst.burst_score(full_series)
+        # Changepoint-derived acceleration vs. last breakpoint.
+        accel = changepoint.velocity_acceleration(
+            daily_series_30d, today_count=today_total
+        )
+        # Mann-Kendall significance (z-score) on the same series.
+        mk_z = score.mann_kendall_confidence(full_series)
+
         trends.append(
             _build_trend(
                 topic,
@@ -701,6 +786,11 @@ def main(
                 convergence=convergence,
                 velocity_score=velocity_per_topic[i],
                 reddit_top_subreddit=reddit_info.get("top_subreddit") if reddit_info else None,
+                velocity_acceleration=accel,
+                velocity_significance=mk_z,
+                burst_score_val=burst_val,
+                novelty_score_val=novelty_scores.get(topic.canonical_name, 0.0),
+                sparkline=sparkline,
             )
         )
 
