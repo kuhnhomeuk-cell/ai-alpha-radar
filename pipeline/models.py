@@ -135,3 +135,4 @@ class Snapshot(BaseModel):
     hit_rate: HitRate
     past_predictions: list[Prediction]
     meta: dict[str, Any]
+    data_freshness_status: Literal["live", "stale", "error"] = "live"

@@ -346,6 +346,29 @@ body::after {
   border-left: 1px solid var(--line);
   padding-left: 16px;
 }
+.stale-banner {
+  width: 100%;
+  padding: 10px var(--sp-5);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  background: rgba(255, 77, 109, 0.10);
+  color: var(--bad);
+  border-bottom: 1px solid rgba(255, 77, 109, 0.30);
+  display: flex; gap: 10px; align-items: center; justify-content: center;
+}
+.stale-banner .label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  padding: 2px 8px;
+  background: rgba(255, 77, 109, 0.20);
+  border-radius: 100px;
+}
+.stale-banner.error { background: rgba(255, 77, 109, 0.18); }
+.stale-banner.warn  { background: rgba(255, 198, 88, 0.10); color: #ffc658; border-bottom-color: rgba(255, 198, 88, 0.30); }
+.stale-banner.warn .label { background: rgba(255, 198, 88, 0.20); }
+.stale-banner[hidden] { display: none; }
 .src-claude {
   display: inline-flex;
   align-items: center;
@@ -1499,6 +1522,8 @@ footer .quote {
 </head>
 <body>
 
+<div id="staleBanner" class="stale-banner" hidden></div>
+
 <!-- ========== TOPBAR ========== -->
 <div class="topbar glass">
   <div class="brand">
@@ -1738,6 +1763,8 @@ let HIT_RATE      = { rate: 0, verified: 0, tracking: 0, verified_early: 0, wron
 let BRIEFING      = { text: '' };
 let META          = {};
 let SNAPSHOT_DATE = '';
+let DATA_FRESHNESS_STATUS = 'live';
+let STALE_MARKER = null;
 
 const WATCHLIST = new Set();
 function loadWatchlist() {
@@ -1805,9 +1832,59 @@ async function loadData() {
     BRIEFING      = snap.briefing    || BRIEFING;
     META          = snap.meta        || {};
     SNAPSHOT_DATE = snap.snapshot_date || '';
+    DATA_FRESHNESS_STATUS = snap.data_freshness_status || 'live';
   } catch (e) {
     console.warn('data.json load failed', e);
+    DATA_FRESHNESS_STATUS = 'error';
   }
+}
+
+async function loadStaleMarker() {
+  try {
+    const res = await fetch('./.stale', { cache: 'no-store' });
+    if (!res.ok) { STALE_MARKER = null; return; }
+    STALE_MARKER = await res.json();
+  } catch (e) {
+    STALE_MARKER = null;
+  }
+}
+
+function renderStalenessBanner() {
+  const el = document.getElementById('staleBanner');
+  if (!el) return;
+  let reason = null;
+  let level  = 'warn';
+
+  if (STALE_MARKER && STALE_MARKER.failed_at) {
+    reason = `Last daily snapshot job failed at ${STALE_MARKER.failed_at}. Data below is the last successful run.`;
+    level  = 'error';
+  } else if (DATA_FRESHNESS_STATUS === 'error') {
+    reason = 'data.json failed to load — showing partial UI.';
+    level  = 'error';
+  } else if (DATA_FRESHNESS_STATUS !== 'live') {
+    reason = `Snapshot marked ${DATA_FRESHNESS_STATUS}.`;
+    level  = 'warn';
+  } else if (SNAPSHOT_DATE) {
+    const snapTs = Date.parse(SNAPSHOT_DATE);
+    if (!isNaN(snapTs)) {
+      const ageHours = (Date.now() - snapTs) / 3.6e6;
+      if (ageHours > 24) {
+        reason = `Snapshot is ${Math.floor(ageHours)}h old — daily cron may have missed a run.`;
+        level  = ageHours > 48 ? 'error' : 'warn';
+      }
+    }
+  }
+
+  if (!reason) { el.hidden = true; el.textContent = ''; el.className = 'stale-banner'; return; }
+  el.hidden = false;
+  el.className = `stale-banner ${level}`;
+  el.innerHTML = '';
+  const label = document.createElement('span'); label.className = 'label';
+  label.textContent = level === 'error' ? 'stale data' : 'heads up';
+  const msg   = document.createElement('span');
+  msg.textContent = reason;
+  el.appendChild(label);
+  el.appendChild(msg);
 }
 
 /* ==========================================================
@@ -2737,6 +2814,8 @@ function escapeAttr(s) { return escapeHtml(s); }
 window.addEventListener('load', async () => {
   loadWatchlist();
   await loadData();
+  await loadStaleMarker();
+  renderStalenessBanner();
   document.getElementById('snapshotStamp').textContent = `snapshot · ${SNAPSHOT_DATE || '—'}`;
   updateWatchlistUI();
   renderBubble();

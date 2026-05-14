@@ -129,6 +129,53 @@ def test_risk_flag_allows_null_peak_estimate() -> None:
     assert risk.peak_estimate_days is None
 
 
+def test_snapshot_default_data_freshness_status_is_live() -> None:
+    snap = models.Snapshot(
+        snapshot_date=date(2026, 5, 13),
+        generated_at=datetime(2026, 5, 13, 6, 0, tzinfo=timezone.utc),
+        trends=[],
+        demand_clusters=[],
+        briefing=models.DailyBriefing(
+            text="",
+            moved_up=[],
+            moved_down=[],
+            emerging=[],
+            generated_at=datetime(2026, 5, 13, 6, 0, tzinfo=timezone.utc),
+        ),
+        hit_rate=models.HitRate(rate=0.0, verified=0, tracking=0, verified_early=0, wrong=0),
+        past_predictions=[],
+        meta={},
+    )
+    assert snap.data_freshness_status == "live"
+    # Round-trips with new field.
+    parsed = models.Snapshot.model_validate_json(snap.model_dump_json())
+    assert parsed.data_freshness_status == "live"
+
+
+def test_snapshot_data_freshness_status_accepts_stale_and_error() -> None:
+    base = dict(
+        snapshot_date=date(2026, 5, 13),
+        generated_at=datetime(2026, 5, 13, 6, 0, tzinfo=timezone.utc),
+        trends=[],
+        demand_clusters=[],
+        briefing=models.DailyBriefing(
+            text="",
+            moved_up=[],
+            moved_down=[],
+            emerging=[],
+            generated_at=datetime(2026, 5, 13, 6, 0, tzinfo=timezone.utc),
+        ),
+        hit_rate=models.HitRate(rate=0.0, verified=0, tracking=0, verified_early=0, wrong=0),
+        past_predictions=[],
+        meta={},
+    )
+    for status in ("live", "stale", "error"):
+        snap = models.Snapshot(data_freshness_status=status, **base)
+        assert snap.data_freshness_status == status
+    with pytest.raises(ValidationError):
+        models.Snapshot(data_freshness_status="bogus", **base)
+
+
 def test_snapshot_roundtrip() -> None:
     trend = _example_trend()
     snapshot = models.Snapshot(

@@ -48,6 +48,10 @@ jobs:
         run: |
           git config user.name "radar-bot"
           git config user.email "radar-bot@users.noreply.github.com"
+          # A successful run clears any prior stale marker.
+          if [ -f public/.stale ]; then
+            git rm public/.stale
+          fi
           git add public/data.json public/snapshots/ data/predictions.jsonl
           if ! git diff --cached --quiet; then
             git commit -m "snapshot: $(date -u +%Y-%m-%d)"
@@ -55,3 +59,15 @@ jobs:
           else
             echo "no snapshot changes to commit"
           fi
+
+      - name: Mark stale on failure
+        if: failure()
+        run: |
+          git config user.name "radar-bot"
+          git config user.email "radar-bot@users.noreply.github.com"
+          mkdir -p public
+          printf '{"failed_at":"%s","reason":"daily snapshot job failed"}\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > public/.stale
+          git add public/.stale
+          git commit -m "chore: mark snapshot stale ($(date -u +%Y-%m-%d))"
+          git push
