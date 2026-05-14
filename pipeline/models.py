@@ -86,6 +86,7 @@ class Trend(BaseModel):
     burst_score: float = 0.0
     rrf_score: float = 0.0
     novelty_score: float = 0.0
+    still_early_gate: bool = False
     saturation: float
     hidden_gem_score: float
     builder_signal: float

@@ -33,6 +33,7 @@ from pipeline import cluster as cluster_mod
 from pipeline import cluster_identity
 from pipeline import cold_start
 from pipeline import demand as demand_mod
+from pipeline import leadlag
 from pipeline import novelty as novelty_mod
 from pipeline import predict, rrf, score, snapshot, summarize
 from pipeline.fetch import (
@@ -278,6 +279,28 @@ def _keyword_daily_counts(
     return series
 
 
+def _keyword_daily_counts_for_source(
+    history: dict[date, Snapshot],
+    keyword: str,
+    today: date,
+    days: int,
+    source_attr: str,
+) -> list[int]:
+    """Per-source variant — pulls a specific SourceCounts attribute per day."""
+    series: list[int] = []
+    for i in range(days, 0, -1):
+        d = today - timedelta(days=i)
+        snap = history.get(d)
+        count = 0
+        if snap is not None:
+            for t in snap.trends:
+                if t.keyword == keyword or t.canonical_form == keyword:
+                    count = getattr(t.sources, source_attr, 0)
+                    break
+        series.append(count)
+    return series
+
+
 def _prior_velocity(
     history: dict[date, Snapshot], keyword: str, today: date
 ) -> float:
@@ -350,6 +373,14 @@ def _build_trend(
         history, term.canonical_form, today, VELOCITY_LOOKBACK_DAYS
     ) + [today_count]
     burst_score_val = burst.burst_score(burst_window)
+    # Granger-based still-early gate (audit 3.8). Per-source 30-day series.
+    arxiv_series = _keyword_daily_counts_for_source(
+        history, term.canonical_form, today, VELOCITY_LOOKBACK_DAYS, "arxiv_30d"
+    ) + [term.arxiv_mentions]
+    hn_series = _keyword_daily_counts_for_source(
+        history, term.canonical_form, today, VELOCITY_LOOKBACK_DAYS, "hn_posts_7d"
+    ) + [term.hn_mentions]
+    still_early = leadlag.still_early_gate(arxiv_series, hn_series)
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
@@ -378,6 +409,7 @@ def _build_trend(
         burst_score=burst_score_val,
         rrf_score=rrf,
         novelty_score=novelty,
+        still_early_gate=still_early,
         saturation=saturation_pct,
         hidden_gem_score=hidden_gem_score,
         builder_signal=builder_signal,

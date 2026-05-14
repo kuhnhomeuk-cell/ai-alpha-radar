@@ -31,6 +31,7 @@ frontend interface; any change requires a frontend coordination note.
       "burst_score": 0.0,
       "rrf_score": 0.0,
       "novelty_score": 0.0,
+      "still_early_gate": false,
       "saturation": 27.5,
       "hidden_gem_score": 0.74,
       "builder_signal": 0.62,
