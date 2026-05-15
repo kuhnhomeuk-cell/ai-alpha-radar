@@ -1271,6 +1271,44 @@ body::after {
 .detail-panel .pred .badge.pending        { color: var(--ink-3);         border-color: var(--line); }
 .detail-panel .pred .badge.wrong          { color: var(--bad);           border-color: rgba(255, 77, 109, 0.3); }
 .detail-panel .audience-section { margin-top: 18px; }
+.detail-panel .painpoints-section { margin-top: 18px; }
+.detail-panel .painpoints-list { display: flex; flex-direction: column; gap: 10px; }
+.detail-panel .painpoint {
+  border-left: 2px solid var(--champagne);
+  padding: 6px 0 6px 12px;
+}
+.detail-panel .painpoint .text {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.detail-panel .painpoint .sources {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.detail-panel .painpoint .source-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.detail-panel .painpoint .source-chip:hover {
+  color: var(--champagne);
+  border-color: var(--champagne);
+}
+.detail-panel .painpoints-empty {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-style: italic;
+}
 .detail-panel .audience-eyebrow {
   font-family: var(--mono);
   font-size: 9px;
@@ -1692,6 +1730,10 @@ footer .quote {
         <div class="audience-eyebrow">◆ What audiences are asking</div>
         <div id="dpAudience"></div>
       </div>
+      <div class="painpoints-section">
+        <div class="audience-eyebrow">⚠ Where solo creators are stuck</div>
+        <div id="dpPainPoints"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1875,6 +1917,7 @@ async function loadData() {
       risk: t.risk || {},
       prediction: t.prediction || null,
       sparkline: t.sparkline_14d || [],
+      pain_points: t.pain_points || [],
     }));
     DEMAND        = snap.demand_clusters || [];
     PREDICTIONS   = snap.past_predictions || [];
@@ -2596,10 +2639,51 @@ function openDetailPanel(kw) {
   }
 
   renderForecast(t);
+  renderPainPoints(t);
 
   const panel = document.getElementById('detailPanel');
   panel.classList.add('visible');
   panel.setAttribute('aria-hidden', 'false');
+}
+
+/* ---- Wave 5: pain-points section from Perplexity Sonar enrichment ----
+   Built via createElement + textContent to keep the audit 4.6 lint baseline. */
+function renderPainPoints(t) {
+  const host = document.getElementById('dpPainPoints');
+  if (!host) return;
+  host.replaceChildren();
+  const points = (t.pain_points || []);
+  if (!points.length) {
+    const empty = document.createElement('div');
+    empty.className = 'painpoints-empty';
+    empty.textContent = 'Awaiting Perplexity Sonar enrichment.';
+    host.appendChild(empty);
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'painpoints-list';
+  points.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'painpoint';
+    const text = document.createElement('div');
+    text.className = 'text';
+    text.textContent = (i + 1) + '. ' + (p.text || '');
+    row.appendChild(text);
+    if (p.source_url) {
+      const sources = document.createElement('div');
+      sources.className = 'sources';
+      const chip = document.createElement('a');
+      chip.className = 'source-chip';
+      chip.href = p.source_url;
+      chip.target = '_blank';
+      chip.rel = 'noopener noreferrer';
+      chip.textContent = p.source_title || p.source_url;
+      sources.appendChild(chip);
+      row.appendChild(sources);
+    }
+    list.appendChild(row);
+  });
+  host.appendChild(list);
 }
 
 /* ---- audit 3.15: forecast curve with confidence band ---- */

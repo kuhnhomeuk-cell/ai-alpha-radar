@@ -83,6 +83,21 @@ class Prediction(BaseModel):
     target_lifecycle: Optional["LifecycleStage"] = None
 
 
+class PainPoint(BaseModel):
+    """Wave 5 — a single creator pain point surfaced by Perplexity Sonar.
+
+    Sonar returns these ranked from most important to least important; we
+    preserve that order in `rank` (1-based). No `confidence` field — Sonar's
+    own ordering is the signal, an additional LLM-derived confidence would be
+    noisy and unverifiable.
+    """
+
+    text: str
+    source_url: str
+    source_title: str
+    rank: int = 0
+
+
 class Trend(BaseModel):
     keyword: str
     canonical_form: str
@@ -125,6 +140,9 @@ class Trend(BaseModel):
     # timeline modal (v0.2 Commit 5) consumes it for source attribution.
     aliases: list[str] = []
     source_doc_ids: dict[str, list[str | int]] = {}
+    # Wave 5 — Perplexity Sonar pain-point enrichment. Default empty so
+    # snapshots written before Wave 5 round-trip unchanged.
+    pain_points: list[PainPoint] = []
 
 
 class DemandQuote(BaseModel):

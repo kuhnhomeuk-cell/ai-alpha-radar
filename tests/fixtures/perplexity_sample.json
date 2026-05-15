@@ -1,0 +1,25 @@
+{
+  "id": "1234abcd-cafe-4dad-9001-feedface0000",
+  "model": "sonar",
+  "created": 1747270000,
+  "usage": {
+    "prompt_tokens": 92,
+    "completion_tokens": 184,
+    "total_tokens": 276
+  },
+  "citations": [
+    "https://www.reddit.com/r/StableDiffusion/comments/abc123/comfyui_video_workflow_help/",
+    "https://www.reddit.com/r/comfyui/comments/def456/animate_diff_audio_sync_no_tutorial/",
+    "https://news.ycombinator.com/item?id=48073246"
+  ],
+  "choices": [
+    {
+      "index": 0,
+      "finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "[{\"text\": \"Solo creators struggle to chain multiple ComfyUI nodes into a stable video workflow without manual node-by-node tweaking\", \"source_url\": \"https://www.reddit.com/r/StableDiffusion/comments/abc123/comfyui_video_workflow_help/\", \"source_title\": \"ComfyUI video workflow help — r/StableDiffusion\"}, {\"text\": \"No clear end-to-end tutorial exists for syncing audio to AnimateDiff outputs in ComfyUI\", \"source_url\": \"https://www.reddit.com/r/comfyui/comments/def456/animate_diff_audio_sync_no_tutorial/\", \"source_title\": \"AnimateDiff audio sync — r/comfyui\"}, {\"text\": \"Creators want a reliable way to batch-render ComfyUI outputs at 4K without OOM on consumer GPUs\", \"source_url\": \"https://news.ycombinator.com/item?id=48073246\", \"source_title\": \"ComfyUI batch render 4K — HN thread\"}]"
+      }
+    }
+  ]
+}

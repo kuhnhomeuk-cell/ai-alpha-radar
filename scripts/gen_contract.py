@@ -68,6 +68,30 @@ def build_example_snapshot() -> models.Snapshot:
             verdict="tracking",
         ),
         sparkline_14d=[1, 2, 2, 3, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10],
+        # Wave 5 — Perplexity Sonar pain-point enrichment.
+        pain_points=[
+            models.PainPoint(
+                text=(
+                    "Solo creators struggle to wire a world-model agent into an "
+                    "existing video pipeline without writing custom glue code."
+                ),
+                source_url="https://news.ycombinator.com/item?id=48073246",
+                source_title="Show HN: tiny world-model agent runtime",
+                rank=1,
+            ),
+            models.PainPoint(
+                text=(
+                    "No end-to-end tutorial exists for evaluating a world-model "
+                    "agent's plan quality on a single creator's laptop."
+                ),
+                source_url=(
+                    "https://www.reddit.com/r/LocalLLaMA/comments/abc123/"
+                    "world_model_eval_tutorial/"
+                ),
+                source_title="World-model agent eval tutorial — r/LocalLLaMA",
+                rank=2,
+            ),
+        ],
     )
     demand = models.DemandCluster(
         question_shape="How do I run MCP servers locally with Claude Desktop?",

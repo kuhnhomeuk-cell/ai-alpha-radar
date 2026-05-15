@@ -41,6 +41,7 @@ from pipeline import novelty as novelty_mod
 from pipeline import predict, questions as question_mining, rrf, score, snapshot, summarize, topics
 from pipeline.fetch import arxiv, github, hackernews
 from pipeline.fetch import bluesky, huggingface, newsletters
+from pipeline.fetch import perplexity as perplexity_fetcher
 from pipeline.fetch import producthunt as producthunt_fetcher
 from pipeline.fetch import reddit as reddit_fetcher
 from pipeline.fetch import replicate as replicate_fetcher
@@ -398,6 +399,32 @@ def _build_trend(
         aliases=list(topic.aliases),
         source_doc_ids=dict(topic.source_doc_ids),
     )
+
+
+def _maybe_enrich_with_perplexity(
+    trends: list[Trend], *, budget_cents: Optional[float] = None
+) -> tuple[list[Trend], float]:
+    """Wave 5 — replace empty `pain_points` with Sonar pain-points per trend.
+
+    Stops early when `budget_cents` is exhausted (remaining trends keep their
+    empty `pain_points`). Individual failures degrade silently — pain-points
+    are enrichment, not a hard input. Returns (enriched_trends, total_cents).
+    """
+    if not trends:
+        return trends, 0.0
+    spent_cents: float = 0.0
+    out: list[Trend] = []
+    for t in trends:
+        if budget_cents is not None and spent_cents >= budget_cents:
+            out.append(t)
+            continue
+        points, cost = perplexity_fetcher.fetch_pain_points(t.keyword)
+        spent_cents += cost
+        if points:
+            out.append(t.model_copy(update={"pain_points": points}))
+        else:
+            out.append(t)
+    return out, spent_cents
 
 
 def _maybe_enrich_with_claude(
@@ -907,6 +934,7 @@ def main(
         t.top_questions = list(dict.fromkeys(topic_qs))[:5]
 
     # ---- 9. Claude enrichment (opt-in, behind cost cap — audit 1.2) ----
+    perplexity_spent_cents: float = 0.0
     if use_claude:
         estimated_cents = summarize.estimate_batch_cost_cents(len(trends))
         if max_cost_cents is not None and estimated_cents > max_cost_cents:
@@ -919,6 +947,25 @@ def main(
             )
             sys.exit(3)
         trends = _maybe_enrich_with_claude(trends, niche=niche)
+
+        # ---- 9b. Perplexity Sonar pain-point enrichment (Wave 5) ----
+        # Folds into the same `--max-cost-cents` gate as Claude. Remaining
+        # budget after Claude's estimate is what's left for Sonar; if the
+        # cap is None, run uncapped. Per-trend failures degrade silently.
+        perplexity_budget_cents = (
+            None
+            if max_cost_cents is None
+            else max(0.0, max_cost_cents - estimated_cents)
+        )
+        trends, perplexity_spent_cents = _maybe_enrich_with_perplexity(
+            trends, budget_cents=perplexity_budget_cents
+        )
+        log(
+            "perplexity_enrichment_done",
+            level="info",
+            trends_enriched=sum(1 for t in trends if t.pain_points),
+            spent_cents=round(perplexity_spent_cents, 2),
+        )
 
     # ---- 10. Predictions update ----
     preds = predict.load_predictions(predictions_log)
