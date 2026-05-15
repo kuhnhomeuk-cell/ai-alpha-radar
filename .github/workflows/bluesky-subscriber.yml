@@ -43,10 +43,31 @@ jobs:
         run: |
           git config user.name "radar-bot"
           git config user.email "radar-bot@users.noreply.github.com"
-          if [ -f data/bluesky_mentions.sqlite ]; then
-            git add -f data/bluesky_mentions.sqlite
-            if ! git diff --cached --quiet; then
-              git commit -m "bluesky: mention DB tick $(date -u +%Y-%m-%dT%H:%MZ)"
-              git push
-            fi
+          if [ ! -f data/bluesky_mentions.sqlite ]; then
+            echo "no bluesky DB to commit"
+            exit 0
           fi
+          git add -f data/bluesky_mentions.sqlite
+          if git diff --cached --quiet; then
+            echo "no bluesky DB changes to commit"
+            exit 0
+          fi
+          git commit -m "bluesky: mention DB tick $(date -u +%Y-%m-%dT%H:%MZ)"
+          # 5-attempt fetch+rebase+push to survive concurrent merges
+          # during the 30-min subscriber window.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main; then
+              if git push; then
+                echo "DB pushed on attempt $attempt"
+                exit 0
+              fi
+            else
+              git rebase --abort
+              echo "rebase conflict on attempt $attempt — aborting" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "exhausted 5 push attempts" >&2
+          exit 1
