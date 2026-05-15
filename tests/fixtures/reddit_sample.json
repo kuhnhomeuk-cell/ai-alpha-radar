@@ -1,0 +1,57 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": null,
+    "before": null,
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "id": "abc111",
+          "subreddit": "MachineLearning",
+          "title": "[R] Scaling laws for transformer training revisited",
+          "url": "https://arxiv.org/abs/2605.99999",
+          "permalink": "/r/MachineLearning/comments/abc111/r_scaling_laws/",
+          "author": "researcher_one",
+          "selftext": "We rerun the Chinchilla experiments at 3x scale...",
+          "score": 421,
+          "num_comments": 87,
+          "created_utc": 1747300000,
+          "is_self": false
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "abc222",
+          "subreddit": "MachineLearning",
+          "title": "[D] Why isn't anyone using sparse mixture-of-experts in production?",
+          "url": "https://reddit.com/r/MachineLearning/comments/abc222/",
+          "permalink": "/r/MachineLearning/comments/abc222/d_sparse_moe/",
+          "author": "discussion_starter",
+          "selftext": "Wondering what the production trade-offs really are.",
+          "score": 156,
+          "num_comments": 203,
+          "created_utc": 1747310000,
+          "is_self": true
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "id": "low333",
+          "subreddit": "MachineLearning",
+          "title": "[N] Random low-engagement news bit",
+          "url": "https://example.com",
+          "permalink": "/r/MachineLearning/comments/low333/",
+          "author": "lurker",
+          "selftext": "",
+          "score": 8,
+          "num_comments": 2,
+          "created_utc": 1747320000,
+          "is_self": false
+        }
+      }
+    ]
+  }
+}

@@ -37,11 +37,12 @@ from dotenv import load_dotenv
 from pipeline import cluster as cluster_mod
 from pipeline import demand as demand_mod
 from pipeline import predict, score, snapshot, summarize, topics
-from pipeline.fetch import arxiv, github, hackernews, huggingface
+from pipeline.fetch import arxiv, github, hackernews, huggingface, reddit
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
 from pipeline.fetch.huggingface import HFModel
+from pipeline.fetch.reddit import RedditPost
 from pipeline.models import (
     ConvergenceEvent,
     CreatorAngles,
@@ -331,6 +332,7 @@ def main(
     posts: Optional[list[HNPost]] = None,
     repos: Optional[list[RepoStat]] = None,
     hf_models: Optional[list[HFModel]] = None,
+    reddit_posts: Optional[list[RedditPost]] = None,
     use_claude: bool = False,
     extract_topics_fn: Optional[ExtractTopicsFn] = None,
     public_dir: Path = ROOT / "public",
@@ -345,7 +347,7 @@ def main(
     fetch_started = time.time()
     fetch_health = {
         "arxiv": True, "hackernews": True, "github": True,
-        "semantic_scholar": False, "huggingface": True,
+        "semantic_scholar": False, "huggingface": True, "reddit": True,
     }
     if papers is None:
         try:
@@ -380,6 +382,13 @@ def main(
             print(f"huggingface fetch failed: {e}", file=sys.stderr)
             hf_models = []
             fetch_health["huggingface"] = False
+    if reddit_posts is None:
+        try:
+            reddit_posts = reddit.fetch_ai_posts()
+        except Exception as e:
+            print(f"reddit fetch failed: {e}", file=sys.stderr)
+            reddit_posts = []
+            fetch_health["reddit"] = False
     fetch_seconds = round(time.time() - fetch_started, 2)
 
     # ---- 2. Empty-inputs short-circuit ----
@@ -531,6 +540,7 @@ def main(
                 "github": {"fetched": len(repos), "ok": fetch_health["github"]},
                 "hackernews": {"fetched": len(posts), "ok": fetch_health["hackernews"]},
                 "huggingface": {"fetched": len(hf_models), "ok": fetch_health["huggingface"]},
+                "reddit": {"fetched": len(reddit_posts), "ok": fetch_health["reddit"]},
                 "semantic_scholar": {
                     "fetched": 0,
                     "ok": fetch_health["semantic_scholar"],
