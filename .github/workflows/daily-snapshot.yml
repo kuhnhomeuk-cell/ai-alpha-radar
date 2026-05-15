@@ -72,9 +72,29 @@ jobs:
           git config user.name "radar-bot"
           git config user.email "radar-bot@users.noreply.github.com"
           git add public/data.json public/snapshots/ data/predictions.jsonl
-          if ! git diff --cached --quiet; then
-            git commit -m "snapshot: $(date -u +%Y-%m-%d)"
-            git push
-          else
+          if git diff --cached --quiet; then
             echo "no snapshot changes to commit"
+            exit 0
           fi
+          git commit -m "snapshot: $(date -u +%Y-%m-%d)"
+          # If another PR merged to main during this ~10-min run, refresh
+          # and replay our snapshot commit on top before pushing.
+          # 5 retry attempts cover near-simultaneous merges; on a true
+          # rebase conflict, abort and surface as a failure rather than
+          # corrupt the snapshot file.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main; then
+              if git push; then
+                echo "snapshot pushed on attempt $attempt"
+                exit 0
+              fi
+            else
+              git rebase --abort
+              echo "rebase conflict on attempt $attempt — aborting" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "exhausted 5 push attempts" >&2
+          exit 1
