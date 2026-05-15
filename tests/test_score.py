@@ -11,7 +11,6 @@ import pytest
 from pipeline import score
 from pipeline.models import ConvergenceEvent
 
-
 # -------- velocity --------------------------------------------------------
 
 
@@ -266,6 +265,20 @@ def test_detect_convergence_four_sources_picks_tightest_window() -> None:
     assert set(event.sources_hit) == {"hackernews", "github", "semantic_scholar"}
 
 
+def test_detect_convergence_prefers_tighter_equal_count_window() -> None:
+    appearances = {
+        "arxiv": datetime(2026, 5, 1, 0, 0, tzinfo=timezone.utc),
+        "hackernews": datetime(2026, 5, 2, 0, 0, tzinfo=timezone.utc),
+        "github": datetime(2026, 5, 3, 23, 0, tzinfo=timezone.utc),
+        "semantic_scholar": datetime(2026, 5, 10, 0, 0, tzinfo=timezone.utc),
+        "youtube": datetime(2026, 5, 10, 3, 0, tzinfo=timezone.utc),
+        "reddit": datetime(2026, 5, 10, 6, 0, tzinfo=timezone.utc),
+    }
+    event = score.detect_convergence(appearances)
+    assert event.detected is True
+    assert set(event.sources_hit) == {"semantic_scholar", "youtube", "reddit"}
+
+
 # -------- mann_kendall_confidence ----------------------------------------
 
 
@@ -365,3 +378,21 @@ def test_velocity_from_topic_docs_doc_outside_30d_window_excluded() -> None:
     )
     assert m7 == 0
     assert m30 == 0
+
+
+# v0.2.0 — venue boost from arxiv:comment
+
+
+def test_venue_boost_fires_on_top_venue_with_recent_year() -> None:
+    assert score.venue_boost("ICML2026") == 0.5
+    assert score.venue_boost("Accepted at NeurIPS 2026") == 0.5
+    assert score.venue_boost("ICLR 2027 oral") == 0.5
+    assert score.venue_boost("CVPR 2026") == 0.5
+
+
+def test_venue_boost_zero_on_non_venue_comment() -> None:
+    assert score.venue_boost("") == 0.0
+    assert score.venue_boost("Work in Progress") == 0.0
+    assert score.venue_boost("21 pages, 5 figures") == 0.0
+    # Pre-2025 venues don't qualify (pattern is 2025-2039)
+    assert score.venue_boost("ICML 2020") == 0.0

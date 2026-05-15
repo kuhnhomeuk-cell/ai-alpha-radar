@@ -109,6 +109,8 @@ def _build_doc_timestamps(
 def _source_counts_from_topic(
     topic: Topic,
     doc_timestamps: dict[tuple[str, str | int], datetime],
+    posts_by_id: dict[int, HNPost],
+    repos_by_name: dict[str, RepoStat],
     today_dt: datetime,
 ) -> SourceCounts:
     """Bucket a topic's source docs into the SourceCounts shape the data
@@ -128,10 +130,29 @@ def _source_counts_from_topic(
             if ((ts := doc_timestamps.get((source, doc_id))) is not None and ts >= cutoff)
         )
 
+    hn_points_7d = sum(
+        max(posts_by_id[int(doc_id)].points, 0)
+        for doc_id in topic.source_doc_ids.get("hackernews", [])
+        if isinstance(doc_id, int)
+        and doc_id in posts_by_id
+        and (ts := doc_timestamps.get(("hackernews", doc_id))) is not None
+        and ts >= seven_d_ago
+    )
+    github_stars_7d = sum(
+        max(repos_by_name[repo_name].stars_7d_delta or 0, 0)
+        for repo_name in topic.source_doc_ids.get("github", [])
+        if isinstance(repo_name, str)
+        and repo_name in repos_by_name
+        and (ts := doc_timestamps.get(("github", repo_name))) is not None
+        and ts >= seven_d_ago
+    )
+
     return SourceCounts(
         arxiv_30d=_count("arxiv", thirty_d_ago),
         github_repos_7d=_count("github", seven_d_ago),
+        github_stars_7d=github_stars_7d,
         hn_posts_7d=_count("hackernews", seven_d_ago),
+        hn_points_7d=hn_points_7d,
     )
 
 
@@ -200,9 +221,24 @@ def _build_trend(
     cluster_label: str,
     convergence: ConvergenceEvent,
     velocity_score: float,
+    papers_by_id: Optional[dict[str, Paper]] = None,
 ) -> Trend:
     velocity_acceleration = 0.0  # warming up — needs day-2+ snapshots
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
+    # v0.2.0: average venue-boost across this topic's attributed arXiv papers,
+    # add it (scaled) to hidden_gem_score capped at 1.0. Papers accepted to
+    # ICML/NeurIPS/etc. surface as hidden gems faster.
+    if papers_by_id:
+        arxiv_ids = topic.source_doc_ids.get("arxiv", [])
+        if arxiv_ids:
+            boosts = [
+                score.venue_boost(papers_by_id[doc_id].comment)
+                for doc_id in arxiv_ids
+                if isinstance(doc_id, str) and doc_id in papers_by_id
+            ]
+            if boosts:
+                avg_boost = sum(boosts) / len(boosts)
+                hidden_gem_score = min(hidden_gem_score + 0.2 * avg_boost, 1.0)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
         github_repos_7d=sources.github_repos_7d,
@@ -377,12 +413,17 @@ def main(
 
     # ---- 7. Per-topic metrics ----
     doc_timestamps = _build_doc_timestamps(papers, posts, repos)
+    posts_by_id = {p.id: p for p in posts}
+    repos_by_name = {r.full_name: r for r in repos}
+    papers_by_id = {p.id: p for p in papers}
 
     # Pre-compute SourceCounts and velocity per topic for percentile math.
     counts_per_topic: list[SourceCounts] = []
     velocity_per_topic: list[float] = []
     for topic in topic_list:
-        counts = _source_counts_from_topic(topic, doc_timestamps, today_dt)
+        counts = _source_counts_from_topic(
+            topic, doc_timestamps, posts_by_id, repos_by_name, today_dt
+        )
         counts_per_topic.append(counts)
         _, _, v = score.velocity_from_topic_docs(
             source_doc_ids=topic.source_doc_ids,
@@ -395,15 +436,15 @@ def main(
     hn_pcts = _percentile_ranks([c.hn_posts_7d for c in counts_per_topic])
     gh_pcts = _percentile_ranks([c.github_repos_7d for c in counts_per_topic])
 
-    max_github_for_builder_signal = max(
-        (c.github_repos_7d for c in counts_per_topic), default=1
+    max_builder_raw = max(
+        (c.github_repos_7d + c.github_stars_7d for c in counts_per_topic), default=1
     ) or 1
 
     # ---- 8. Build trends ----
     trends: list[Trend] = []
     for i, topic in enumerate(topic_list):
         sources = counts_per_topic[i]
-        builder_sig = sources.github_repos_7d / max_github_for_builder_signal
+        builder_sig = (sources.github_repos_7d + sources.github_stars_7d) / max_builder_raw
         saturation_pct = score.saturation(
             github=gh_pcts[i],
             hn=hn_pcts[i],
@@ -426,6 +467,7 @@ def main(
                 cluster_label=cluster_label,
                 convergence=convergence,
                 velocity_score=velocity_per_topic[i],
+                papers_by_id=papers_by_id,
             )
         )
 
@@ -483,6 +525,7 @@ def main(
                     "ok": fetch_health["semantic_scholar"],
                 },
             },
+            "github_stars": {r.full_name: r.stars for r in repos},
             "trends_processed": len(trends),
             "use_claude": use_claude,
         },

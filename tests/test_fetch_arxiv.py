@@ -3,6 +3,9 @@
 from datetime import datetime
 from pathlib import Path
 
+import httpx
+import pytest
+
 from pipeline.fetch import arxiv
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "arxiv_sample.xml"
@@ -48,3 +51,47 @@ def test_unknown_category_filter_returns_empty() -> None:
         FIXTURE.read_text(encoding="utf-8"), categories=["does.notexist"]
     )
     assert papers == []
+
+
+# v0.2.0 — new field extraction + backoff
+
+
+def test_parse_atom_feed_extracts_comment() -> None:
+    """arxiv:comment field is populated when present (fixture has "ICML2026")."""
+    papers = _papers()
+    comments = [p.comment for p in papers if p.comment]
+    assert comments, "expected at least one paper to have a non-empty comment"
+    assert any(
+        arxiv.feedparser.parse  # sanity: feedparser still imported
+        and any(v in c for v in ("ICML", "NeurIPS", "ICLR", "Work in Progress"))
+        for c in comments
+    ), f"expected a venue or status comment, got {comments[:5]!r}"
+
+
+def test_parse_atom_feed_includes_primary_in_all_categories() -> None:
+    """all_categories must always include the primary_category."""
+    for p in _papers():
+        assert p.primary_category in p.all_categories, (
+            f"{p.id}: primary {p.primary_category!r} missing from {p.all_categories}"
+        )
+
+
+def test_fetch_with_backoff_retries_on_429(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A run of 429s exhausts retries and raises ArXivRateLimited."""
+    call_count = 0
+
+    def fake_get(self, url, params=None):  # type: ignore[no-untyped-def]
+        nonlocal call_count
+        call_count += 1
+        request = httpx.Request("GET", url, params=params)
+        response = httpx.Response(429, request=request)
+        return response
+
+    monkeypatch.setattr(httpx.Client, "get", fake_get)
+    monkeypatch.setattr(arxiv.time, "sleep", lambda _: None)
+
+    with httpx.Client() as client:
+        with pytest.raises(arxiv.ArXivRateLimited):
+            arxiv._fetch_with_backoff(client, arxiv.ARXIV_API_URL, {}, max_retries=3)
+
+    assert call_count == 3, f"expected 3 attempts, got {call_count}"

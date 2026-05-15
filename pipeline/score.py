@@ -18,12 +18,31 @@ Two spec deviations, both surfaced not silent:
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta
 from typing import Optional
 
 import pymannkendall as mk
 
 from pipeline.models import ConvergenceEvent, LifecycleStage, SourceName
+
+# Top-venue acceptance pattern for arxiv:comment fields.
+# Matches strings like "ICML2026", "Accepted at NeurIPS 2026", "ICLR 2027".
+VENUE_PATTERN = re.compile(
+    r"\b(ICML|NeurIPS|ICLR|CVPR|EMNLP|ACL|NAACL|AAAI|SIGKDD|ICDM|ECML|COLM)\s*20(2[5-9]|3\d)\b",
+    re.IGNORECASE,
+)
+
+
+def venue_boost(comment: str) -> float:
+    """Returns 0.5 if `comment` mentions a top-tier venue + 202x year, else 0.0.
+
+    Designed to be averaged across a topic's attributed arXiv papers and
+    folded into hidden_gem_score in run.py:_build_trend.
+    """
+    if not comment:
+        return 0.0
+    return 0.5 if VENUE_PATTERN.search(comment) else 0.0
 
 # Saturation weights — BACKEND_BUILD §6.2
 SAT_WEIGHTS = {"github": 0.35, "hn": 0.30, "arxiv": 0.20, "semantic_scholar": 0.15}
@@ -158,6 +177,7 @@ def detect_convergence(
     events = sorted(first_appearances.items(), key=lambda kv: kv[1])
     best_window: Optional[tuple[list[SourceName], dict[SourceName, datetime]]] = None
     best_count = 0
+    best_span_hours = float("inf")
 
     for i, (_, t_i) in enumerate(events):
         # Extend j while events[j] is within 72h of events[i]
@@ -168,11 +188,16 @@ def detect_convergence(
                 break
             j += 1
         count = j - i
-        if count >= CONVERGENCE_MIN_SOURCES and count > best_count:
+        if count >= CONVERGENCE_MIN_SOURCES:
+            span_hours = (events[j - 1][1] - t_i).total_seconds() / 3600.0
+        if count >= CONVERGENCE_MIN_SOURCES and (
+            count > best_count or (count == best_count and span_hours < best_span_hours)
+        ):
             window_sources = [s for s, _ in events[i:j]]
             window_appearances = {s: t for s, t in events[i:j]}
             best_window = (window_sources, window_appearances)
             best_count = count
+            best_span_hours = span_hours
 
     if best_window is None:
         return ConvergenceEvent(
