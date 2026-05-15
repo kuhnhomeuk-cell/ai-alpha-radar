@@ -106,3 +106,48 @@ def test_fetch_trending_models_malformed_body_returns_empty(_no_sleep: None) -> 
     )
     items = huggingface.fetch_trending_models(limit=20)
     assert items == []
+
+
+# ---------- v0.2.0 — download velocity layer ----------
+
+
+def test_models_warming_up_until_velocity_attached() -> None:
+    items = huggingface.parse_search_response(_load())
+    for m in items:
+        assert m.warming_up is True
+        assert m.downloads_7d_delta is None
+
+
+def test_compute_download_velocity_annotates_known_models() -> None:
+    items = huggingface.parse_search_response(_load())
+    # Build a prior map covering 2 of the 5 public models. Lower their prior
+    # downloads by 1000 so we get a clean +1000 delta.
+    known = [m for m in items[:2]]
+    prior = {m.id: max(m.downloads - 1000, 0) for m in known}
+    annotated = huggingface.compute_download_velocity(items, prior_downloads=prior)
+    by_id = {m.id: m for m in annotated}
+
+    for m in known:
+        result = by_id[m.id]
+        assert result.warming_up is False
+        # delta is either +1000 or, if prior went to 0 floor, equals current.
+        assert result.downloads_7d_delta == 1000 or result.downloads_7d_delta == m.downloads
+
+    # Models not in the prior map stay warming up.
+    for m in items[2:]:
+        result = by_id[m.id]
+        assert result.warming_up is True
+        assert result.downloads_7d_delta is None
+
+
+def test_load_prior_download_map_missing_file_returns_empty(tmp_path: Path) -> None:
+    assert huggingface.load_prior_download_map(tmp_path / "nonexistent.json") == {}
+
+
+def test_load_prior_download_map_reads_meta(tmp_path: Path) -> None:
+    snap = tmp_path / "2026-05-08.json"
+    snap.write_text(json.dumps({
+        "meta": {"hf_downloads": {"meta-llama/Llama-3.3-70B-Instruct": 1_450_000}}
+    }))
+    result = huggingface.load_prior_download_map(snap)
+    assert result == {"meta-llama/Llama-3.3-70B-Instruct": 1_450_000}

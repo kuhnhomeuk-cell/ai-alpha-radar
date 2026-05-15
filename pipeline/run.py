@@ -606,7 +606,12 @@ def main(
     # Hugging Face Hub trending — no auth, free public endpoint.
     if hf_models is None:
         try:
-            hf_models = huggingface.fetch_trending_models()
+            # v0.2.0 — pass snapshots_dir so download velocity attaches
+            # against the 7-day-prior snapshot. Day-1 (no prior) is fine:
+            # warming_up stays True, downloads_7d_delta stays None.
+            hf_models = huggingface.fetch_trending_models(
+                snapshots_dir=public_dir / "snapshots",
+            )
         except Exception as e:
             log("fetch_failed", level="warning", source="huggingface", error=str(e))
             hf_models = []
@@ -1092,6 +1097,9 @@ def main(
             "prediction_calibration": calibration_summary,
             "predictions_on_disk": len(preds),
             "predictions_pending_unmatched": len(stuck_pending),
+            # v0.2.0 — persist per-model lifetime downloads so the next-day
+            # snapshot can compute downloads_7d_delta against this baseline.
+            "hf_downloads": {m.id: m.downloads for m in hf_models},
         },
     )
     snapshot.write_snapshot(snap, public_dir=public_dir)

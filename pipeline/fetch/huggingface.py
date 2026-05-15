@@ -16,7 +16,10 @@ and a different shape. v1 ships /api/models only; spaces stays at 0.
 
 from __future__ import annotations
 
+import json
 import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Optional
 
 import httpx
@@ -39,6 +42,10 @@ class HFModel(BaseModel):
     pipeline_tag: Optional[str] = None
     library_name: Optional[str] = None
     private: bool = False
+    # v0.2.0 — download velocity vs the 7-day-prior snapshot. None until
+    # the pipeline has a prior snapshot to delta against.
+    downloads_7d_delta: Optional[int] = None
+    warming_up: bool = True
 
 
 def parse_search_response(payload: list[dict[str, Any]]) -> list[HFModel]:
@@ -77,11 +84,50 @@ def model_text(m: HFModel) -> str:
     return "\n".join(parts)
 
 
+def compute_download_velocity(
+    today: list[HFModel], *, prior_downloads: dict[str, int]
+) -> list[HFModel]:
+    """v0.2.0 — annotate each model with downloads_7d_delta using prior map.
+    Models not in the prior snapshot stay warming_up=True with delta=None.
+    """
+    annotated: list[HFModel] = []
+    for m in today:
+        if m.id in prior_downloads:
+            annotated.append(
+                m.model_copy(update={
+                    "downloads_7d_delta": m.downloads - prior_downloads[m.id],
+                    "warming_up": False,
+                })
+            )
+        else:
+            annotated.append(m)
+    return annotated
+
+
+def load_prior_download_map(snapshot_path: Path) -> dict[str, int]:
+    """v0.2.0 — read a prior snapshot's meta.hf_downloads. Returns {} if absent."""
+    if not snapshot_path.exists():
+        return {}
+    try:
+        data = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return data.get("meta", {}).get("hf_downloads", {})
+
+
 @with_retry(attempts=3, base_delay=1.0)
 def fetch_trending_models(
     limit: int = HF_DEFAULT_LIMIT,
+    *,
+    snapshots_dir: Optional[Path] = None,
+    lookback_days: int = 7,
 ) -> list[HFModel]:
-    """Live fetch of trending HF models. No auth."""
+    """Live fetch of trending HF models. No auth.
+
+    If `snapshots_dir` is provided, attach downloads_7d_delta against the
+    snapshot from `lookback_days` ago (defaults to 7d). Without it the
+    velocity layer stays None / warming_up=True, preserving legacy callers.
+    """
     headers = {"User-Agent": HF_USER_AGENT}
     params = {"sort": "trendingScore", "direction": -1, "limit": limit, "full": True}
     with httpx.Client(timeout=30, headers=headers) as client:
@@ -89,7 +135,14 @@ def fetch_trending_models(
         response.raise_for_status()
         data = response.json()
     time.sleep(HF_REQUEST_INTERVAL_SECONDS)
-    return parse_search_response(data)
+    today = parse_search_response(data)
+
+    if snapshots_dir is not None:
+        prior_date = (datetime.now(tz=timezone.utc) - timedelta(days=lookback_days)).date()
+        prior = load_prior_download_map(snapshots_dir / f"{prior_date.isoformat()}.json")
+        if prior:
+            today = compute_download_velocity(today, prior_downloads=prior)
+    return today
 
 
 if __name__ == "__main__":
