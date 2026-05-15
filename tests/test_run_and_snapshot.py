@@ -74,6 +74,32 @@ def _stub_extract_topics(papers, posts, repos, candidate_hints):
     return out
 
 
+@pytest.fixture(autouse=True)
+def _stub_cluster_topics(monkeypatch):
+    """Keep orchestrator tests focused on pipeline wiring, not MiniLM/UMAP."""
+
+    def fake_cluster_topics(names):
+        return {
+            name: run.cluster_mod.ClusterAssignment(
+                cluster_id=i,
+                cluster_label=f"cluster {i}",
+            )
+            for i, name in enumerate(names)
+        }
+
+    monkeypatch.setattr(run.cluster_mod, "cluster_topics", fake_cluster_topics)
+
+
+@pytest.fixture(autouse=True)
+def _stub_live_fetchers(monkeypatch):
+    """Keep orchestrator tests offline: short-circuit HF + Reddit live fetches
+    so test_orchestrator_* doesn't hit the network when hf_models / reddit_posts
+    aren't explicitly injected.
+    """
+    monkeypatch.setattr(run.huggingface, "fetch_trending_models", lambda **kw: [])
+    monkeypatch.setattr(run.reddit, "fetch_ai_posts", lambda **kw: [])
+
+
 def test_write_snapshot_creates_data_json_and_dated_archive(tmp_path: Path) -> None:
     snap = Snapshot(
         snapshot_date=date(2026, 5, 13),
