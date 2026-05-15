@@ -565,7 +565,14 @@ def main(
             fetch_health["arxiv"] = False
     if posts is None:
         try:
-            posts = hackernews.fetch_ai_posts(HN_LOOKBACK_DAYS)
+            # v0.2.0 — enable points-floored keyword sweep + 3 tag-only passes
+            # (Show HN / front_page / Ask HN). Tests that pin call counts call
+            # fetch_ai_posts with explicit keyword/extra_passes args.
+            posts = hackernews.fetch_ai_posts(
+                HN_LOOKBACK_DAYS,
+                min_points=hackernews.HN_MIN_POINTS_KEYWORD,
+                extra_passes=hackernews.EXTRA_PASS_NAMES,
+            )
         except Exception as e:
             log("fetch_failed", level="warning", source="hackernews", error=str(e))
             posts = []
