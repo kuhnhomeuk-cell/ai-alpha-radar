@@ -48,10 +48,10 @@
       "summary": "AI systems that work together automatically to fix their own mistakes and complete tasks without human help.",
       "summary_confidence": "medium",
       "angles": {
-        "hook": "AI agents that work 24/7 while you sleep—no prompts needed",
-        "contrarian": "Agentic AI won't replace creators—it'll expose lazy ones",
+        "hook": "AI agents that work 24/7 while you sleep\u2014no prompts needed",
+        "contrarian": "Agentic AI won't replace creators\u2014it'll expose lazy ones",
         "tutorial": "Set up your first self-fixing AI workflow in 10 minutes",
-        "eli_creator": "Imagine hiring a team of assistants who talk to each other, fix their own mistakes, and finish your project while you sleep. That's agentic workflows—AI doing the whole job automatically."
+        "eli_creator": "Imagine hiring a team of assistants who talk to each other, fix their own mistakes, and finish your project while you sleep. That's agentic workflows\u2014AI doing the whole job automatically."
       },
       "risk": {
         "breakout_likelihood": "medium",
@@ -118,8 +118,8 @@
       "top_questions": [
         "do a staggered refactor and eat the elephant in bites :) Also easier to ship a binary like a cli 1) I still have to comprehend it. 2) The corpus for the sort of applications I build is likely larger for Python than it is for C++ and Rust. Bigger corpus == more training data == better generated code. 3) The bottleneck in the applications I run aren&#x27;t in the execution of the code; they&#x27;re in the database&#x2F;network latency. 4) I don&#x27;t get anything extra for pushing Rust or C++ over Python. This post resonates. I recently built a little web service to scratch an itch I&#x27;ve been having and after discussing the options with Claude we settled on Go, and honestly it&#x27;s been fantastic. Highly performant, native threading, dead simple to deploy with containers. And I don&#x27;t even know how to read or write Go. For me, whether it&#x27;s AI or my own handcrafted artisanal code, the choice of language comes down to what has the least friction. This means I turn to vite&#x2F;react for a lot of frontend requirements, and that the backend will be in nodejs or python, because those are easier for me to debug than writing an equivalent application in C++ or Rust. For the utilities I write it is faster to iterate without having to compile. When I get to the point where I&#x27;m done adding changing features, and performance is an annoyance I can always ask the AI to &quot;rewrite this in Go&quot;. (I&#x27;ve never gotten to that point.) Python has a much more mature ecosystem than Rust, especially for AI&#x2F;ML stuff. I ran into a rust crate that purported to do a certain ML algorithm but did not do it correctly. I managed to write a replacement with Claude though. I do think enforcing correctness at the type system level is a good idea for AI, which is why I often choose languages like C# and Rust over Python. However, for some things Python is definitely the correct tool for the job.  https:&#x2F;&#x2F;arxiv.org&#x2F;pdf&#x2F;2508.09101  tldr 2% average point lost on Rust compared to python, gap vary by model, go has a better upper bound but opus had it 3% below python. benchmark is a bit old but research on why is there, article is just vibes The LLMs just churns out non-idiomatic slop in any language. It doesn&#x27;t matter if the 800-line if statement is able to use pattern matching. There&#x27;s been a lot of progress on making coding agents able to solve problems when they can easily evaluate in a closed loop, we desperately need something similar for controlling complexity and using relevant abstractions. The ideal language for AI coding: 1. Type safety as basic guard rails that LLM output is syntactically and schematically correct 2. Concise since you have to review a lot more code 3. Easy to debug &#x2F; good observability since you can&#x27;t rely on your understanding of the code. Something functional where you can observe the state at any moment would be ideal. 4. A very large set of public code examples across various domains so there&#x27;s enough training data for the LLM to be proficient in that language 5. A large open source ecosystem of libraries to write less code and avoid the tendency for generated code to bloat It&#x27;s basically all the same things you look for in general. I think TypeScript scores high here but I&#x27;m curious if anyone knows of a language that fits these criteria better. AI&#x27;s are really good with Python. Quick turnaround. Easy to read. Tons of training data&#x2F;examples. Many of the same reasons we wrote Python before. Another benefit to using Python, is if you subscribe to writing&#x2F;vibing a throwaway version first, a Python version is 100x better than a spec. (Disclaimer: I teach Python and AI for a living and am doing a tutorial at pycon this week, Beyond vibe coding. Am also using other languages as there are times when Python isn&#x27;t appropriate) You can of course use any language but here is my advice: you should use the language that you know best to make your life as uncomplicated as possible when you want to understand what the LLM was creating. Remember, you are the judge whether the code is OK and if you use assembler you might get really performant code, but can you trust it?",
         "is making me dumb Use AI to fix that cert Relatable! Or at least making me feel dumb (at times). Things that help me feel smarter are * actually writing more on my own - created a personal blog just to get myself to write more * upleveling my thinking - think more about problems and framing * leverage my experience - guide (or sometimes force) the AI assistant to leverage my experience to avoid problems * learning new things - rather than let AI just replace things I can do, I use AI to help me learn new things&#x2F;technology faster than I would have pre-AI We&#x27;ll just move to a higher level of abstraction; thinking will be like efficiently coding in assembly, no longer necessary in today&#x27;s world. You are doing this to yourself. Is it tho?",
-        "how to code. I&#x27;ve been back and forth between 100% management and 100% IC in my career. While there is a warm-up time to get back into coding, you should not completely forget how to code after such a short time. The only reason this person feels like they&#x27;ve forgotten how to code is that they&#x27;ve made a choice not to code for 2 years and, apparently, they don&#x27;t feel like making any effort to change this. For someone who claims to love writing code, I don&#x27;t get it. Something doesn&#x27;t make sense about this writing. It doesn’t have to be this way. You can use AI in ways that don’t rot your brain. You can delegate easy tasks to the AI to save time, while saving the harder tasks for yourself. Or you can treat it more as a mentor &#x2F; tutor and have it explain why it made certain decisions. I find that AI fails at things that are truly creative. I have been thoroughly unimpressed with ideas it has had or things it’s written for me. There’s still a lot of room for human creativity. It converts ICs into project managers, by default. I&#x27;ve been wrestling with this issue for a year. before I ask AI to write anything, I prepare a plan, I was very positively surprised when noticed Plan mode in Codex recently. It make me feel that maybe others doing the same and that&#x27;s why they added it. Anyway, I start with plan, then ask AI to do just one step. If coding a new feature, I do one step and check the code, doing git diff, reading changes, or just asking Codex, to show me changes. If writing an article, I ask for only one paragraph. I read paragraph and if it is ok, I accept it, if it doesn&#x27;t show off my thoughts I work on one paragraph. If doing data analysis with AI, I do one step of analysis and ask AI to display intermediate results so I can see if all is going in good direction and there are no hallucinations, additionally I have follow-up prompts for AI to do results verification. If all looks good, then I continue to the next step. I don&#x27;t like situation when I ask AI to do all code changes, or all article, or all data analysis in one pass with one prompt. It is simply impossible to check if AI is correct and results are not satisfactory. You can easily see this when asking AI to write a deep article with one prompt - you clearly see that it doesn&#x27;t reflect your thoughts. Maybe step-by-step is the approach to use AI and not feel dumber. Firstly I salute the author for saying these things. I mean we know the feeling of criticizing AI and certainly I criticize it a lot too, but when it comes to personal matters or how I am using AI, there are somethings I shy away from saying online and I wonder other people might feel the same way too. So for example, once AI deleted my project, I was able to recover it but I lost version control through series of mistakes and IMO I lost a good version. (I think after abandoning that project and coming back, I was able to accomplish it) Another example which is the one which is biting me the most is that I wanted to create a copy.sh&#x2F;v86 based thing where you are able to edit the .img files of distros and save them all within the browser. I was able to run v86 custom way but I wasn&#x27;t able to mount or have a proper way for making it work. And now although I mean this is just an optional project and I just thought hey it would be fun to edit .img files in browser but now it feels like I get disappointed. I think that disappointment is in both say a frustration of thing not working and secondly, just realizing that I might be dropping this idea altogether. Now I must admit that this is a field that I have absolutely no expertise at all in, but still, it feels disappointing to me and I kept thinking about it for sometime now. I wonder how many people just feel that if AI is unable to make their project, to then either get frustrated&#x2F;disappointed and even a salt of panic. I think its just wrong for how damn much we are relying on LLM&#x27;s at this point. It feels like the whole economy is just doing what I am doing but with billions of dollars. Another thing that I feel like is that both young and elderly people are really much like the same in vibe-coding. (Yes specs can help but LLM&#x27;s are still autocorrect on steroids), I feel like we are both forsaking the junior developers and also forsaking the expertise created by senior developers as we replace it with these LLM&#x27;s related:  https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?",
-        "is making its employees miserable  https:&#x2F;&#x2F;archive.is&#x2F;JUPmz  As someone who has spent a vast portion of life believing technology would make life better, I&#x27;ve come to the realisation that this idea is a fallacy. Technology amplifies power and until we collectively redefine and enforce a value system that benefits us all, the advancements in technology simply serve as a means of subjugation MEta made billions on AI in 2025, 10% of their revenue... by allowing scammers to use AI to attack users and steal user&#x27;s money. I think there is a bit of wider social norms piece missing as well on AI use in knowledge work context. Someone forwarded an enormous amount of text over teams the other day at work. From someone (bless her) that always means well but usually averages about one spelling mistake per word and rarely goes over 20 words per message. Clearly copy paste chatgpt. For say hn gang that thinks in terms of context shifts, information load and things on  THAT  wave length the problem with that situation is obvious but I realised then that is not at all obvious to the average public. She genuinely seemed to think she&#x27;s helping me by spending 15 seconds typing in a prompt and having me spend the next 30 minutes untangling the AI slop. There is  zero  understanding or consensus of acceptable practices around that sort of thing baked into societal norms right now. Not going to lie, I have no pity for the tech employees of a company that has spent most of its existence making the world a worse place. They are finally getting a taste of the medicine Facebook has been giving to everyone in the last 2 decades. &gt; it is cutting jobs to offset its A.I. spending, saying last month that it would slash 10 percent of its work force. &gt; Meta also introduced internal dashboards to track employees’ consumption of “tokens,” a unit of A.I. use that is roughly equivalent to four characters of text, four people said. Some said the dashboards were a pressure tactic to encourage competition with colleagues. That led some employees to make so many A.I. agents that others had to introduce agents to find agents, and agents to rate agents, two people said. Maybe the first to be laid off should be the ones that thought it made sense to track token consumption. Goodhart&#x27;s Law doesn&#x27;t even apply in this scenario because that&#x27;s a dumb metric whether or not you&#x27;re using it to evaluate employees. I believe that&#x27;s the point. Every big tech company&#x27;s embrace of AI is making all of their employees miserable. Whereas if you&#x27;re half-competent and at a startup, the AI is an incredible opportunity to try to leap ahead while the prices are subsidized (by the big tech behemoths fighting wth each other) The reason is a complete inversion of Ownership and Agency. For a decade of ZIRP, big tech convinced its employees that they&#x27;re &quot;changing the world&quot;, and what we did  mattered . Sure the exhorbitant salaries and constantly rising stock value didn&#x27;t hurt, but honestly other than the FIRE cultists, for most of us the difference between 200k&#x2F;year and 800k&#x2F;year didn&#x27;t feel much day to day (other than the ability to buy a house or something, and feel safe with a retirement nest egg). No, most people were missionaries not mercanaries. 2021 was the first crack. The comps went crazy, half the industry turned over, and the ones who didn&#x27;t felt a bitter sting where it became blatantly clear that all the new arrivals were just in it for the $$$, and the companies were willing to pay for the backfills but not to reward the loyalty of the missionaries. Then came the yearly layoffs, chipping away further, and reminding every employee that they&#x27;re at the mercy of a spreadsheet and the whims of people 3 levels above them in the org chart, in spite of the economic reality of their product, or their personal productivity. And now we&#x27;re here, and it&#x27;s clear that all of the above is still relevant. The old-timers that hung around see that their personal output doesn&#x27;t matter, their product&#x27;s PnL doesn&#x27;t matter. All that matters is 1) the company&#x27;s AI strategy (and if they&#x27;re not part of it, they&#x27;re secondary), and 2) tokenmaxing. How can anyone find joy in this environment unless they&#x27;re  purely  in it for the comp?",
+        "how to code. I&#x27;ve been back and forth between 100% management and 100% IC in my career. While there is a warm-up time to get back into coding, you should not completely forget how to code after such a short time. The only reason this person feels like they&#x27;ve forgotten how to code is that they&#x27;ve made a choice not to code for 2 years and, apparently, they don&#x27;t feel like making any effort to change this. For someone who claims to love writing code, I don&#x27;t get it. Something doesn&#x27;t make sense about this writing. It doesn\u2019t have to be this way. You can use AI in ways that don\u2019t rot your brain. You can delegate easy tasks to the AI to save time, while saving the harder tasks for yourself. Or you can treat it more as a mentor &#x2F; tutor and have it explain why it made certain decisions. I find that AI fails at things that are truly creative. I have been thoroughly unimpressed with ideas it has had or things it\u2019s written for me. There\u2019s still a lot of room for human creativity. It converts ICs into project managers, by default. I&#x27;ve been wrestling with this issue for a year. before I ask AI to write anything, I prepare a plan, I was very positively surprised when noticed Plan mode in Codex recently. It make me feel that maybe others doing the same and that&#x27;s why they added it. Anyway, I start with plan, then ask AI to do just one step. If coding a new feature, I do one step and check the code, doing git diff, reading changes, or just asking Codex, to show me changes. If writing an article, I ask for only one paragraph. I read paragraph and if it is ok, I accept it, if it doesn&#x27;t show off my thoughts I work on one paragraph. If doing data analysis with AI, I do one step of analysis and ask AI to display intermediate results so I can see if all is going in good direction and there are no hallucinations, additionally I have follow-up prompts for AI to do results verification. If all looks good, then I continue to the next step. I don&#x27;t like situation when I ask AI to do all code changes, or all article, or all data analysis in one pass with one prompt. It is simply impossible to check if AI is correct and results are not satisfactory. You can easily see this when asking AI to write a deep article with one prompt - you clearly see that it doesn&#x27;t reflect your thoughts. Maybe step-by-step is the approach to use AI and not feel dumber. Firstly I salute the author for saying these things. I mean we know the feeling of criticizing AI and certainly I criticize it a lot too, but when it comes to personal matters or how I am using AI, there are somethings I shy away from saying online and I wonder other people might feel the same way too. So for example, once AI deleted my project, I was able to recover it but I lost version control through series of mistakes and IMO I lost a good version. (I think after abandoning that project and coming back, I was able to accomplish it) Another example which is the one which is biting me the most is that I wanted to create a copy.sh&#x2F;v86 based thing where you are able to edit the .img files of distros and save them all within the browser. I was able to run v86 custom way but I wasn&#x27;t able to mount or have a proper way for making it work. And now although I mean this is just an optional project and I just thought hey it would be fun to edit .img files in browser but now it feels like I get disappointed. I think that disappointment is in both say a frustration of thing not working and secondly, just realizing that I might be dropping this idea altogether. Now I must admit that this is a field that I have absolutely no expertise at all in, but still, it feels disappointing to me and I kept thinking about it for sometime now. I wonder how many people just feel that if AI is unable to make their project, to then either get frustrated&#x2F;disappointed and even a salt of panic. I think its just wrong for how damn much we are relying on LLM&#x27;s at this point. It feels like the whole economy is just doing what I am doing but with billions of dollars. Another thing that I feel like is that both young and elderly people are really much like the same in vibe-coding. (Yes specs can help but LLM&#x27;s are still autocorrect on steroids), I feel like we are both forsaking the junior developers and also forsaking the expertise created by senior developers as we replace it with these LLM&#x27;s related:  https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?",
+        "is making its employees miserable  https:&#x2F;&#x2F;archive.is&#x2F;JUPmz  As someone who has spent a vast portion of life believing technology would make life better, I&#x27;ve come to the realisation that this idea is a fallacy. Technology amplifies power and until we collectively redefine and enforce a value system that benefits us all, the advancements in technology simply serve as a means of subjugation MEta made billions on AI in 2025, 10% of their revenue... by allowing scammers to use AI to attack users and steal user&#x27;s money. I think there is a bit of wider social norms piece missing as well on AI use in knowledge work context. Someone forwarded an enormous amount of text over teams the other day at work. From someone (bless her) that always means well but usually averages about one spelling mistake per word and rarely goes over 20 words per message. Clearly copy paste chatgpt. For say hn gang that thinks in terms of context shifts, information load and things on  THAT  wave length the problem with that situation is obvious but I realised then that is not at all obvious to the average public. She genuinely seemed to think she&#x27;s helping me by spending 15 seconds typing in a prompt and having me spend the next 30 minutes untangling the AI slop. There is  zero  understanding or consensus of acceptable practices around that sort of thing baked into societal norms right now. Not going to lie, I have no pity for the tech employees of a company that has spent most of its existence making the world a worse place. They are finally getting a taste of the medicine Facebook has been giving to everyone in the last 2 decades. &gt; it is cutting jobs to offset its A.I. spending, saying last month that it would slash 10 percent of its work force. &gt; Meta also introduced internal dashboards to track employees\u2019 consumption of \u201ctokens,\u201d a unit of A.I. use that is roughly equivalent to four characters of text, four people said. Some said the dashboards were a pressure tactic to encourage competition with colleagues. That led some employees to make so many A.I. agents that others had to introduce agents to find agents, and agents to rate agents, two people said. Maybe the first to be laid off should be the ones that thought it made sense to track token consumption. Goodhart&#x27;s Law doesn&#x27;t even apply in this scenario because that&#x27;s a dumb metric whether or not you&#x27;re using it to evaluate employees. I believe that&#x27;s the point. Every big tech company&#x27;s embrace of AI is making all of their employees miserable. Whereas if you&#x27;re half-competent and at a startup, the AI is an incredible opportunity to try to leap ahead while the prices are subsidized (by the big tech behemoths fighting wth each other) The reason is a complete inversion of Ownership and Agency. For a decade of ZIRP, big tech convinced its employees that they&#x27;re &quot;changing the world&quot;, and what we did  mattered . Sure the exhorbitant salaries and constantly rising stock value didn&#x27;t hurt, but honestly other than the FIRE cultists, for most of us the difference between 200k&#x2F;year and 800k&#x2F;year didn&#x27;t feel much day to day (other than the ability to buy a house or something, and feel safe with a retirement nest egg). No, most people were missionaries not mercanaries. 2021 was the first crack. The comps went crazy, half the industry turned over, and the ones who didn&#x27;t felt a bitter sting where it became blatantly clear that all the new arrivals were just in it for the $$$, and the companies were willing to pay for the backfills but not to reward the loyalty of the missionaries. Then came the yearly layoffs, chipping away further, and reminding every employee that they&#x27;re at the mercy of a spreadsheet and the whims of people 3 levels above them in the org chart, in spite of the economic reality of their product, or their personal productivity. And now we&#x27;re here, and it&#x27;s clear that all of the above is still relevant. The old-timers that hung around see that their personal output doesn&#x27;t matter, their product&#x27;s PnL doesn&#x27;t matter. All that matters is 1) the company&#x27;s AI strategy (and if they&#x27;re not part of it, they&#x27;re secondary), and 2) tokenmaxing. How can anyone find joy in this environment unless they&#x27;re  purely  in it for the comp?",
         "can tell you the drag is between your own tools and the real world (which is very messy and inconsistent): taxes, compliance, payroll, amendments, share structures, etc. Within my island, my books are in order, invoices and time keeping is fully automated, calendars and sales pipelines are connected. I&#x27;m sure there are many businesses whose inner islands are not as orderly. The zillion tools out there all try to bring equanimity to the chaos and yet here we still are with fresh books, quickbooks, and xero... What&#x27;s new here?"
       ],
       "sources": {
@@ -161,7 +161,7 @@
       "summary_confidence": "medium",
       "angles": {
         "hook": "RAG AI reads YOUR docs to answer questions perfectly",
-        "contrarian": "RAG is overrated—simple prompt engineering works better",
+        "contrarian": "RAG is overrated\u2014simple prompt engineering works better",
         "tutorial": "Build a RAG chatbot from your content in 5 minutes",
         "eli_creator": "It's like giving your AI assistant a pile of your own notes to reference instead of just relying on memory. Answers are more accurate because it's pulling from YOUR specific information."
       },
@@ -638,7 +638,7 @@
         "hook": "AI just became transparent: here's what your model actually thinks",
         "contrarian": "mechanistic interpretability won't save you from AI mistakes",
         "tutorial": "how to audit your AI tool's decision-making in 60 seconds",
-        "eli_creator": "It's like opening up your brain's instruction manual. Instead of just knowing you made a decision, you see exactly which thoughts fired and why—same idea but for AI."
+        "eli_creator": "It's like opening up your brain's instruction manual. Instead of just knowing you made a decision, you see exactly which thoughts fired and why\u2014same idea but for AI."
       },
       "risk": {
         "breakout_likelihood": "low",
@@ -732,10 +732,10 @@
       "summary": "AI systems learning to use external tools and apps automatically instead of doing everything themselves.",
       "summary_confidence": "medium",
       "angles": {
-        "hook": "AI that uses your apps FOR you—no coding needed",
-        "contrarian": "Function calling won't replace your workflow—it'll complicate it",
+        "hook": "AI that uses your apps FOR you\u2014no coding needed",
+        "contrarian": "Function calling won't replace your workflow\u2014it'll complicate it",
         "tutorial": "Connect Claude to your tools in 5 minutes",
-        "eli_creator": "Like hiring an assistant who knows when to use your camera, editor, or email—AI now picks the right tool for each job instead of trying to do everything itself."
+        "eli_creator": "Like hiring an assistant who knows when to use your camera, editor, or email\u2014AI now picks the right tool for each job instead of trying to do everything itself."
       },
       "risk": {
         "breakout_likelihood": "low",
@@ -835,7 +835,7 @@
       "summary": "AI systems that use structured knowledge databases to verify and fix their own reasoning.",
       "summary_confidence": "low",
       "angles": {
-        "hook": "AI that fact-checks itself—no hallucinations",
+        "hook": "AI that fact-checks itself\u2014no hallucinations",
         "contrarian": "Knowledge graphs waste time for solo creators",
         "tutorial": "Build self-correcting AI prompts with reasoning chains",
         "eli_creator": "Like spell-check for AI thinking. Instead of just guessing answers, AI now checks its facts against a database before responding, catching its own mistakes."
@@ -929,7 +929,7 @@
       "summary": "AI systems that search and understand both text and images together to give better answers.",
       "summary_confidence": "low",
       "angles": {
-        "hook": "This AI reads your images AND text—game changer for creators",
+        "hook": "This AI reads your images AND text\u2014game changer for creators",
         "contrarian": "Multimodal RAG is overhyped for solo creators right now",
         "tutorial": "How to build a multimodal RAG system in 10 minutes",
         "eli_creator": "Imagine asking Google a question while showing it a picture at the same time. It understands both what you say AND what you're pointing at to give you smarter answers."
@@ -1025,7 +1025,7 @@
         "hook": "AI agents that predict the future before you do",
         "contrarian": "World models won't save your AI agent projects",
         "tutorial": "Build a world model for your AI tool in 10 minutes",
-        "eli_creator": "Imagine teaching your AI helper to play chess by letting it mentally simulate moves ahead before choosing. That's world models—AI that thinks through outcomes before acting."
+        "eli_creator": "Imagine teaching your AI helper to play chess by letting it mentally simulate moves ahead before choosing. That's world models\u2014AI that thinks through outcomes before acting."
       },
       "risk": {
         "breakout_likelihood": "low",
@@ -1212,7 +1212,7 @@
       "summary_confidence": "medium",
       "angles": {
         "hook": "Run GPT-4 quality AI locally for free (no subscriptions)",
-        "contrarian": "Quantization made AI worse, not better—here's why",
+        "contrarian": "Quantization made AI worse, not better\u2014here's why",
         "tutorial": "Quantize any LLM in 5 minutes on your laptop",
         "eli_creator": "It's like compressing a video file to send faster without making it blurry. Quantization shrinks AI models so they run instantly on your computer instead of needing expensive servers."
       },
@@ -1497,7 +1497,7 @@
         "hook": "Tiny AI setting tweak = 10x better results (tested)",
         "contrarian": "More prompting settings actually hurt your AI output",
         "tutorial": "How to find your perfect AI temperature setting fast",
-        "eli_creator": "Like adjusting a volume knob—tiny turns create huge differences in sound. Same with AI: small tweaks to settings create wildly different outputs. Find your sweet spot."
+        "eli_creator": "Like adjusting a volume knob\u2014tiny turns create huge differences in sound. Same with AI: small tweaks to settings create wildly different outputs. Find your sweet spot."
       },
       "risk": {
         "breakout_likelihood": "low",
@@ -1587,7 +1587,7 @@
       "summary": "Using mathematical proof methods to ensure AI-generated code actually works correctly.",
       "summary_confidence": "low",
       "angles": {
-        "hook": "AI code generator just made a critical mistake—here's how to catch it",
+        "hook": "AI code generator just made a critical mistake\u2014here's how to catch it",
         "contrarian": "Formal verification is overkill for most solo creators using AI tools",
         "tutorial": "How to verify AI-generated code works before shipping it to production",
         "eli_creator": "It's like spell-check for code. Instead of just guessing if AI-written code works, formal verification mathematically proves it's correct before you run it."
@@ -1682,7 +1682,7 @@
       "summary_confidence": "low",
       "angles": {
         "hook": "AI that remembers your mistakes and fixes them automatically",
-        "contrarian": "Memory in AI doesn't actually help creators—it slows you down",
+        "contrarian": "Memory in AI doesn't actually help creators\u2014it slows you down",
         "tutorial": "How to build an AI assistant that learns from your content",
         "eli_creator": "Think of AI like a student who learns from every mistake on a test. Instead of repeating the same wrong answer, it remembers what went wrong and fixes it next time."
       },
@@ -1874,7 +1874,7 @@
         "hook": "AI that learns from your feedback and gets better daily",
         "contrarian": "Reinforcement learning won't save your AI image generator",
         "tutorial": "Train your AI model using feedback loops in minutes",
-        "eli_creator": "It's like teaching a student artist by showing them their sketches and saying 'do more of what worked, less of what didn't' — the AI learns faster by practice, not just instructions."
+        "eli_creator": "It's like teaching a student artist by showing them their sketches and saying 'do more of what worked, less of what didn't' \u2014 the AI learns faster by practice, not just instructions."
       },
       "risk": {
         "breakout_likelihood": "low",
@@ -2061,7 +2061,7 @@
         "hook": "AI just fixed my medical records in 60 seconds",
         "contrarian": "Your medical timeline is probably completely wrong",
         "tutorial": "How to use AI to organize patient records chronologically",
-        "eli_creator": "Like editing a messy video where scenes are out of order—AI watches your medical records and rearranges events chronologically so doctors see the full story correctly."
+        "eli_creator": "Like editing a messy video where scenes are out of order\u2014AI watches your medical records and rearranges events chronologically so doctors see the full story correctly."
       },
       "risk": {
         "breakout_likelihood": "low",
@@ -2151,7 +2151,7 @@
       "summary": "AI systems need to prove where they get facts from so users can trust their answers.",
       "summary_confidence": "low",
       "angles": {
-        "hook": "Your AI assistant is lying about its sources—here's why",
+        "hook": "Your AI assistant is lying about its sources\u2014here's why",
         "contrarian": "Citation faithfulness won't save your AI from hallucinating",
         "tutorial": "How to audit your AI tool's citations in 60 seconds",
         "eli_creator": "Like a student showing their homework sources. AI now has to point to exactly where it found each fact, so you can verify it's not making stuff up."
@@ -2431,7 +2431,7 @@
       "summary_confidence": "low",
       "angles": {
         "hook": "AI that learns from YOUR feedback to get smarter",
-        "contrarian": "Stop fine-tuning models—let AI fix itself through conversation",
+        "contrarian": "Stop fine-tuning models\u2014let AI fix itself through conversation",
         "tutorial": "Train your AI assistant using simple human feedback loops",
         "eli_creator": "Like how you learn to write better by getting notes from an editor. AI gets smarter when humans point out what it got wrong, then it fixes itself next time."
       },
@@ -2622,7 +2622,7 @@
       "summary": "Tools that check and fix AI text outputs so they match what you actually need.",
       "summary_confidence": "medium",
       "angles": {
-        "hook": "Your AI is lying to you—here's how to catch it",
+        "hook": "Your AI is lying to you\u2014here's how to catch it",
         "contrarian": "Prompt engineering is dead; validation is the real skill now",
         "tutorial": "Build a 60-second AI output checker that actually works",
         "eli_creator": "Like spell-check for AI - it catches when your AI helper writes nonsense and automatically fixes it so you get usable content, not garbage you have to rewrite."
@@ -2716,7 +2716,7 @@
       "summary": "Tools that watch AI agents to stop them from doing harmful things or getting tricked.",
       "summary_confidence": "low",
       "angles": {
-        "hook": "Your AI agent is running wild—here's how to stop it",
+        "hook": "Your AI agent is running wild\u2014here's how to stop it",
         "contrarian": "Agent monitoring wastes time; trust your prompts instead",
         "tutorial": "Set up AI agent guardrails in 5 minutes flat",
         "eli_creator": "It's like a security guard watching your AI assistant while it works. If the AI tries to do something sketchy or a hacker tricks it, the guard stops it before damage happens."
@@ -2811,7 +2811,7 @@
       "summary_confidence": "medium",
       "angles": {
         "hook": "Run AI on your laptop, zero internet required",
-        "contrarian": "Cloud AI is dying—local models just won",
+        "contrarian": "Cloud AI is dying\u2014local models just won",
         "tutorial": "How to install open-source AI on your computer",
         "eli_creator": "It's like keeping your diary locked in your desk instead of emailing it to someone else. Your computer does the thinking itself, so your stuff stays private and super fast."
       },
@@ -2867,7 +2867,7 @@
   ],
   "demand_clusters": [],
   "briefing": {
-    "text": "## Daily Movers Briefing\n\n**What moved**\n**Agentic workflows** leads the board with a velocity of 2.14 — the only trend showing real momentum today. If you haven't posted on AI agents automating a solo creator's entire content pipeline, that window is open right now. **Tool use and function calling** is quietly gaining ground at 0.86 velocity with 22% saturation — low competition, real interest.\n\n**What died**\nEverything else flatlined. **Retrieval-augmented generation**, **speculative decoding**, **mixture-of-experts routing** — all sitting at zero velocity and zero saturation in your niche. These are researcher topics right now, not creator topics. Skip them.\n\n**What's emerging**\n**Tool use and function calling** is worth watching as the practical cousin of agentic workflows. Frame it as \"teaching your AI assistant to actually *do* things\" — that angle converts for solo creator audiences. Get an early short in before saturation climbs.",
+    "text": "## Daily Movers Briefing\n\n**What moved**\n**Agentic workflows** leads the board with a velocity of 2.14 \u2014 the only trend showing real momentum today. If you haven't posted on AI agents automating a solo creator's entire content pipeline, that window is open right now. **Tool use and function calling** is quietly gaining ground at 0.86 velocity with 22% saturation \u2014 low competition, real interest.\n\n**What died**\nEverything else flatlined. **Retrieval-augmented generation**, **speculative decoding**, **mixture-of-experts routing** \u2014 all sitting at zero velocity and zero saturation in your niche. These are researcher topics right now, not creator topics. Skip them.\n\n**What's emerging**\n**Tool use and function calling** is worth watching as the practical cousin of agentic workflows. Frame it as \"teaching your AI assistant to actually *do* things\" \u2014 that angle converts for solo creator audiences. Get an early short in before saturation climbs.",
     "moved_up": [
       "agentic workflows",
       "tool use and function calling"
@@ -3266,7 +3266,7 @@
       0.004565467592328787,
       0.0015589745016768575,
       -0.05109222233295441,
-      -1.316613662538657e-8,
+      -1.316613662538657e-08,
       -0.030058423057198524,
       -0.00226671458221972,
       0.030776897445321083,
@@ -3439,7 +3439,7 @@
       -0.03495882824063301,
       0.006087826564908028,
       0.017437515780329704,
-      0.00008624637121101841,
+      8.624637121101841e-05,
       -0.023072371259331703,
       -0.005937805864959955,
       -0.014482076279819012,
@@ -3526,7 +3526,7 @@
       -0.06888555735349655,
       0.03772718459367752,
       -0.022507747635245323,
-      -0.00004129270018893294,
+      -4.129270018893294e-05,
       -0.017479320988059044,
       -0.024204343557357788,
       0.04259612783789635,
@@ -3652,7 +3652,7 @@
       -0.03620206564664841,
       0.007133167237043381,
       -0.024409035220742226,
-      -1.518903758324086e-8,
+      -1.518903758324086e-08,
       0.021078459918498993,
       -0.002085477812215686,
       0.021662088111042976,
@@ -3719,5 +3719,455 @@
       -0.03770287334918976
     ]
   },
-  "newsletter_signals": []
+  "newsletter_signals": [],
+  "youtube_outliers": [
+    {
+      "video_id": "4gS2wYVep-8",
+      "title": "The Truth About Digital Marketing Courses & AI Tools",
+      "channel_name": "OfficialAngel",
+      "view_count": 11609,
+      "channel_baseline_views": 8,
+      "outlier_multiple": 1335.84,
+      "published_at": "2026-05-05T05:06:08Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/4gS2wYVep-8/maxresdefault.jpg",
+      "key_topics": []
+    },
+    {
+      "video_id": "E5L_lKSoYtc",
+      "title": "Explained: Why Indian govt is warning banks about Anthropic's 'Mythos' AI | Claude Mythos",
+      "channel_name": "Business Standard",
+      "view_count": 726422,
+      "channel_baseline_views": 3078,
+      "outlier_multiple": 235.98,
+      "published_at": "2026-04-28T07:29:50Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/E5L_lKSoYtc/maxresdefault.jpg",
+      "key_topics": [
+        "Society",
+        "Business Standard",
+        "BS News",
+        "Business News",
+        "Financial News"
+      ]
+    },
+    {
+      "video_id": "06LSsZFYFkw",
+      "title": "From Tools to Transformation: How Expedia Operationalizes AI at Scale | Technovation 1077",
+      "channel_name": "Metis Strategy",
+      "view_count": 38326,
+      "channel_baseline_views": 249,
+      "outlier_multiple": 153.32,
+      "published_at": "2026-05-04T07:00:00Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/06LSsZFYFkw/maxresdefault.jpg",
+      "key_topics": []
+    },
+    {
+      "video_id": "vm9Zmte1Otk",
+      "title": "Digital Collective: A Community for Creators Ready to Actually Build",
+      "channel_name": "James Hicks",
+      "view_count": 7111,
+      "channel_baseline_views": 46,
+      "outlier_multiple": 151.55,
+      "published_at": "2026-04-18T22:30:24Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/vm9Zmte1Otk/sddefault.jpg",
+      "key_topics": []
+    },
+    {
+      "video_id": "raipKr4s-aM",
+      "title": "This AI Band Is Asking for Donations",
+      "channel_name": "Still Havens",
+      "view_count": 20394,
+      "channel_baseline_views": 142,
+      "outlier_multiple": 143.59,
+      "published_at": "2026-05-07T13:01:38Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/raipKr4s-aM/maxresdefault.jpg",
+      "key_topics": [
+        "Society",
+        "ai band",
+        "ai generated music",
+        "ai music project"
+      ]
+    },
+    {
+      "video_id": "Ec6kkQH0Fzo",
+      "title": "Jensen Huang & Anirudh Devgan on Design for AI and AI for Design at CadenceLIVE 2026 \u2013 Fireside Chat",
+      "channel_name": "Cadence Design Systems",
+      "view_count": 17833,
+      "channel_baseline_views": 138,
+      "outlier_multiple": 128.67,
+      "published_at": "2026-05-01T17:18:16Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/Ec6kkQH0Fzo/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "Technology",
+        "Cadence",
+        "NVIDIA",
+        "Jensen Huang"
+      ]
+    },
+    {
+      "video_id": "KHYSe8tcfkc",
+      "title": "HubSpot Burned the Roadmap for AI | Dharmesh Shah Explains Why",
+      "channel_name": "Get Paid",
+      "view_count": 17040,
+      "channel_baseline_views": 143,
+      "outlier_multiple": 118.95,
+      "published_at": "2026-05-07T15:30:13Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/KHYSe8tcfkc/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge"
+      ]
+    },
+    {
+      "video_id": "TMuXTqaGt0w",
+      "title": "The AI That Replaces 10 Tools and Saves You HOURS and MONEY Every Day (2026) SKYWORK",
+      "channel_name": "AI DOTHA",
+      "view_count": 10302,
+      "channel_baseline_views": 90,
+      "outlier_multiple": 114.44,
+      "published_at": "2026-05-03T13:00:51Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/TMuXTqaGt0w/maxresdefault.jpg",
+      "key_topics": [
+        "Technology",
+        "ai tools",
+        "skywork",
+        "free ai tools"
+      ]
+    },
+    {
+      "video_id": "73fy-pd9KqY",
+      "title": "How To Generate HIGH QUALITY Images (LOW VRAM / 8GB GPU) | ComfyUI + Z-Image Turbo",
+      "channel_name": "DABeverything",
+      "view_count": 2076,
+      "channel_baseline_views": 22,
+      "outlier_multiple": 93.18,
+      "published_at": "2026-05-04T14:30:05Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/73fy-pd9KqY/maxresdefault.jpg",
+      "key_topics": [
+        "Technology",
+        "ComfyUI",
+        "Z Image Turbo",
+        "low VRAM AI"
+      ]
+    },
+    {
+      "video_id": "YNm3JcGi8Co",
+      "title": "Kimi K2.6 Review: 300 AI Agents From One Prompt",
+      "channel_name": "David Alex",
+      "view_count": 6293,
+      "channel_baseline_views": 69,
+      "outlier_multiple": 90.58,
+      "published_at": "2026-05-13T17:03:17Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/YNm3JcGi8Co/maxresdefault.jpg",
+      "key_topics": [
+        "agent swarm",
+        "open source ai model",
+        "multi agent ai"
+      ]
+    },
+    {
+      "video_id": "_R83pFpUWyM",
+      "title": "The Engineering of AI Agents: Context, Harnessing, and Autonomy",
+      "channel_name": "InfoQ",
+      "view_count": 21924,
+      "channel_baseline_views": 387,
+      "outlier_multiple": 56.56,
+      "published_at": "2026-05-07T04:09:45Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/_R83pFpUWyM/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "Technology",
+        "AI Agents",
+        "Software Architecture",
+        "Claude Code",
+        "Context Engineering"
+      ]
+    },
+    {
+      "video_id": "II59lFGElKE",
+      "title": "Agents Can Tell If You Used AI (Before You Query)",
+      "channel_name": "The Novelist Studio",
+      "view_count": 51428,
+      "channel_baseline_views": 1440,
+      "outlier_multiple": 35.69,
+      "published_at": "2026-04-21T20:40:12Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/II59lFGElKE/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge"
+      ]
+    },
+    {
+      "video_id": "24cuaxwWwvo",
+      "title": "How Neon powers database workflows for AI agents",
+      "channel_name": "Stripe Developers",
+      "view_count": 82770,
+      "channel_baseline_views": 2339,
+      "outlier_multiple": 35.38,
+      "published_at": "2026-04-30T22:07:07Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/24cuaxwWwvo/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "Technology",
+        "stripe",
+        "payments"
+      ]
+    },
+    {
+      "video_id": "MlcnA_1a3e8",
+      "title": "This AI LEGO Video About Black History Is HITTING People HARD",
+      "channel_name": "Lamont Tyson",
+      "view_count": 61685,
+      "channel_baseline_views": 2047,
+      "outlier_multiple": 30.12,
+      "published_at": "2026-05-12T11:00:46Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/MlcnA_1a3e8/sddefault.jpg",
+      "key_topics": [
+        "Entertainment",
+        "Film"
+      ]
+    },
+    {
+      "video_id": "4L2DNpq8ufE",
+      "title": "How to Add Claude Code in Cursor (2026)",
+      "channel_name": "The Code City",
+      "view_count": 6084,
+      "channel_baseline_views": 208,
+      "outlier_multiple": 29.18,
+      "published_at": "2026-04-26T09:34:51Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/4L2DNpq8ufE/maxresdefault.jpg",
+      "key_topics": [
+        "Technology",
+        "cursor ai",
+        "claude ai",
+        "cursor ide tutorial",
+        "ai coding assistant"
+      ]
+    },
+    {
+      "video_id": "ot6qX9_XcNc",
+      "title": "AI Agents Explained Like No Course Will",
+      "channel_name": "Kunaal Naik | AI Agents",
+      "view_count": 19644,
+      "channel_baseline_views": 752,
+      "outlier_multiple": 26.12,
+      "published_at": "2026-04-23T12:31:15Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/ot6qX9_XcNc/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "Technology",
+        "ai agents",
+        "n8n",
+        "n8n ai automation",
+        "autonomous agents"
+      ]
+    },
+    {
+      "video_id": "qvvtbS4Wj8g",
+      "title": "Use ChatGPT 5.5 in OpenClaw Without API Costs",
+      "channel_name": "Phil Lougher",
+      "view_count": 6264,
+      "channel_baseline_views": 252,
+      "outlier_multiple": 24.83,
+      "published_at": "2026-05-04T18:43:20Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/qvvtbS4Wj8g/maxresdefault.jpg",
+      "key_topics": [
+        "Technology",
+        "openclaw",
+        "ai agent",
+        "ai automation"
+      ]
+    },
+    {
+      "video_id": "NwKt_tMkcAY",
+      "title": "Anthropic Case Study: The Rise of Claude",
+      "channel_name": "Bet-David Consulting",
+      "view_count": 74271,
+      "channel_baseline_views": 3425,
+      "outlier_multiple": 21.68,
+      "published_at": "2026-04-15T23:00:20Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/NwKt_tMkcAY/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "anthropic case study",
+        "claude ai",
+        "claude vs openai",
+        "claude business model",
+        "AI industry analysis"
+      ]
+    },
+    {
+      "video_id": "L7FF8Zgab3M",
+      "title": "What is OpenClaw? Inside AI Agents, LLMs and the Agentic Loop",
+      "channel_name": "IBM Technology",
+      "view_count": 167922,
+      "channel_baseline_views": 7813,
+      "outlier_multiple": 21.49,
+      "published_at": "2026-04-27T11:00:36Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/L7FF8Zgab3M/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "Technology",
+        "IBM",
+        "IBM Cloud"
+      ]
+    },
+    {
+      "video_id": "d0wUM8hIaxE",
+      "title": "AI agents explained (2-minute AI with Google)",
+      "channel_name": "Google Cloud",
+      "view_count": 15339,
+      "channel_baseline_views": 801,
+      "outlier_multiple": 19.13,
+      "published_at": "2026-05-05T14:28:30Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/d0wUM8hIaxE/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "Technology"
+      ]
+    },
+    {
+      "video_id": "V3_R-OQxcwI",
+      "title": "BEST BUSINESS AUTOMATION SOFTWARE 2026",
+      "channel_name": "41JUSBERI",
+      "view_count": 9634,
+      "channel_baseline_views": 553,
+      "outlier_multiple": 17.42,
+      "published_at": "2026-05-11T21:08:31Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/V3_R-OQxcwI/maxresdefault.jpg",
+      "key_topics": [
+        "Business"
+      ]
+    },
+    {
+      "video_id": "DX5RUweuf8I",
+      "title": "LTX 2.3 v1.1 on 8GB VRAM! Free 4K 50fps ComfyUI Workflow",
+      "channel_name": "Tensor Alchemist",
+      "view_count": 57483,
+      "channel_baseline_views": 3494,
+      "outlier_multiple": 16.45,
+      "published_at": "2026-04-30T14:07:01Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/DX5RUweuf8I/maxresdefault.jpg",
+      "key_topics": [
+        "Technology",
+        "ltx 2.3",
+        "comfyui workflow",
+        "8gb vram",
+        "ai video generator"
+      ]
+    },
+    {
+      "video_id": "cqMpTbTrMW4",
+      "title": "AI Insider: The Fastest Way To Use AI Agents In Your Business, Content & Life (Open Claw & Claude)",
+      "channel_name": "The Calum Johnson Show",
+      "view_count": 516781,
+      "channel_baseline_views": 34133,
+      "outlier_multiple": 15.14,
+      "published_at": "2026-04-27T12:01:08Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/cqMpTbTrMW4/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge"
+      ]
+    },
+    {
+      "video_id": "XBVoLSXaAHA",
+      "title": "'Rogue' AI agent from SF-based Cursor goes haywire, deletes company's entire database",
+      "channel_name": "ABC7 News Bay Area",
+      "view_count": 69682,
+      "channel_baseline_views": 5393,
+      "outlier_multiple": 12.92,
+      "published_at": "2026-04-30T19:30:42Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/XBVoLSXaAHA/maxresdefault.jpg",
+      "key_topics": [
+        "Business",
+        "Society",
+        "Technology"
+      ]
+    },
+    {
+      "video_id": "89-rzF95vMA",
+      "title": "How I Got ChatGPT-5.5 for Free (5 min setup)",
+      "channel_name": "Tech Fire",
+      "view_count": 19898,
+      "channel_baseline_views": 1654,
+      "outlier_multiple": 12.03,
+      "published_at": "2026-05-01T13:45:02Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/89-rzF95vMA/maxresdefault.jpg",
+      "key_topics": [
+        "Technology",
+        "chatgpt business free",
+        "free chatgpt plus alternative"
+      ]
+    },
+    {
+      "video_id": "K7j0TVY1iwk",
+      "title": "5 Things You Should NEVER Tell ChatGPT",
+      "channel_name": "Abhasa - Mental Health",
+      "view_count": 496698,
+      "channel_baseline_views": 43646,
+      "outlier_multiple": 11.38,
+      "published_at": "2026-04-29T10:50:13Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/K7j0TVY1iwk/maxresdefault.jpg",
+      "key_topics": [
+        "Health"
+      ]
+    },
+    {
+      "video_id": "FVm-k7WTMHQ",
+      "title": "The New Claude Code Desktop App Just Dropped, And it Kills Cursor",
+      "channel_name": "Build Great Products",
+      "view_count": 58502,
+      "channel_baseline_views": 5200,
+      "outlier_multiple": 11.25,
+      "published_at": "2026-04-15T16:22:08Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/FVm-k7WTMHQ/maxresdefault.jpg",
+      "key_topics": [
+        "Technology",
+        "Claude Code",
+        "Claude Desktop app",
+        "AI coding tools"
+      ]
+    },
+    {
+      "video_id": "lpbhButGZyk",
+      "title": "TradingView + Claude Code 4.7 Built a Pro SMC Indicator \u2014 Full AI Automation 2026",
+      "channel_name": "Power of Trading",
+      "view_count": 44977,
+      "channel_baseline_views": 4888,
+      "outlier_multiple": 9.2,
+      "published_at": "2026-04-22T21:00:49Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/lpbhButGZyk/maxresdefault.jpg",
+      "key_topics": [
+        "Claude Code 4.7",
+        "ai automation trading"
+      ]
+    },
+    {
+      "video_id": "yyTpoMFYvYk",
+      "title": "Seedance 2.0 and ComfyUI Local Video AI Comparison",
+      "channel_name": "Pixovert",
+      "view_count": 2310,
+      "channel_baseline_views": 286,
+      "outlier_multiple": 8.05,
+      "published_at": "2026-04-16T19:35:28Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/yyTpoMFYvYk/maxresdefault.jpg",
+      "key_topics": [
+        "Technology"
+      ]
+    },
+    {
+      "video_id": "QC-yvvOWvuk",
+      "title": "Create LONG AI Animated Videos Using Completely FREE AI Tools With ONE PROMPT",
+      "channel_name": "Ai Lockup",
+      "view_count": 9555,
+      "channel_baseline_views": 1252,
+      "outlier_multiple": 7.63,
+      "published_at": "2026-05-06T19:48:38Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/QC-yvvOWvuk/maxresdefault.jpg",
+      "key_topics": [
+        "free ai animation video generator",
+        "ai animation",
+        "ai filmmaking",
+        "free ai animation tools"
+      ]
+    }
+  ]
 }

@@ -13,6 +13,9 @@ frontend interface; any change requires a frontend coordination note.
       "canonical_form": "world-model-agents",
       "cluster_id": 3,
       "cluster_label": "Autonomous Reasoning",
+      "meta_trend": null,
+      "reddit_top_subreddit": null,
+      "top_questions": [],
       "sources": {
         "arxiv_30d": 42,
         "github_repos_7d": 8,
@@ -20,12 +23,23 @@ frontend interface; any change requires a frontend coordination note.
         "hn_posts_7d": 11,
         "hn_points_7d": 560,
         "semantic_scholar_citations_7d": 15,
-        "youtube_videos_7d": 0,
+        "huggingface_likes_7d": 0,
+        "huggingface_downloads_7d": 0,
+        "huggingface_spaces_7d": 0,
+        "bluesky_mentions_7d": 0,
         "reddit_mentions_7d": 0,
+        "producthunt_launches_7d": 0,
+        "replicate_runs_7d_delta": 0,
+        "youtube_videos_7d": 0,
         "x_posts_7d": 0
       },
       "velocity_score": 3.8,
       "velocity_acceleration": 1.2,
+      "velocity_significance": 0.0,
+      "burst_score": 0.0,
+      "rrf_score": 0.0,
+      "novelty_score": 0.0,
+      "still_early_gate": false,
       "saturation": 27.5,
       "hidden_gem_score": 0.74,
       "builder_signal": 0.62,
@@ -85,6 +99,22 @@ frontend interface; any change requires a frontend coordination note.
         8,
         9,
         10
+      ],
+      "aliases": [],
+      "source_doc_ids": {},
+      "pain_points": [
+        {
+          "text": "Solo creators struggle to wire a world-model agent into an existing video pipeline without writing custom glue code.",
+          "source_url": "https://news.ycombinator.com/item?id=48073246",
+          "source_title": "Show HN: tiny world-model agent runtime",
+          "rank": 1
+        },
+        {
+          "text": "No end-to-end tutorial exists for evaluating a world-model agent's plan quality on a single creator's laptop.",
+          "source_url": "https://www.reddit.com/r/LocalLLaMA/comments/abc123/world_model_eval_tutorial/",
+          "source_title": "World-model agent eval tutorial \u2014 r/LocalLLaMA",
+          "rank": 2
+        }
       ]
     }
   ],
@@ -170,6 +200,24 @@ frontend interface; any change requires a frontend coordination note.
     },
     "claude_cost_usd": 0.043,
     "claude_cache_hit_rate": 0.78
-  }
+  },
+  "data_freshness_status": "live",
+  "cluster_centroids": {},
+  "newsletter_signals": [],
+  "youtube_outliers": [
+    {
+      "video_id": "IOJ0jA-9Ccc",
+      "title": "LTX 2.3 - Improved AI Videos & Extensions in ComfyUI!",
+      "channel_name": "Nerdy Rodent",
+      "view_count": 33592,
+      "channel_baseline_views": 7923,
+      "outlier_multiple": 4.24,
+      "published_at": "2026-04-24T11:30:21Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/IOJ0jA-9Ccc/maxresdefault.jpg",
+      "key_topics": [
+        "Technology"
+      ]
+    }
+  ]
 }
 ```

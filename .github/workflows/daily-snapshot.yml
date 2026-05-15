@@ -65,6 +65,9 @@ jobs:
           REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
           PRODUCT_HUNT_TOKEN: ${{ secrets.PRODUCT_HUNT_TOKEN }}
           REPLICATE_API_KEY: ${{ secrets.REPLICATE_API_KEY }}
+          # Wave 5 — Perplexity Sonar pain-point enrichment. Empty/missing
+          # downgrades to no pain points (logged), pipeline still ships.
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
         run: poetry run python -m pipeline.run --claude --max-cost-cents 50
 
       - name: Commit snapshot

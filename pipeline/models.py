@@ -83,6 +83,21 @@ class Prediction(BaseModel):
     target_lifecycle: Optional["LifecycleStage"] = None
 
 
+class PainPoint(BaseModel):
+    """Wave 5 — a single creator pain point surfaced by Perplexity Sonar.
+
+    Sonar returns these ranked from most important to least important; we
+    preserve that order in `rank` (1-based). No `confidence` field — Sonar's
+    own ordering is the signal, an additional LLM-derived confidence would be
+    noisy and unverifiable.
+    """
+
+    text: str
+    source_url: str
+    source_title: str
+    rank: int = 0
+
+
 class Trend(BaseModel):
     keyword: str
     canonical_form: str
@@ -125,6 +140,9 @@ class Trend(BaseModel):
     # timeline modal (v0.2 Commit 5) consumes it for source attribution.
     aliases: list[str] = []
     source_doc_ids: dict[str, list[str | int]] = {}
+    # Wave 5 — Perplexity Sonar pain-point enrichment. Default empty so
+    # snapshots written before Wave 5 round-trip unchanged.
+    pain_points: list[PainPoint] = []
 
 
 class DemandQuote(BaseModel):
@@ -170,6 +188,30 @@ class HitRate(BaseModel):
     wrong: int
 
 
+class YoutubeOutlier(BaseModel):
+    """Wave 5 — a YouTube video that's overperforming its channel's baseline.
+
+    `outlier_multiple` is the breakout factor: a video's view count divided
+    by the channel's baseline view count over recent uploads. Sourced from
+    VidIQ's `breakoutScore` (a value of 5.0 means the video has 5× the
+    channel's typical performance).
+
+    Distinct from `SourceCounts.youtube_videos_7d` — that's a per-trend
+    count keyed to a topic; `YoutubeOutlier` is per-video metadata for the
+    dashboard's outliers route.
+    """
+
+    video_id: str
+    title: str
+    channel_name: str
+    view_count: int
+    channel_baseline_views: int
+    outlier_multiple: float
+    published_at: datetime
+    thumbnail_url: str
+    key_topics: list[str] = []
+
+
 class Snapshot(BaseModel):
     snapshot_date: date
     generated_at: datetime
@@ -186,3 +228,8 @@ class Snapshot(BaseModel):
     cluster_centroids: dict[int, list[float]] = {}
     # Audit 3.2 — URLs surfaced across curated AI newsletters.
     newsletter_signals: list[NewsletterSignal] = []
+    # Wave 5 — YouTube outliers (videos overperforming their channel baseline).
+    # Populated from data/youtube_outliers.json, an operator-refreshed file
+    # written by fanning out VidIQ MCP calls. Default empty so snapshots
+    # written before Wave 5 round-trip unchanged.
+    youtube_outliers: list[YoutubeOutlier] = []
