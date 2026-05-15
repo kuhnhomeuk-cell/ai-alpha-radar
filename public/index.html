@@ -1111,6 +1111,164 @@ body::after {
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 32px;
 }
+
+/* ===== Wave 5: Comets (YouTube outliers) ===== */
+.outliers-wrap { max-width: 1280px; margin: 0 auto; padding: 56px 40px 80px; }
+.outliers-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 24px;
+}
+.outliers-meta strong { color: var(--champagne); font-weight: 600; }
+.outliers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+.outlier-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease;
+  text-align: left;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+.outlier-card:hover {
+  border-color: var(--champagne);
+  transform: translateY(-1px);
+}
+.outlier-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  object-fit: cover;
+  display: block;
+}
+.outlier-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.outlier-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.outlier-channel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--champagne);
+}
+.outlier-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  margin-top: auto;
+  padding-top: 6px;
+}
+.outlier-badge {
+  border: 1px solid var(--champagne);
+  color: var(--champagne);
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.outliers-empty {
+  border: 1px dashed var(--line-hi);
+  padding: 48px;
+  color: var(--ink-3);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Outlier modal extras (clones .conv-modal infra; only delta styles here) */
+.outlier-stats {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.outlier-stats .num {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--champagne);
+  display: block;
+  margin-bottom: 2px;
+}
+.outlier-topics-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+.outlier-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.outlier-topic-chip {
+  border: 1px solid var(--line-hi);
+  color: var(--ink-2);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.outlier-topics-empty {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-style: italic;
+  margin-bottom: 20px;
+}
+.outlier-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.outlier-action {
+  background: transparent;
+  color: var(--champagne);
+  border: 1px solid var(--champagne);
+  padding: 8px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 140ms ease, color 140ms ease;
+}
+.outlier-action:hover {
+  background: var(--champagne);
+  color: var(--surface-1);
+}
+.outlier-action.copied {
+  background: var(--good);
+  border-color: var(--good);
+  color: var(--surface-1);
+}
 .almanac-card {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1622,6 +1780,7 @@ footer .quote {
     <button data-page="demand">Demand Clusters</button>
     <button data-page="log">Star Log</button>
     <button data-page="almanac">Almanac</button>
+    <button data-page="outliers">Comets</button>
   </div>
   <div class="right">
     <div class="search-wrap">
@@ -1809,6 +1968,44 @@ footer .quote {
   </div>
 </div>
 
+<!-- ========== COMETS (Wave 5 — YouTube outliers, observatory aesthetic) ========== -->
+<div class="page page-observatory" data-page="outliers">
+  <div class="outliers-wrap">
+    <div class="page-eyebrow">Wave 5 · audience-side signal</div>
+    <div class="page-title">
+      <h1>YouTube videos burning <em>brighter than their channel</em>.</h1>
+      <div class="lede">
+        Comets are outlier videos — uploads getting many times the views their channel typically earns. They're a real-time read on what audiences are clicking on now, ranked by the breakout factor. Tap a card to see the topic chips and copy the title as a seed for your own version.
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="outliers-meta" id="outliersMeta"></div>
+    <div id="outliersHost"></div>
+  </div>
+</div>
+
+<!-- ========== OUTLIER MODAL (global, Wave 5) ========== -->
+<div class="conv-scrim" id="outlierScrim" onclick="window.closeOutlierModal()"></div>
+<div class="conv-modal glass" id="outlierModal" aria-hidden="true" role="dialog" aria-labelledby="outlierTitle">
+  <div class="conv-head">
+    <div>
+      <div class="conv-name" id="outlierTitle">—</div>
+      <div class="conv-cluster" id="outlierChannel">—</div>
+    </div>
+    <button class="close" onclick="window.closeOutlierModal()">CLOSE ✕</button>
+  </div>
+  <div class="conv-body">
+    <div class="conv-eyebrow">⚡ Outlier · breakout factor</div>
+    <div class="outlier-stats" id="outlierStats"></div>
+    <div class="outlier-topics-label">Key topics</div>
+    <div class="outlier-topics" id="outlierTopics"></div>
+    <div class="outlier-actions">
+      <button class="outlier-action" id="outlierCopyBtn" type="button">📋 Use as topic seed</button>
+      <a class="outlier-action" id="outlierWatchLink" target="_blank" rel="noopener noreferrer">▶ Watch on YouTube</a>
+    </div>
+  </div>
+</div>
+
 <!-- ========== SOURCE-HEALTH STRIP (global, all pages) ========== -->
 <div class="source-health glass" id="sourceHealth">
   <div class="src-list" id="srcList">—</div>
@@ -1857,6 +2054,7 @@ let HIT_RATE      = { rate: 0, verified: 0, tracking: 0, verified_early: 0, wron
 let BRIEFING      = { text: '' };
 let META          = {};
 let SNAPSHOT_DATE = '';
+let YOUTUBE_OUTLIERS = [];  /* Wave 5 — populated from snap.youtube_outliers */
 
 const WATCHLIST = new Set();
 function loadWatchlist() {
@@ -1925,6 +2123,7 @@ async function loadData() {
     BRIEFING      = snap.briefing    || BRIEFING;
     META          = snap.meta        || {};
     SNAPSHOT_DATE = snap.snapshot_date || '';
+    YOUTUBE_OUTLIERS = snap.youtube_outliers || [];
   } catch (e) {
     console.warn('data.json load failed', e);
   }
@@ -1940,6 +2139,7 @@ document.querySelectorAll('.nav button').forEach(btn => {
     btn.classList.add('active');
     document.querySelector(`.page[data-page="${btn.dataset.page}"]`).classList.add('active');
     if (btn.dataset.page === 'radar') setTimeout(renderBubble, 50);
+    if (btn.dataset.page === 'outliers') renderOutliers();
   });
 });
 
@@ -2685,6 +2885,181 @@ function renderPainPoints(t) {
   });
   host.appendChild(list);
 }
+
+/* ==========================================================
+   COMETS — Wave 5: YouTube outliers card grid + click-modal.
+   Built with createElement + textContent only (no innerHTML),
+   so the audit 4.6 lint baseline stays at 23.
+   ========================================================== */
+function _formatLargeNumber(n) {
+  if (!n || n < 1000) return String(n || 0);
+  if (n < 1_000_000) return (n / 1000).toFixed(n < 10_000 ? 1 : 0) + 'K';
+  return (n / 1_000_000).toFixed(n < 10_000_000 ? 1 : 0) + 'M';
+}
+
+function _formatPublishedAgo(isoString) {
+  if (!isoString) return '';
+  const then = new Date(isoString);
+  if (Number.isNaN(then.getTime())) return '';
+  const secs = (Date.now() - then.getTime()) / 1000;
+  if (secs < 86400) return Math.max(1, Math.round(secs / 3600)) + 'h ago';
+  const days = Math.round(secs / 86400);
+  if (days < 30) return days + 'd ago';
+  return Math.round(days / 30) + 'mo ago';
+}
+
+function renderOutliers() {
+  const host = document.getElementById('outliersHost');
+  const meta = document.getElementById('outliersMeta');
+  if (!host) return;
+  host.replaceChildren();
+  meta.replaceChildren();
+
+  if (!YOUTUBE_OUTLIERS.length) {
+    const empty = document.createElement('div');
+    empty.className = 'outliers-empty';
+    empty.textContent = 'No outliers yet — refresh data/youtube_outliers.json via scripts/refresh_youtube_outliers.py to populate this view.';
+    host.appendChild(empty);
+    return;
+  }
+
+  const metaText = document.createElement('span');
+  metaText.appendChild(document.createTextNode('Showing '));
+  const strongCount = document.createElement('strong');
+  strongCount.textContent = String(YOUTUBE_OUTLIERS.length);
+  metaText.appendChild(strongCount);
+  metaText.appendChild(document.createTextNode(' outliers · ranked by breakout factor'));
+  meta.appendChild(metaText);
+
+  const grid = document.createElement('div');
+  grid.className = 'outliers-grid';
+  YOUTUBE_OUTLIERS.forEach((o, idx) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'outlier-card';
+    card.dataset.index = String(idx);
+
+    if (o.thumbnail_url) {
+      const img = document.createElement('img');
+      img.className = 'outlier-thumb';
+      img.loading = 'lazy';
+      img.src = o.thumbnail_url;
+      img.alt = '';
+      card.appendChild(img);
+    }
+
+    const body = document.createElement('div');
+    body.className = 'outlier-body';
+    const title = document.createElement('div');
+    title.className = 'outlier-title';
+    title.textContent = o.title || '';
+    body.appendChild(title);
+    const channel = document.createElement('div');
+    channel.className = 'outlier-channel';
+    channel.textContent = o.channel_name || '';
+    body.appendChild(channel);
+
+    const statsRow = document.createElement('div');
+    statsRow.className = 'outlier-stats-row';
+    const views = document.createElement('span');
+    views.textContent = _formatLargeNumber(o.view_count) + ' views';
+    statsRow.appendChild(views);
+    const ago = _formatPublishedAgo(o.published_at);
+    if (ago) {
+      const agoEl = document.createElement('span');
+      agoEl.textContent = '· ' + ago;
+      statsRow.appendChild(agoEl);
+    }
+    const badge = document.createElement('span');
+    badge.className = 'outlier-badge';
+    const multiple = (o.outlier_multiple || 0).toFixed(o.outlier_multiple < 10 ? 1 : 0);
+    badge.textContent = multiple + '× baseline';
+    statsRow.appendChild(badge);
+    body.appendChild(statsRow);
+
+    card.appendChild(body);
+    card.addEventListener('click', () => openOutlierModal(idx));
+    grid.appendChild(card);
+  });
+  host.appendChild(grid);
+}
+
+function openOutlierModal(idx) {
+  const o = YOUTUBE_OUTLIERS[idx];
+  if (!o) return;
+  document.getElementById('outlierTitle').textContent = o.title || '—';
+  document.getElementById('outlierChannel').textContent =
+    (o.channel_name || '—') + ' · ' + _formatLargeNumber(o.view_count) + ' views';
+
+  const stats = document.getElementById('outlierStats');
+  stats.replaceChildren();
+  const blocks = [
+    [(o.outlier_multiple || 0).toFixed(o.outlier_multiple < 10 ? 2 : 1) + '×', 'breakout factor'],
+    [_formatLargeNumber(o.channel_baseline_views), 'channel baseline'],
+    [_formatPublishedAgo(o.published_at) || '—', 'published'],
+  ];
+  blocks.forEach(([numText, labelText]) => {
+    const cell = document.createElement('div');
+    const num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = numText;
+    const label = document.createElement('span');
+    label.textContent = labelText;
+    cell.appendChild(num);
+    cell.appendChild(label);
+    stats.appendChild(cell);
+  });
+
+  const topicsHost = document.getElementById('outlierTopics');
+  topicsHost.replaceChildren();
+  const topics = (o.key_topics || []);
+  if (!topics.length) {
+    const none = document.createElement('span');
+    none.className = 'outlier-topics-empty';
+    none.textContent = 'No topic chips on this video';
+    topicsHost.appendChild(none);
+  } else {
+    topics.forEach(topic => {
+      const chip = document.createElement('span');
+      chip.className = 'outlier-topic-chip';
+      chip.textContent = topic;
+      topicsHost.appendChild(chip);
+    });
+  }
+
+  const copyBtn = document.getElementById('outlierCopyBtn');
+  copyBtn.classList.remove('copied');
+  copyBtn.textContent = '📋 Use as topic seed';
+  copyBtn.onclick = () => {
+    const text = o.title || '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        copyBtn.classList.add('copied');
+        copyBtn.textContent = '✓ Copied';
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyBtn.textContent = '📋 Use as topic seed';
+        }, 1500);
+      });
+    }
+  };
+
+  const watch = document.getElementById('outlierWatchLink');
+  watch.href = 'https://www.youtube.com/watch?v=' + encodeURIComponent(o.video_id || '');
+
+  document.getElementById('outlierScrim').classList.add('visible');
+  const modal = document.getElementById('outlierModal');
+  modal.classList.add('visible');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeOutlierModal() {
+  document.getElementById('outlierScrim').classList.remove('visible');
+  const modal = document.getElementById('outlierModal');
+  modal.classList.remove('visible');
+  modal.setAttribute('aria-hidden', 'true');
+}
+window.closeOutlierModal = closeOutlierModal;
 
 /* ---- audit 3.15: forecast curve with confidence band ---- */
 function renderForecast(t) {

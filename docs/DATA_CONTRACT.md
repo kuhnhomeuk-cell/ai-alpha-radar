@@ -203,6 +203,21 @@ frontend interface; any change requires a frontend coordination note.
   },
   "data_freshness_status": "live",
   "cluster_centroids": {},
-  "newsletter_signals": []
+  "newsletter_signals": [],
+  "youtube_outliers": [
+    {
+      "video_id": "IOJ0jA-9Ccc",
+      "title": "LTX 2.3 - Improved AI Videos & Extensions in ComfyUI!",
+      "channel_name": "Nerdy Rodent",
+      "view_count": 33592,
+      "channel_baseline_views": 7923,
+      "outlier_multiple": 4.24,
+      "published_at": "2026-04-24T11:30:21Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/IOJ0jA-9Ccc/maxresdefault.jpg",
+      "key_topics": [
+        "Technology"
+      ]
+    }
+  ]
 }
 ```

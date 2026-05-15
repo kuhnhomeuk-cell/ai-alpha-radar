@@ -126,6 +126,17 @@ def build_example_snapshot() -> models.Snapshot:
         generated_at=datetime(2026, 5, 13, 6, 14, 22, tzinfo=timezone.utc),
     )
     hit_rate = models.HitRate(rate=0.62, verified=10, tracking=4, verified_early=2, wrong=4)
+    outlier = models.YoutubeOutlier(
+        video_id="IOJ0jA-9Ccc",
+        title="LTX 2.3 - Improved AI Videos & Extensions in ComfyUI!",
+        channel_name="Nerdy Rodent",
+        view_count=33592,
+        channel_baseline_views=7923,
+        outlier_multiple=4.24,
+        published_at=datetime(2026, 4, 24, 11, 30, 21, tzinfo=timezone.utc),
+        thumbnail_url="https://i.ytimg.com/vi/IOJ0jA-9Ccc/maxresdefault.jpg",
+        key_topics=["Technology"],
+    )
     return models.Snapshot(
         snapshot_date=date(2026, 5, 13),
         generated_at=datetime(2026, 5, 13, 6, 14, 22, tzinfo=timezone.utc),
@@ -134,6 +145,7 @@ def build_example_snapshot() -> models.Snapshot:
         briefing=briefing,
         hit_rate=hit_rate,
         past_predictions=[trend.prediction],
+        youtube_outliers=[outlier],
         meta={
             "pipeline_runtime_seconds": 142,
             "sources": {

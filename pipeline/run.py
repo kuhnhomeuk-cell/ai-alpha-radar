@@ -46,6 +46,7 @@ from pipeline.fetch import producthunt as producthunt_fetcher
 from pipeline.fetch import reddit as reddit_fetcher
 from pipeline.fetch import replicate as replicate_fetcher
 from pipeline.fetch import semantic_scholar
+from pipeline.fetch import youtube_outliers as youtube_outliers_fetcher
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
@@ -641,6 +642,11 @@ def main(
             s2_data = {}
     fetch_health["semantic_scholar"] = bool(s2_data)
 
+    # Wave 5 — YouTube outliers, read from the operator-refreshed disk cache.
+    # No network call; safe to run unconditionally. Missing/malformed file
+    # degrades to []. Cache is regenerated via scripts/refresh_youtube_outliers.py.
+    youtube_outliers_payload = youtube_outliers_fetcher.fetch_youtube_outliers()
+
     fetch_seconds = round(time.time() - fetch_started, 2)
 
     # Truthfulness gate — Audit 1.5. Refuse to ship if fewer than 3 sources ok.
@@ -1027,6 +1033,7 @@ def main(
         hit_rate=hit_rate,
         past_predictions=past_predictions[-90:],
         newsletter_signals=ns_payload,
+        youtube_outliers=youtube_outliers_payload,
         cluster_centroids=canonical_centroids,
         meta={
             "pipeline_runtime_seconds": round(time.time() - started, 2),
