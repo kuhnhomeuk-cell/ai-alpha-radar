@@ -43,17 +43,50 @@ def test_canonicalize_preserves_noise_label_minus_one() -> None:
     assert mapping[-1] == -1
 
 
-@pytest.mark.xfail(
-    reason="Calls run.main() without --claude/extract_topics_fn — main now "
-    "requires topic extraction. Re-fixture in Phase 3 with a fake "
-    "extract_topics_fn that returns deterministic Topic objects.",
-    strict=True,
-)
+def _deterministic_topics_fixture(papers, posts, repos, candidate_hints):
+    """Test stand-in for topics.extract_topics — returns a fixed roster of
+    Topic objects derived deterministically from the fixture arxiv IDs.
+    Same input → same output, same canonical_forms day-over-day, which is
+    what cluster_identity stability is testing."""
+    from pipeline.topics import Topic
+
+    # Use the first few arxiv IDs as the source attribution for each
+    # topic. The actual canonical_names below are stable strings chosen
+    # to embed into distinct clusters under MiniLM.
+    arxiv_ids = [p.id for p in papers[:9]]
+    spec = [
+        ("agent memory and persistence", "agent-memory-and-persistence"),
+        ("retrieval augmented generation", "retrieval-augmented-generation"),
+        ("diffusion language models", "diffusion-language-models"),
+        ("tool use and function calling", "tool-use-and-function-calling"),
+        ("speculative decoding", "speculative-decoding"),
+        ("world model agents", "world-model-agents"),
+        ("test-time training", "test-time-training"),
+        ("mixture of experts routing", "mixture-of-experts-routing"),
+        ("small reasoning models", "small-reasoning-models"),
+    ]
+    topics: list[Topic] = []
+    for i, (name, form) in enumerate(spec):
+        attributed = arxiv_ids[i : i + 2] if i < len(arxiv_ids) else []
+        topics.append(
+            Topic(
+                canonical_name=name,
+                canonical_form=form,
+                aliases=[],
+                description=f"Test fixture topic #{i + 1}.",
+                source_doc_ids={"arxiv": list(attributed)} if attributed else {},
+            )
+        )
+    return topics
+
+
 def test_run_cluster_ids_stable_across_two_consecutive_runs(tmp_path) -> None:
     """Audit 2.6 integration check: running the orchestrator twice on the
     same inputs (with day-N output seeding day-N+1's prior centroids)
     should keep ≥80% of cluster_ids identical for terms that survive both
-    days."""
+    days. Uses a deterministic extract_topics_fn so two runs see the same
+    topic roster — the only thing varying between runs is the centroid
+    matching, which is the surface under test."""
     import json
     from datetime import date
     from pathlib import Path
@@ -79,6 +112,7 @@ def test_run_cluster_ids_stable_across_two_consecutive_runs(tmp_path) -> None:
         posts=posts,
         repos=repos,
         use_claude=False,
+        extract_topics_fn=_deterministic_topics_fixture,
         public_dir=tmp_path,
         predictions_log=tmp_path / "predictions.jsonl",
     )
@@ -88,6 +122,7 @@ def test_run_cluster_ids_stable_across_two_consecutive_runs(tmp_path) -> None:
         posts=posts,
         repos=repos,
         use_claude=False,
+        extract_topics_fn=_deterministic_topics_fixture,
         public_dir=tmp_path,
         predictions_log=tmp_path / "predictions.jsonl",
     )
