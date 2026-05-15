@@ -59,9 +59,9 @@ jobs:
           # Wave 3a fetcher credentials — optional. Empty values cause the
           # corresponding fetcher to return [] silently; the truthfulness
           # gate (MIN_OK_SOURCES=3) still passes on arxiv/hn/github/hf alone.
-          # Operator action: `gh secret set REDDIT_CLIENT_ID` etc. to enable.
-          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          # Reddit no longer requires CLIENT_ID/SECRET — the fetcher uses
+          # the public per-subreddit RSS endpoint. REDDIT_USER_AGENT is
+          # kept because Reddit rate-limits aggressively on default UAs.
           REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
           PRODUCT_HUNT_TOKEN: ${{ secrets.PRODUCT_HUNT_TOKEN }}
           REPLICATE_API_KEY: ${{ secrets.REPLICATE_API_KEY }}
