@@ -116,6 +116,26 @@ def test_with_retry_caps_retry_after_at_max_delay(monkeypatch) -> None:
     assert slept[0] <= 60.0
 
 
+def test_with_retry_applies_max_delay_after_jitter(monkeypatch) -> None:
+    """Jitter must not push a capped Retry-After above max_delay."""
+    slept: list[float] = []
+    monkeypatch.setattr(_retry.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(_retry.random, "uniform", lambda _a, _b: 0.3)
+    calls = {"n": 0}
+
+    @_retry.with_retry(
+        attempts=2, base_delay=1.0, max_delay=10.0, retry_on={429}, jitter=0.3
+    )
+    def rate_limited() -> str:
+        calls["n"] += 1
+        if calls["n"] < 2:
+            raise _make_status_error(429, headers={"retry-after": "15013"})
+        return "ok"
+
+    assert rate_limited() == "ok"
+    assert slept == [10.0]
+
+
 def test_with_retry_propagates_non_httpx_errors() -> None:
     @_retry.with_retry(attempts=3, base_delay=0.0)
     def boom() -> None:

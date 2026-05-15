@@ -13,6 +13,7 @@ state, not the day-of-publication state.
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Any, Iterable, Optional
 
@@ -54,6 +55,13 @@ def parse_batch_response(
     return out
 
 
+ARXIV_VERSION_SUFFIX_RE = re.compile(r"v\d+$", re.IGNORECASE)
+
+
+def _strip_arxiv_version(arxiv_id: str) -> str:
+    return ARXIV_VERSION_SUFFIX_RE.sub("", arxiv_id)
+
+
 def _prefix_arxiv_ids(arxiv_ids: Iterable[str]) -> list[str]:
     """Normalize to S2's `ARXIV:<base>` form.
 
@@ -62,13 +70,15 @@ def _prefix_arxiv_ids(arxiv_ids: Iterable[str]) -> list[str]:
     """
     out: list[str] = []
     for aid in arxiv_ids:
+        aid = aid.strip()
         if aid.startswith("ARXIV:"):
-            out.append(aid)
+            out.append(f"ARXIV:{_strip_arxiv_version(aid.removeprefix('ARXIV:'))}")
             continue
-        base = aid.rsplit("/", 1)[-1]
-        if "v" in base:
-            base = base.split("v", 1)[0]
-        out.append(f"ARXIV:{base}")
+        if "/abs/" in aid:
+            base = aid.split("/abs/", 1)[1]
+        else:
+            base = aid.rsplit("/", 1)[-1]
+        out.append(f"ARXIV:{_strip_arxiv_version(base)}")
     return out
 
 
@@ -109,8 +119,25 @@ def enrich_papers(
     results: dict[str, CitationInfo] = {}
     for start in range(0, len(arxiv_ids), S2_BATCH_LIMIT):
         chunk = arxiv_ids[start : start + S2_BATCH_LIMIT]
-        results.update(_post_batch(chunk, api_key))
+        results.update(_post_batch_resilient(chunk, api_key))
     return results
+
+
+def _post_batch_resilient(
+    arxiv_ids: list[str], api_key: Optional[str] = None
+) -> dict[str, CitationInfo]:
+    """Split 400ing S2 batches to isolate bad ids without losing the rest."""
+    try:
+        return _post_batch(arxiv_ids, api_key)
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code != 400 or len(arxiv_ids) <= 1:
+            if e.response.status_code == 400 and len(arxiv_ids) == 1:
+                return {}
+            raise
+        mid = len(arxiv_ids) // 2
+        left = _post_batch_resilient(arxiv_ids[:mid], api_key)
+        right = _post_batch_resilient(arxiv_ids[mid:], api_key)
+        return {**left, **right}
 
 
 if __name__ == "__main__":

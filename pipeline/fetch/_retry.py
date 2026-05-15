@@ -86,7 +86,7 @@ def with_retry(
                         delay = min(max_delay, retry_after)
                     else:
                         delay = min(max_delay, base_delay * (2 ** (attempt - 1)))
-                    delay = delay * (1 + random.uniform(0, jitter))
+                    delay = min(max_delay, delay * (1 + random.uniform(0, jitter)))
                     print(
                         f"retry: {fn.__name__} got HTTP {status}; "
                         f"sleeping {delay:.2f}s before attempt {attempt + 1}/{attempts}",
@@ -96,8 +96,10 @@ def with_retry(
                 except httpx.HTTPError as e:
                     if attempt == attempts:
                         raise
-                    delay = min(max_delay, base_delay * (2 ** (attempt - 1))) * (
-                        1 + random.uniform(0, jitter)
+                    delay = min(
+                        max_delay,
+                        min(max_delay, base_delay * (2 ** (attempt - 1)))
+                        * (1 + random.uniform(0, jitter)),
                     )
                     print(
                         f"retry: {fn.__name__} got {type(e).__name__}; "

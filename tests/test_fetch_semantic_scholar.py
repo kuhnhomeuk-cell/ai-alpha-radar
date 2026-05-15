@@ -96,9 +96,36 @@ def test_enrich_papers_chunks_batches_over_500(monkeypatch) -> None:
 
 
 def test_prefix_arxiv_ids_handles_bare_and_url_and_already_prefixed() -> None:
-    inputs = ["1706.03762", "http://arxiv.org/abs/2005.14165v1", "ARXIV:2203.02155"]
+    inputs = ["1706.03762", "http://arxiv.org/abs/2005.14165v1", "ARXIV:2203.02155v2"]
     out = semantic_scholar._prefix_arxiv_ids(inputs)
     assert out == ["ARXIV:1706.03762", "ARXIV:2005.14165", "ARXIV:2203.02155"]
+
+
+def test_prefix_arxiv_ids_preserves_old_style_category_ids() -> None:
+    inputs = ["http://arxiv.org/abs/cs/9901001v1"]
+    assert semantic_scholar._prefix_arxiv_ids(inputs) == ["ARXIV:cs/9901001"]
+
+
+def test_enrich_papers_splits_400_batches_to_skip_bad_ids(monkeypatch) -> None:
+    from pipeline.fetch.semantic_scholar import CitationInfo
+
+    def fake_post_batch(chunk, api_key):
+        if "bad-id" in chunk:
+            request = httpx.Request("POST", semantic_scholar.S2_BATCH_URL)
+            response = httpx.Response(400, request=request)
+            raise httpx.HTTPStatusError("bad request", request=request, response=response)
+        return {
+            aid: CitationInfo(
+                citation_count=1,
+                influential_citation_count=0,
+                references_count=0,
+            )
+            for aid in chunk
+        }
+
+    monkeypatch.setattr(semantic_scholar, "_post_batch", fake_post_batch)
+    enriched = semantic_scholar.enrich_papers(["1706.03762", "bad-id", "2005.14165"])
+    assert set(enriched) == {"1706.03762", "2005.14165"}
 
 
 # ---------- audit 4.5 — HTTP-layer integration tests ----------

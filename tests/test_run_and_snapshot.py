@@ -240,6 +240,26 @@ def test_orchestrator_hard_fails_without_claude_when_inputs_present(tmp_path: Pa
         )
 
 
+def test_orchestrator_aborts_when_claude_cost_cap_exceeded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(run.summarize, "estimate_batch_cost_cents", lambda _n: 51.0)
+
+    with pytest.raises(SystemExit) as exc:
+        run.main(
+            today=date(2026, 5, 13),
+            papers=_load_papers(),
+            posts=_load_posts(),
+            repos=_load_repos(),
+            use_claude=True,
+            max_cost_cents=50,
+            extract_topics_fn=_stub_extract_topics,
+            public_dir=tmp_path,
+            predictions_log=tmp_path / "predictions.jsonl",
+        )
+    assert exc.value.code == 3
+
+
 def test_orchestrator_loads_existing_predictions_into_hit_rate(tmp_path: Path) -> None:
     # Pre-seed a tiny predictions log
     log = tmp_path / "predictions.jsonl"

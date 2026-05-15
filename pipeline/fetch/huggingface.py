@@ -5,7 +5,7 @@ and arXiv for AI-tool launches that solo creators actually adopt. No
 auth required; the public /api/models endpoint serves trending sorted
 by an internal momentum score.
 
-Endpoint: GET https://huggingface.co/api/models?sort=trending&limit=100
+Endpoint: GET https://huggingface.co/api/models?sort=trendingScore&limit=100
 Each item carries `likes`, `downloads`, `tags`, `pipeline_tag` — all
 used for term extraction and per-term aggregation in run.py.
 
@@ -83,7 +83,7 @@ def fetch_trending_models(
 ) -> list[HFModel]:
     """Live fetch of trending HF models. No auth."""
     headers = {"User-Agent": HF_USER_AGENT}
-    params = {"sort": "trending", "limit": limit, "full": "true"}
+    params = {"sort": "trendingScore", "direction": -1, "limit": limit, "full": True}
     with httpx.Client(timeout=30, headers=headers) as client:
         response = client.get(HF_API_URL, params=params)
         response.raise_for_status()

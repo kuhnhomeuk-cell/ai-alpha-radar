@@ -330,6 +330,39 @@ class FakeBatchClient:
         return iter(records)
 
 
+class FakeBetaBatchClient(FakeBatchClient):
+    """Stub for anthropic 0.40 shape: beta.messages.batches."""
+
+    def __init__(self, prompt_responses: dict[str, str]) -> None:
+        super().__init__(prompt_responses)
+        self.beta_calls: list[list[str]] = []
+        self.messages = SimpleNamespace(create=self._not_implemented)
+        self.beta = SimpleNamespace(
+            messages=SimpleNamespace(
+                batches=SimpleNamespace(
+                    create=self._beta_batch_create,
+                    retrieve=self._beta_batch_retrieve,
+                    results=self._beta_batch_results,
+                )
+            )
+        )
+
+    def _record_betas(self, betas: list[str]) -> None:
+        self.beta_calls.append(betas)
+
+    def _beta_batch_create(self, *, requests: list[dict], betas: list[str]) -> Any:
+        self._record_betas(betas)
+        return self._batch_create(requests=requests)
+
+    def _beta_batch_retrieve(self, batch_id: str, *, betas: list[str]) -> Any:
+        self._record_betas(betas)
+        return self._batch_retrieve(batch_id)
+
+    def _beta_batch_results(self, batch_id: str, *, betas: list[str]) -> Any:
+        self._record_betas(betas)
+        return self._batch_results(batch_id)
+
+
 def test_enrich_cards_batch_two_stage_orchestration() -> None:
     cards = [_make_card(keyword="alpha"), _make_card(keyword="beta")]
     fake = FakeBatchClient(
@@ -363,6 +396,40 @@ def test_enrich_cards_batch_two_stage_orchestration() -> None:
 def test_enrich_cards_batch_empty_list_returns_empty_dict() -> None:
     fake = FakeBatchClient({})
     assert summarize.enrich_cards_batch([], client=fake) == {}
+
+
+def test_enrich_cards_batch_supports_beta_batches_resource() -> None:
+    fake = FakeBetaBatchClient(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "S", "confidence": "high"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "H", "contrarian": "C", "tutorial": "T"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "medium",
+                    "peak_estimate_days": 30,
+                    "risk_flag": "none",
+                    "rationale": "r",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "E"}),
+        }
+    )
+    outputs = summarize.enrich_cards_batch([_make_card()], client=fake)
+    assert outputs[0].summary == "S"
+    assert fake.beta_calls
+    assert all(call == [summarize.BATCH_BETA_HEADER] for call in fake.beta_calls)
+
+
+def test_estimate_batch_cost_cents_scales_by_card_count() -> None:
+    assert summarize.estimate_batch_cost_cents(0) == 0.0
+    one = summarize.estimate_batch_cost_cents(1)
+    two = summarize.estimate_batch_cost_cents(2)
+    assert one > 0
+    assert two == pytest.approx(one * 2)
 
 
 def test_daily_briefing_calls_sonnet_and_parses() -> None:

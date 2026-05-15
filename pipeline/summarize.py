@@ -38,6 +38,10 @@ SONNET_MODEL = "claude-sonnet-4-6"
 MAX_OUTPUT_TOKENS_CARD = 300
 MAX_OUTPUT_TOKENS_BRIEFING = 600
 MAX_INPUT_TOKENS_BUDGET = 600  # BACKEND_BUILD §9 per-request ceiling
+HAIKU_INPUT_DOLLARS_PER_MILLION_TOKENS = 1.00
+HAIKU_OUTPUT_DOLLARS_PER_MILLION_TOKENS = 5.00
+BATCH_API_DISCOUNT = 0.50
+BATCH_BETA_HEADER = "message-batches-2024-09-24"
 
 DEFAULT_NICHE = "AI tools for solo creators"
 
@@ -78,6 +82,20 @@ class CardOutput(BaseModel):
     summary_confidence: Literal["high", "medium", "low"]
     angles: CreatorAngles
     risk: RiskFlag
+
+
+def estimate_batch_cost_cents(num_cards: int) -> float:
+    """Conservative estimate for four Haiku batch requests per trend card."""
+    if num_cards <= 0:
+        return 0.0
+    requests = num_cards * 4
+    input_tokens = requests * MAX_INPUT_TOKENS_BUDGET
+    output_tokens = requests * MAX_OUTPUT_TOKENS_CARD
+    dollars = (
+        input_tokens / 1_000_000 * HAIKU_INPUT_DOLLARS_PER_MILLION_TOKENS
+        + output_tokens / 1_000_000 * HAIKU_OUTPUT_DOLLARS_PER_MILLION_TOKENS
+    )
+    return dollars * BATCH_API_DISCOUNT * 100
 
 
 # ---------- Prompts (verbatim PLAN.md §7.2) ----------
@@ -232,6 +250,24 @@ def enrich_card(
 # ---------- Batch API ----------
 
 
+def _messages_batches_resource(client: anthropic.Anthropic) -> tuple[Any, dict[str, Any]]:
+    """Return the Message Batches resource for both old and new Anthropic SDKs."""
+    batches = getattr(getattr(client, "messages", None), "batches", None)
+    if batches is not None:
+        return batches, {}
+
+    beta_batches = getattr(
+        getattr(getattr(client, "beta", None), "messages", None), "batches", None
+    )
+    if beta_batches is not None:
+        return beta_batches, {"betas": [BATCH_BETA_HEADER]}
+
+    raise RuntimeError(
+        "Anthropic SDK does not expose Message Batches. Upgrade anthropic or "
+        "use a version with client.beta.messages.batches support."
+    )
+
+
 def _build_request_params(
     *, niche: str, prompt: str, model: str = HAIKU_MODEL, max_tokens: int = MAX_OUTPUT_TOKENS_CARD
 ) -> dict[str, Any]:
@@ -253,16 +289,17 @@ def _submit_and_collect_batch(
     Unparseable JSON responses become ClaudeParseError exceptions; failed
     batch entries become entries missing from the result dict.
     """
-    batch = client.messages.batches.create(requests=requests)
+    batches, extra_kwargs = _messages_batches_resource(client)
+    batch = batches.create(requests=requests, **extra_kwargs)
     deadline = time.time() + BATCH_TIMEOUT_SECONDS
     while batch.processing_status != "ended":
         if time.time() > deadline:
             raise TimeoutError(f"Anthropic batch {batch.id} did not finish in 1 hour")
         time.sleep(BATCH_POLL_INTERVAL_SECONDS)
-        batch = client.messages.batches.retrieve(batch.id)
+        batch = batches.retrieve(batch.id, **extra_kwargs)
 
     out: dict[str, dict[str, Any]] = {}
-    for entry in client.messages.batches.results(batch.id):
+    for entry in batches.results(batch.id, **extra_kwargs):
         result = getattr(entry, "result", None)
         if result is None or getattr(result, "type", "") != "succeeded":
             continue

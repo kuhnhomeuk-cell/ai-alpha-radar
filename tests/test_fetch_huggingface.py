@@ -70,6 +70,9 @@ def test_fetch_trending_models_200_path(_no_sleep: None) -> None:
     )
     items = huggingface.fetch_trending_models(limit=20)
     assert route.called
+    request = route.calls.last.request
+    assert "sort=trendingScore" in str(request.url)
+    assert "direction=-1" in str(request.url)
     assert len(items) == 5  # private filtered
 
 
