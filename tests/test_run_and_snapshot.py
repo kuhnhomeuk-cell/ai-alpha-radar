@@ -94,6 +94,22 @@ def test_read_prior_snapshot_returns_none_if_missing(tmp_path: Path) -> None:
     assert snapshot.read_prior_snapshot(date(2026, 5, 1), public_dir=tmp_path) is None
 
 
+def test_read_prior_snapshot_returns_none_on_corrupt_json(tmp_path: Path) -> None:
+    """Audit 4.4 — a corrupt prior snapshot must not crash the pipeline."""
+    (tmp_path / "snapshots").mkdir()
+    (tmp_path / "snapshots" / "2026-05-01.json").write_text("{ not json", encoding="utf-8")
+    assert snapshot.read_prior_snapshot(date(2026, 5, 1), public_dir=tmp_path) is None
+
+
+def test_read_prior_snapshot_returns_none_on_schema_drift(tmp_path: Path) -> None:
+    """Audit 4.4 — a snapshot that fails pydantic validation returns None, not raises."""
+    (tmp_path / "snapshots").mkdir()
+    (tmp_path / "snapshots" / "2026-05-01.json").write_text(
+        '{"snapshot_date": "not-a-date"}', encoding="utf-8"
+    )
+    assert snapshot.read_prior_snapshot(date(2026, 5, 1), public_dir=tmp_path) is None
+
+
 def test_read_prior_snapshot_roundtrip(tmp_path: Path) -> None:
     snap = Snapshot(
         snapshot_date=date(2026, 5, 13),
@@ -222,6 +238,26 @@ def test_orchestrator_hard_fails_without_claude_when_inputs_present(tmp_path: Pa
             public_dir=tmp_path,
             predictions_log=tmp_path / "predictions.jsonl",
         )
+
+
+def test_orchestrator_aborts_when_claude_cost_cap_exceeded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(run.summarize, "estimate_batch_cost_cents", lambda _n: 51.0)
+
+    with pytest.raises(SystemExit) as exc:
+        run.main(
+            today=date(2026, 5, 13),
+            papers=_load_papers(),
+            posts=_load_posts(),
+            repos=_load_repos(),
+            use_claude=True,
+            max_cost_cents=50,
+            extract_topics_fn=_stub_extract_topics,
+            public_dir=tmp_path,
+            predictions_log=tmp_path / "predictions.jsonl",
+        )
+    assert exc.value.code == 3
 
 
 def test_orchestrator_loads_existing_predictions_into_hit_rate(tmp_path: Path) -> None:

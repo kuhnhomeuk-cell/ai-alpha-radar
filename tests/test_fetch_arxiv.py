@@ -3,10 +3,21 @@
 from datetime import datetime
 from pathlib import Path
 
-from pipeline.fetch import arxiv
+import httpx
+import pytest
+import respx
+
+from pipeline.fetch import _retry, arxiv
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "arxiv_sample.xml"
 TARGET_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL"]
+
+
+@pytest.fixture
+def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Eliminate retry/rate-limit sleeps so HTTP tests stay sub-second."""
+    monkeypatch.setattr(_retry.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(arxiv.time, "sleep", lambda _s: None)
 
 
 def _papers() -> list[arxiv.Paper]:
@@ -47,4 +58,52 @@ def test_unknown_category_filter_returns_empty() -> None:
     papers = arxiv.parse_atom_feed(
         FIXTURE.read_text(encoding="utf-8"), categories=["does.notexist"]
     )
+    assert papers == []
+
+
+# ---------- audit 4.5 — HTTP-layer integration tests ----------
+
+
+@respx.mock
+def test_fetch_recent_papers_200_path_parses_feed(_no_sleep: None) -> None:
+    route = respx.get("https://export.arxiv.org/api/query").mock(
+        return_value=httpx.Response(200, text=FIXTURE.read_text(encoding="utf-8")),
+    )
+    papers = arxiv.fetch_recent_papers(TARGET_CATEGORIES, lookback_days=0)
+    assert route.called
+    assert len(papers) >= 1
+    assert all(p.primary_category in TARGET_CATEGORIES for p in papers)
+
+
+@respx.mock
+def test_fetch_recent_papers_honors_retry_after_then_succeeds(_no_sleep: None) -> None:
+    body = FIXTURE.read_text(encoding="utf-8")
+    route = respx.get("https://export.arxiv.org/api/query").mock(
+        side_effect=[
+            httpx.Response(429, headers={"retry-after": "1"}),
+            httpx.Response(200, text=body),
+        ]
+    )
+    papers = arxiv.fetch_recent_papers(TARGET_CATEGORIES, lookback_days=0)
+    assert route.call_count == 2  # one retry consumed
+    assert len(papers) >= 1
+
+
+@respx.mock
+def test_fetch_recent_papers_500_exhausts_and_raises(_no_sleep: None) -> None:
+    route = respx.get("https://export.arxiv.org/api/query").mock(
+        return_value=httpx.Response(500),
+    )
+    with pytest.raises(httpx.HTTPStatusError):
+        arxiv.fetch_recent_papers(TARGET_CATEGORIES, lookback_days=0)
+    assert route.call_count == 3  # 1 initial + 2 retries
+
+
+@respx.mock
+def test_fetch_recent_papers_malformed_body_returns_empty(_no_sleep: None) -> None:
+    respx.get("https://export.arxiv.org/api/query").mock(
+        return_value=httpx.Response(200, text="<not a real feed>"),
+    )
+    # feedparser tolerates garbage; we expect zero entries parsed, not a raise
+    papers = arxiv.fetch_recent_papers(TARGET_CATEGORIES, lookback_days=0)
     assert papers == []

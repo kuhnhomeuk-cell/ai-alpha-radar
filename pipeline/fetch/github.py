@@ -24,10 +24,20 @@ from typing import Any, Iterable, Optional
 
 from github import Auth, Github
 from pydantic import BaseModel
+from urllib3.util.retry import Retry
 
 GH_TOPICS = ["ai", "llm", "agents"]
 GH_PER_TOPIC_LIMIT = 30
 GH_REQUEST_INTERVAL_SECONDS = 2.0  # 30 req/min cap per BACKEND_BUILD §9
+# Retry config injected into PyGithub — mirrors _retry.with_retry semantics
+# for the httpx-based fetchers (item 2.7).
+GH_RETRY = Retry(
+    total=2,  # 2 retries on top of the initial call → 3 attempts total
+    backoff_factor=1.0,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=frozenset(["GET"]),
+    respect_retry_after_header=True,
+)
 
 
 class RepoStat(BaseModel):
@@ -111,7 +121,7 @@ def fetch_trending_repos(
     since = (datetime.now(tz=timezone.utc) - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
     auth = Auth.Token(gh_pat)
     items_by_name: dict[str, dict[str, Any]] = {}
-    g = Github(auth=auth)
+    g = Github(auth=auth, retry=GH_RETRY)
     try:
         for topic in topics:
             query = f"topic:{topic} created:>{since}"

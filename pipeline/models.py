@@ -30,8 +30,20 @@ class SourceCounts(BaseModel):
     hn_posts_7d: int = 0
     hn_points_7d: int = 0
     semantic_scholar_citations_7d: int = 0
-    youtube_videos_7d: int = 0
+    # Audit 3.1 — Hugging Face Hub trending signals
+    huggingface_likes_7d: int = 0
+    huggingface_downloads_7d: int = 0
+    huggingface_spaces_7d: int = 0  # populated in a later wave (/api/spaces)
+    # Audit 3.6 — Bluesky firehose mention count (operator-scheduled subscriber)
+    bluesky_mentions_7d: int = 0
+    # Audit 3.3 — Reddit shortlist post-mentions
     reddit_mentions_7d: int = 0
+    # Audit 3.4 — Product Hunt featured launches per term
+    producthunt_launches_7d: int = 0
+    # Audit 3.5 — Replicate model-run-count delta per term
+    replicate_runs_7d_delta: int = 0
+    # Audit 1.4 — fields retained for back-compat with v0.1.0 snapshots
+    youtube_videos_7d: int = 0
     x_posts_7d: int = 0
 
 
@@ -76,9 +88,25 @@ class Trend(BaseModel):
     canonical_form: str
     cluster_id: int
     cluster_label: str
+    # Audit 3.13 — parent narrative label across clusters.
+    meta_trend: Optional[str] = None
+    # Audit 3.3 — top subreddit for this trend (if any).
+    reddit_top_subreddit: Optional[str] = None
+    # Audit 3.14 — top question-shaped strings mined from HN/Reddit comments.
+    top_questions: list[str] = []
     sources: SourceCounts
     velocity_score: float
     velocity_acceleration: float
+    # Audit 2.9 — Mann-Kendall p-value over the velocity series.
+    velocity_significance: float = 0.0
+    # Audit 2.2 — Kleinberg-style burst score, 0-1.
+    burst_score: float = 0.0
+    # Audit 3.7 — Reciprocal Rank Fusion across ranked algorithms.
+    rrf_score: float = 0.0
+    # Audit 3.10 — diachronic embedding novelty, 0-1.
+    novelty_score: float = 0.0
+    # Audit 3.8 — Granger / velocity-gap gate; true if arxiv leads HN.
+    still_early_gate: bool = False
     saturation: float
     hidden_gem_score: float
     builder_signal: float
@@ -124,6 +152,16 @@ class DailyBriefing(BaseModel):
     generated_at: datetime
 
 
+class NewsletterSignal(BaseModel):
+    """Audit 3.2 — a URL surfaced across multiple curated AI newsletters."""
+
+    url: str
+    unique_newsletters_count: int
+    newsletters: list[str]
+    first_seen: datetime
+    last_seen: datetime
+
+
 class HitRate(BaseModel):
     rate: float
     verified: int
@@ -141,3 +179,10 @@ class Snapshot(BaseModel):
     hit_rate: HitRate
     past_predictions: list[Prediction]
     meta: dict[str, Any]
+    # Audit 1.6 — staleness banner state for the frontend.
+    data_freshness_status: Literal["live", "stale", "error"] = "live"
+    # Audit 2.6 — per-cluster centroid vectors in UMAP reduced space, keyed
+    # by stable cluster_id. Empty when fewer terms than HDBSCAN's floor.
+    cluster_centroids: dict[int, list[float]] = {}
+    # Audit 3.2 — URLs surfaced across curated AI newsletters.
+    newsletter_signals: list[NewsletterSignal] = []

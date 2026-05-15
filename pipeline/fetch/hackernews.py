@@ -19,6 +19,8 @@ from typing import Any, Iterable, Optional
 import httpx
 from pydantic import BaseModel
 
+from pipeline.fetch._retry import with_retry
+
 HN_SEARCH_URL = "https://hn.algolia.com/api/v1/search"
 HN_ITEM_URL_TEMPLATE = "https://hn.algolia.com/api/v1/items/{item_id}"
 HN_KEYWORDS = ["AI", "LLM", "GPT", "Claude", "model"]
@@ -121,6 +123,7 @@ def _fetch_item(client: httpx.Client, item_id: int) -> dict[str, Any]:
     return response.json()
 
 
+@with_retry(attempts=3, base_delay=1.0)
 def fetch_ai_posts(
     lookback_days: int = 7,
     *,

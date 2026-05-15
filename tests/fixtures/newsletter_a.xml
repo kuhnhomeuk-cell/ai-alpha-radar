@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Newsletter A</title>
+    <link>https://newsletter-a.example.com</link>
+    <description>Test feed</description>
+    <item>
+      <title>Issue 42 — Big AI week</title>
+      <link>https://newsletter-a.example.com/issue-42</link>
+      <pubDate>Wed, 13 May 2026 09:00:00 +0000</pubDate>
+      <description><![CDATA[
+        Top reads this week:
+        <a href="https://github.com/anthropic/mcp">MCP servers</a>
+        <a href="https://www.latent.space/p/world-model-agents">World-model agents primer</a>
+        <a href="https://huggingface.co/black-forest-labs/FLUX.1-dev">FLUX.1-dev</a>
+        Plus: https://arxiv.org/abs/2605.12345 is making the rounds.
+      ]]></description>
+    </item>
+    <item>
+      <title>Issue 41</title>
+      <link>https://newsletter-a.example.com/issue-41</link>
+      <pubDate>Wed, 06 May 2026 09:00:00 +0000</pubDate>
+      <description><![CDATA[Old issue, nothing fresh. https://example.com/old]]></description>
+    </item>
+  </channel>
+</rss>

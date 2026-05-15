@@ -55,12 +55,35 @@ CONVERGENCE_MIN_SOURCES = 3
 MANN_KENDALL_MIN_LENGTH = 4
 
 
-def velocity(mentions_7d: int, mentions_30d: int) -> float:
-    """`mentions_7d / max(mentions_30d/30 * 7, 1)` with mentions_30d floored at 10."""
+def velocity(
+    mentions_7d: int,
+    mentions_30d: int,
+    *,
+    prior_alpha: Optional[float] = None,
+    prior_beta: Optional[float] = None,
+) -> float:
+    """`mentions_7d / max(mentions_30d/30 * 7, 1)` with mentions_30d floored at 10.
+
+    Audit 2.1 — when mentions_7d < cold-start threshold (3) AND a Beta-
+    Binomial prior is supplied, smooth the 7d count toward the prior's
+    posterior expectation before computing velocity. Otherwise apply
+    no smoothing. This prevents 1/0-style velocity spikes on terms with
+    a single fresh mention.
+    """
+    from pipeline import cold_start
+
+    smoothed_7d: float = mentions_7d
+    if prior_alpha is not None and prior_beta is not None and mentions_7d < 3:
+        smoothed_7d = cold_start.smoothed_count(
+            today_count=mentions_7d,
+            alpha=prior_alpha,
+            beta=prior_beta,
+            n_days=7,
+        )
     floored_30d = max(mentions_30d, MENTIONS_30D_FLOOR)
     expected_7d = floored_30d / 30 * 7
     denom = max(expected_7d, 1.0)
-    return mentions_7d / denom
+    return smoothed_7d / denom
 
 
 def saturation(

@@ -125,7 +125,86 @@ def test_enrich_card_makes_four_sequential_haiku_calls() -> None:
     assert output.angles.tutorial == "Build a tiny world-model agent"
     assert output.angles.eli_creator.startswith("Like a chess AI")
     assert output.risk.breakout_likelihood == "high"
-    assert output.risk.peak_estimate_days == 21
+    # builder horizon = [30, 60] (audit 2.5); model's 21 clamps up to 30.
+    assert output.risk.peak_estimate_days == 30
+
+
+def test_peak_estimate_days_clamped_to_lifecycle_horizon() -> None:
+    """Audit 2.5: out-of-range peak_estimate_days is clamped to the nearest
+    lifecycle horizon bound."""
+    card = _make_card(lifecycle_stage="whisper")  # whisper horizon = (14, 30)
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "x", "confidence": "medium"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "h", "contrarian": "c", "tutorial": "t"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "medium",
+                    "peak_estimate_days": 180,  # way out of range for whisper
+                    "risk_flag": "none",
+                    "rationale": "x",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "e"}),
+        }
+    )
+    output = summarize.enrich_card(card, client=fake)
+    assert output.risk.peak_estimate_days == 30, "should clamp 180 → upper bound 30"
+
+
+def test_peak_estimate_days_passes_through_when_in_range() -> None:
+    card = _make_card(lifecycle_stage="builder")  # builder horizon = (30, 60)
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "x", "confidence": "medium"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "h", "contrarian": "c", "tutorial": "t"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "medium",
+                    "peak_estimate_days": 45,  # inside [30, 60]
+                    "risk_flag": "none",
+                    "rationale": "x",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "e"}),
+        }
+    )
+    output = summarize.enrich_card(card, client=fake)
+    assert output.risk.peak_estimate_days == 45
+
+
+def test_peak_estimate_days_null_preserved_for_commodity() -> None:
+    """Audit 2.5: commodity has no horizon — passing peak stays None."""
+    card = _make_card(lifecycle_stage="commodity")
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "x", "confidence": "low"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "h", "contrarian": "c", "tutorial": "t"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "low",
+                    "peak_estimate_days": None,
+                    "risk_flag": "none",
+                    "rationale": "x",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "e"}),
+        }
+    )
+    output = summarize.enrich_card(card, client=fake)
+    assert output.risk.peak_estimate_days is None
 
 
 def test_enrich_card_strips_markdown_json_fences() -> None:
@@ -251,6 +330,39 @@ class FakeBatchClient:
         return iter(records)
 
 
+class FakeBetaBatchClient(FakeBatchClient):
+    """Stub for anthropic 0.40 shape: beta.messages.batches."""
+
+    def __init__(self, prompt_responses: dict[str, str]) -> None:
+        super().__init__(prompt_responses)
+        self.beta_calls: list[list[str]] = []
+        self.messages = SimpleNamespace(create=self._not_implemented)
+        self.beta = SimpleNamespace(
+            messages=SimpleNamespace(
+                batches=SimpleNamespace(
+                    create=self._beta_batch_create,
+                    retrieve=self._beta_batch_retrieve,
+                    results=self._beta_batch_results,
+                )
+            )
+        )
+
+    def _record_betas(self, betas: list[str]) -> None:
+        self.beta_calls.append(betas)
+
+    def _beta_batch_create(self, *, requests: list[dict], betas: list[str]) -> Any:
+        self._record_betas(betas)
+        return self._batch_create(requests=requests)
+
+    def _beta_batch_retrieve(self, batch_id: str, *, betas: list[str]) -> Any:
+        self._record_betas(betas)
+        return self._batch_retrieve(batch_id)
+
+    def _beta_batch_results(self, batch_id: str, *, betas: list[str]) -> Any:
+        self._record_betas(betas)
+        return self._batch_results(batch_id)
+
+
 def test_enrich_cards_batch_two_stage_orchestration() -> None:
     cards = [_make_card(keyword="alpha"), _make_card(keyword="beta")]
     fake = FakeBatchClient(
@@ -284,6 +396,40 @@ def test_enrich_cards_batch_two_stage_orchestration() -> None:
 def test_enrich_cards_batch_empty_list_returns_empty_dict() -> None:
     fake = FakeBatchClient({})
     assert summarize.enrich_cards_batch([], client=fake) == {}
+
+
+def test_enrich_cards_batch_supports_beta_batches_resource() -> None:
+    fake = FakeBetaBatchClient(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "S", "confidence": "high"}
+            ),
+            "Generate three YouTube Shorts angles": json.dumps(
+                {"hook": "H", "contrarian": "C", "tutorial": "T"}
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "medium",
+                    "peak_estimate_days": 30,
+                    "risk_flag": "none",
+                    "rationale": "r",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "E"}),
+        }
+    )
+    outputs = summarize.enrich_cards_batch([_make_card()], client=fake)
+    assert outputs[0].summary == "S"
+    assert fake.beta_calls
+    assert all(call == [summarize.BATCH_BETA_HEADER] for call in fake.beta_calls)
+
+
+def test_estimate_batch_cost_cents_scales_by_card_count() -> None:
+    assert summarize.estimate_batch_cost_cents(0) == 0.0
+    one = summarize.estimate_batch_cost_cents(1)
+    two = summarize.estimate_batch_cost_cents(2)
+    assert one > 0
+    assert two == pytest.approx(one * 2)
 
 
 def test_daily_briefing_calls_sonnet_and_parses() -> None:

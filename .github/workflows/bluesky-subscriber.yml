@@ -1,0 +1,52 @@
+name: Bluesky Subscriber
+
+# Audit 3.6 — Bluesky Jetstream firehose is a long-lived websocket stream,
+# not a poll. Daily snapshot reads from data/bluesky_mentions.sqlite; this
+# job writes to it. ~30 min sliding window every 4h gives ~3 hours of
+# coverage per 4h period — enough to keep the 7d window meaningful.
+#
+# Operator action: enable via the Actions tab once you've decided whether
+# the network egress cost is worth it.
+
+on:
+  schedule:
+    - cron: '15 */4 * * *'   # every 4h at :15
+  workflow_dispatch:
+
+jobs:
+  subscribe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35      # script wall-clock is 30 min; budget headroom
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache Poetry deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+
+      - run: pip install poetry==2.4.1
+      - run: poetry install --no-interaction --no-root
+
+      - name: Run subscriber for 30 min
+        run: poetry run python -m pipeline.fetch.bluesky --duration 1800
+
+      - name: Commit mention DB
+        run: |
+          git config user.name "radar-bot"
+          git config user.email "radar-bot@users.noreply.github.com"
+          if [ -f data/bluesky_mentions.sqlite ]; then
+            git add -f data/bluesky_mentions.sqlite
+            if ! git diff --cached --quiet; then
+              git commit -m "bluesky: mention DB tick $(date -u +%Y-%m-%dT%H:%MZ)"
+              git push
+            fi
+          fi

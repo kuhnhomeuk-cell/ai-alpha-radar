@@ -82,6 +82,33 @@ def test_load_predictions_missing_file_returns_empty(tmp_path: Path) -> None:
     assert predict.load_predictions(tmp_path / "nope.jsonl") == []
 
 
+def test_load_predictions_raises_on_invalid_line(tmp_path: Path) -> None:
+    """Audit item 1.8: malformed JSON lines surface as ValidationError rather
+    than silent drops. Confirms the 15-vs-13 drift in production was NOT a
+    parse error (which would have raised here too)."""
+    log = tmp_path / "predictions.jsonl"
+    log.write_text("{not a json line}\n", encoding="utf-8")
+    with pytest.raises(Exception):
+        predict.load_predictions(log)
+
+
+def test_update_all_verdicts_preserves_count(tmp_path: Path) -> None:
+    """Audit item 1.8: update_all_verdicts MUST NOT lose or add predictions.
+    Predictions whose keyword is no longer in today's top-N stay as-is
+    (verdict='pending'); they are not dropped."""
+    preds = [
+        _pred("alive", filed=date(2026, 5, 1), target=date(2026, 6, 1)),
+        _pred("orphaned", filed=date(2026, 5, 1), target=date(2026, 6, 1)),
+    ]
+    updated = predict.update_all_verdicts(
+        preds, current_lifecycles_by_keyword={"alive": "builder"}, today=date(2026, 5, 13)
+    )
+    assert len(updated) == len(preds)
+    by_kw = {p.keyword: p for p in updated}
+    assert by_kw["alive"].verdict == "verified_early"
+    assert by_kw["orphaned"].verdict == "pending"
+
+
 # ---------- verdict updater ----------
 
 
