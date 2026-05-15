@@ -37,10 +37,11 @@ from dotenv import load_dotenv
 from pipeline import cluster as cluster_mod
 from pipeline import demand as demand_mod
 from pipeline import predict, score, snapshot, summarize, topics
-from pipeline.fetch import arxiv, github, hackernews
+from pipeline.fetch import arxiv, github, hackernews, huggingface
 from pipeline.fetch.arxiv import Paper
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
+from pipeline.fetch.huggingface import HFModel
 from pipeline.models import (
     ConvergenceEvent,
     CreatorAngles,
@@ -329,6 +330,7 @@ def main(
     papers: Optional[list[Paper]] = None,
     posts: Optional[list[HNPost]] = None,
     repos: Optional[list[RepoStat]] = None,
+    hf_models: Optional[list[HFModel]] = None,
     use_claude: bool = False,
     extract_topics_fn: Optional[ExtractTopicsFn] = None,
     public_dir: Path = ROOT / "public",
@@ -342,7 +344,8 @@ def main(
     # ---- 1. Fetch (or accept injected inputs for tests) ----
     fetch_started = time.time()
     fetch_health = {
-        "arxiv": True, "hackernews": True, "github": True, "semantic_scholar": False,
+        "arxiv": True, "hackernews": True, "github": True,
+        "semantic_scholar": False, "huggingface": True,
     }
     if papers is None:
         try:
@@ -370,6 +373,13 @@ def main(
         else:
             repos = []
             fetch_health["github"] = False
+    if hf_models is None:
+        try:
+            hf_models = huggingface.fetch_trending_models(snapshots_dir=public_dir / "snapshots")
+        except Exception as e:
+            print(f"huggingface fetch failed: {e}", file=sys.stderr)
+            hf_models = []
+            fetch_health["huggingface"] = False
     fetch_seconds = round(time.time() - fetch_started, 2)
 
     # ---- 2. Empty-inputs short-circuit ----
@@ -520,12 +530,15 @@ def main(
                 "arxiv": {"fetched": len(papers), "ok": fetch_health["arxiv"]},
                 "github": {"fetched": len(repos), "ok": fetch_health["github"]},
                 "hackernews": {"fetched": len(posts), "ok": fetch_health["hackernews"]},
+                "huggingface": {"fetched": len(hf_models), "ok": fetch_health["huggingface"]},
                 "semantic_scholar": {
                     "fetched": 0,
                     "ok": fetch_health["semantic_scholar"],
                 },
             },
             "github_stars": {r.full_name: r.stars for r in repos},
+            "hf_downloads": {m.id: m.downloads for m in hf_models},
+            "trending_models": [m.model_dump(mode="json") for m in hf_models[:10]],
             "trends_processed": len(trends),
             "use_claude": use_claude,
         },

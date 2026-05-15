@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "abc123",
+    "id": "meta-llama/Llama-3-70B",
+    "modelId": "meta-llama/Llama-3-70B",
+    "author": "meta-llama",
+    "downloads": 12500000,
+    "likes": 4321,
+    "lastModified": "2026-04-15T12:00:00.000Z",
+    "pipeline_tag": "text-generation",
+    "library_name": "transformers",
+    "tags": ["transformers", "pytorch", "llama", "text-generation"]
+  },
+  {
+    "_id": "def456",
+    "id": "openai-community/whisper-large-v3",
+    "modelId": "openai-community/whisper-large-v3",
+    "author": "openai-community",
+    "downloads": 8400000,
+    "likes": 1899,
+    "lastModified": "2026-03-20T09:30:00.000Z",
+    "pipeline_tag": "automatic-speech-recognition",
+    "library_name": "transformers",
+    "tags": ["transformers", "whisper", "speech"]
+  },
+  {
+    "_id": "ghi789",
+    "id": "stabilityai/stable-diffusion-3",
+    "modelId": "stabilityai/stable-diffusion-3",
+    "author": "stabilityai",
+    "downloads": 5600000,
+    "likes": 6789,
+    "lastModified": "2026-04-01T18:45:00.000Z",
+    "pipeline_tag": "text-to-image",
+    "library_name": "diffusers",
+    "tags": ["diffusers", "stable-diffusion"]
+  },
+  {
+    "_id": "skip01",
+    "id": "some-org/non-ai-thing",
+    "modelId": "some-org/non-ai-thing",
+    "author": "some-org",
+    "downloads": 1000,
+    "likes": 5,
+    "lastModified": "2026-01-01T00:00:00.000Z",
+    "pipeline_tag": "tabular-classification",
+    "library_name": "sklearn",
+    "tags": ["sklearn"]
+  },
+  {
+    "_id": "jkl012",
+    "id": "Qwen/Qwen3-72B-Instruct",
+    "modelId": "Qwen/Qwen3-72B-Instruct",
+    "author": "Qwen",
+    "downloads": 3200000,
+    "likes": 2456,
+    "lastModified": "2026-05-01T15:20:00.000Z",
+    "pipeline_tag": "text-generation",
+    "library_name": "transformers",
+    "tags": ["transformers", "qwen3", "chat"]
+  }
+]
