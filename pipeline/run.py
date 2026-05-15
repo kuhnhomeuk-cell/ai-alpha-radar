@@ -72,6 +72,9 @@ ExtractTopicsFn = Callable[
     [list[Paper], list[HNPost], list[RepoStat], list[str]], list[Topic]
 ]
 
+# Sources eligible to contribute to a topic's consensus_ratio.
+CONSENSUS_SOURCES = ("arxiv", "github", "hackernews", "reddit", "huggingface")
+
 
 # ---------- helpers ----------
 
@@ -91,9 +94,12 @@ def _percentile_ranks(values: list[int]) -> list[float]:
 
 
 def _build_doc_timestamps(
-    papers: list[Paper], posts: list[HNPost], repos: list[RepoStat]
+    papers: list[Paper],
+    posts: list[HNPost],
+    repos: list[RepoStat],
+    reddit_posts: list[RedditPost] | None = None,
 ) -> dict[tuple[str, str | int], datetime]:
-    """Index source-doc-id → published_at across all three fetchers.
+    """Index source-doc-id → published_at across all fetchers.
 
     velocity_from_topic_docs reads this to bucket a topic's attributed
     docs into 7d and 30d windows.
@@ -105,6 +111,41 @@ def _build_doc_timestamps(
         out[("hackernews", p.id)] = p.created_at
     for r in repos:
         out[("github", r.full_name)] = r.created_at
+    for rp in reddit_posts or []:
+        out[("reddit", rp.id)] = rp.created_at
+    return out
+
+
+def _attribute_hf_models_to_topics(
+    topics_list: list[Topic], hf_models: list[HFModel]
+) -> dict[str, list[str]]:
+    """Post-hoc HF-model → topic attribution via token-overlap matching.
+
+    A model's id (e.g. "meta-llama/Llama-3-70B") is split into lowercase
+    tokens; a topic claims the model when any topic alias/canonical_form
+    token (length >= 4 to avoid spurious matches on "ai", "ml") appears
+    in the model's id tokens. Returns {topic.canonical_name: [model.id]}.
+    """
+    topic_tokens: dict[str, set[str]] = {}
+    for t in topics_list:
+        names = [t.canonical_form, *t.aliases, t.canonical_name]
+        toks: set[str] = set()
+        for n in names:
+            for tok in n.lower().replace("/", "-").replace("_", "-").split("-"):
+                tok = tok.strip()
+                if len(tok) >= 4:
+                    toks.add(tok)
+        topic_tokens[t.canonical_name] = toks
+
+    out: dict[str, list[str]] = {t.canonical_name: [] for t in topics_list}
+    for m in hf_models:
+        model_toks = {
+            tok for tok in m.id.lower().replace("/", "-").replace("_", "-").split("-")
+            if len(tok) >= 4
+        }
+        for canonical_name, toks in topic_tokens.items():
+            if toks & model_toks:
+                out[canonical_name].append(m.id)
     return out
 
 
@@ -114,13 +155,16 @@ def _source_counts_from_topic(
     posts_by_id: dict[int, HNPost],
     repos_by_name: dict[str, RepoStat],
     today_dt: datetime,
+    *,
+    hf_model_ids: list[str] | None = None,
 ) -> SourceCounts:
     """Bucket a topic's source docs into the SourceCounts shape the data
     contract requires.
 
-    arxiv_30d uses a 30-day window; github_repos_7d and hn_posts_7d use
-    7-day windows. The other warming-up fields stay zero — they need
-    snapshot-to-snapshot deltas the day-1 pipeline doesn't yet have.
+    arxiv_30d uses a 30-day window; github_repos_7d, hn_posts_7d, and
+    reddit_mentions_7d use 7-day windows. huggingface_models_7d takes
+    the post-hoc attribution count (no timestamp window — HF models'
+    last_modified is unreliable as a recency signal).
     """
     seven_d_ago = today_dt - timedelta(days=7)
     thirty_d_ago = today_dt - timedelta(days=30)
@@ -155,6 +199,8 @@ def _source_counts_from_topic(
         github_stars_7d=github_stars_7d,
         hn_posts_7d=_count("hackernews", seven_d_ago),
         hn_points_7d=hn_points_7d,
+        reddit_mentions_7d=_count("reddit", seven_d_ago),
+        huggingface_models_7d=len(hf_model_ids or []),
     )
 
 
@@ -224,6 +270,8 @@ def _build_trend(
     convergence: ConvergenceEvent,
     velocity_score: float,
     papers_by_id: Optional[dict[str, Paper]] = None,
+    hf_model_ids: Optional[list[str]] = None,
+    active_consensus_sources: Optional[list[str]] = None,
 ) -> Trend:
     velocity_acceleration = 0.0  # warming up — needs day-2+ snapshots
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
@@ -241,6 +289,17 @@ def _build_trend(
             if boosts:
                 avg_boost = sum(boosts) / len(boosts)
                 hidden_gem_score = min(hidden_gem_score + 0.2 * avg_boost, 1.0)
+    # v0.2.0: cross-source consensus. A source "confirms" the topic if it
+    # contributed at least one doc (HF uses post-hoc attribution).
+    active = active_consensus_sources or list(CONSENSUS_SOURCES)
+    sources_confirming: list[str] = []
+    for src in active:
+        if src == "huggingface":
+            if hf_model_ids:
+                sources_confirming.append(src)
+        elif topic.source_doc_ids.get(src):
+            sources_confirming.append(src)
+    consensus_ratio = score.cross_source_consensus(sources_confirming, len(active))
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
         github_repos_7d=sources.github_repos_7d,
@@ -277,6 +336,8 @@ def _build_trend(
         sparkline_14d=[],
         aliases=list(topic.aliases),
         source_doc_ids=dict(topic.source_doc_ids),
+        sources_confirming=sources_confirming,
+        consensus_ratio=consensus_ratio,
     )
 
 
@@ -392,7 +453,7 @@ def main(
     fetch_seconds = round(time.time() - fetch_started, 2)
 
     # ---- 2. Empty-inputs short-circuit ----
-    if not papers and not posts and not repos:
+    if not papers and not posts and not repos and not reddit_posts and not hf_models:
         snap = Snapshot(
             snapshot_date=today_d,
             generated_at=datetime.now(tz=timezone.utc),
@@ -414,7 +475,9 @@ def main(
     if extract_topics_fn is not None:
         topic_list = extract_topics_fn(papers, posts, repos, candidate_hints)
     elif use_claude:
-        topic_list = topics.extract_topics(papers, posts, repos, candidate_hints)
+        topic_list = topics.extract_topics(
+            papers, posts, repos, candidate_hints, reddit_posts=reddit_posts
+        )
     else:
         raise RuntimeError(
             "v0.1.1: topic extraction requires --claude (one haiku-4-5 call "
@@ -431,17 +494,32 @@ def main(
     )
 
     # ---- 7. Per-topic metrics ----
-    doc_timestamps = _build_doc_timestamps(papers, posts, repos)
+    doc_timestamps = _build_doc_timestamps(papers, posts, repos, reddit_posts)
     posts_by_id = {p.id: p for p in posts}
     repos_by_name = {r.full_name: r for r in repos}
     papers_by_id = {p.id: p for p in papers}
+    # v0.2.0 — post-hoc HF model → topic attribution by id-token overlap.
+    hf_attribution = _attribute_hf_models_to_topics(topic_list, hf_models)
+    # v0.2.0 — sources that actually fetched something this run get to
+    # vote in cross-source consensus.
+    active_consensus_sources = [
+        s for s in CONSENSUS_SOURCES
+        if (
+            (s == "arxiv" and papers)
+            or (s == "github" and repos)
+            or (s == "hackernews" and posts)
+            or (s == "reddit" and reddit_posts)
+            or (s == "huggingface" and hf_models)
+        )
+    ]
 
     # Pre-compute SourceCounts and velocity per topic for percentile math.
     counts_per_topic: list[SourceCounts] = []
     velocity_per_topic: list[float] = []
     for topic in topic_list:
         counts = _source_counts_from_topic(
-            topic, doc_timestamps, posts_by_id, repos_by_name, today_dt
+            topic, doc_timestamps, posts_by_id, repos_by_name, today_dt,
+            hf_model_ids=hf_attribution.get(topic.canonical_name, []),
         )
         counts_per_topic.append(counts)
         _, _, v = score.velocity_from_topic_docs(
@@ -487,6 +565,8 @@ def main(
                 convergence=convergence,
                 velocity_score=velocity_per_topic[i],
                 papers_by_id=papers_by_id,
+                hf_model_ids=hf_attribution.get(topic.canonical_name, []),
+                active_consensus_sources=active_consensus_sources,
             )
         )
 

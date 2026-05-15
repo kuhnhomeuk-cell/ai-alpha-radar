@@ -250,6 +250,72 @@ def test_orchestrator_hard_fails_without_claude_when_inputs_present(tmp_path: Pa
         )
 
 
+# v0.2.0 — cross-source consensus + HF attribution
+
+
+def test_orchestrator_populates_consensus_fields(tmp_path: Path) -> None:
+    """consensus_ratio reflects how many active sources confirm a topic.
+    The world-model-agents stub topic only has an arxiv attribution; with
+    3 active sources (arxiv/hn/gh), its consensus ratio should be 1/3.
+    """
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        hf_models=[],
+        reddit_posts=[],
+        use_claude=False,
+        extract_topics_fn=_stub_extract_topics,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+    wma = next(t for t in snap.trends if t.keyword == "world model agents")
+    assert wma.sources_confirming == ["arxiv"]
+    # Active sources for this run: arxiv + hackernews + github (3).
+    assert wma.consensus_ratio == pytest.approx(1 / 3)
+
+
+def test_orchestrator_hf_attribution_matches_by_token_overlap(tmp_path: Path) -> None:
+    """An HF model whose id contains a topic alias/canonical token gets
+    attributed to that topic and confirms it in the consensus.
+    """
+    from pipeline.fetch.huggingface import HFModel
+    from datetime import datetime as dt, timezone as tz
+
+    hf_models = [HFModel(
+        id="my-org/world-model-agent-v2",  # tokens: world, model, agent
+        author="my-org",
+        downloads=1000,
+        likes=10,
+        last_modified=dt(2026, 5, 1, tzinfo=tz.utc),
+        pipeline_tag="text-generation",
+        library_name="transformers",
+        tags=["world-model"],
+        url="https://huggingface.co/my-org/world-model-agent-v2",
+    )]
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        hf_models=hf_models,
+        reddit_posts=[],
+        use_claude=False,
+        extract_topics_fn=_stub_extract_topics,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+    wma = next(t for t in snap.trends if t.keyword == "world model agents")
+    # arxiv (topic-extracted) + huggingface (post-hoc attribution) confirm
+    assert "huggingface" in wma.sources_confirming
+    assert "arxiv" in wma.sources_confirming
+    # active sources: arxiv + hackernews + github + huggingface = 4
+    assert wma.consensus_ratio == pytest.approx(2 / 4)
+    # SourceCounts also reflects the HF attribution
+    assert wma.sources.huggingface_models_7d == 1
+
+
 def test_orchestrator_loads_existing_predictions_into_hit_rate(tmp_path: Path) -> None:
     # Pre-seed a tiny predictions log
     log = tmp_path / "predictions.jsonl"

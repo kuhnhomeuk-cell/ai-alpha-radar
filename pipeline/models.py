@@ -5,9 +5,9 @@ coordination note to the frontend team.
 """
 
 from datetime import date, datetime
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 LifecycleStage = Literal["whisper", "builder", "creator", "hype", "commodity"]
 SourceName = Literal[
@@ -17,46 +17,74 @@ SourceName = Literal[
     "semantic_scholar",
     "youtube",
     "reddit",
+    "huggingface",
     "grok_x",
     "tiktok",
 ]
 PredictionVerdict = Literal["pending", "tracking", "verified", "verified_early", "wrong"]
 
-
-class SourceCounts(BaseModel):
-    arxiv_30d: int = 0
-    github_repos_7d: int = 0
-    github_stars_7d: int = 0
-    hn_posts_7d: int = 0
-    hn_points_7d: int = 0
-    semantic_scholar_citations_7d: int = 0
-    youtube_videos_7d: int = 0
-    reddit_mentions_7d: int = 0
-    x_posts_7d: int = 0
+NonNegativeInt = Annotated[int, Field(ge=0)]
+NonNegativeFloat = Annotated[float, Field(ge=0)]
+PercentFloat = Annotated[float, Field(ge=0, le=100)]
+UnitFloat = Annotated[float, Field(ge=0, le=1)]
+TbtsScore = Annotated[int, Field(ge=0, le=100)]
 
 
-class ConvergenceEvent(BaseModel):
+class ContractModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class SourceCounts(ContractModel):
+    arxiv_30d: NonNegativeInt = 0
+    github_repos_7d: NonNegativeInt = 0
+    github_stars_7d: NonNegativeInt = 0
+    hn_posts_7d: NonNegativeInt = 0
+    hn_points_7d: NonNegativeInt = 0
+    semantic_scholar_citations_7d: NonNegativeInt = 0
+    youtube_videos_7d: NonNegativeInt = 0
+    reddit_mentions_7d: NonNegativeInt = 0
+    x_posts_7d: NonNegativeInt = 0
+    # v0.2.0 — HuggingFace model adoption signal.
+    huggingface_models_7d: NonNegativeInt = 0
+
+
+class ConvergenceEvent(ContractModel):
     detected: bool
     sources_hit: list[SourceName]
-    window_hours: int
+    window_hours: NonNegativeInt
     first_appearance: dict[SourceName, datetime]
 
+    @model_validator(mode="after")
+    def _consistent_detection_state(self) -> "ConvergenceEvent":
+        if not self.detected:
+            if self.sources_hit or self.window_hours != 0 or self.first_appearance:
+                raise ValueError("undetected convergence events must have empty source/window data")
+            return self
+        if len(self.sources_hit) < 3:
+            raise ValueError("detected convergence events require at least three sources")
+        if self.window_hours <= 0:
+            raise ValueError("detected convergence events require a positive window")
+        missing = set(self.sources_hit) - set(self.first_appearance)
+        if missing:
+            raise ValueError("detected convergence sources must have first_appearance timestamps")
+        return self
 
-class CreatorAngles(BaseModel):
+
+class CreatorAngles(ContractModel):
     hook: str
     contrarian: str
     tutorial: str
     eli_creator: str
 
 
-class RiskFlag(BaseModel):
+class RiskFlag(ContractModel):
     breakout_likelihood: Literal["low", "medium", "high", "breakout"]
-    peak_estimate_days: Optional[int]
+    peak_estimate_days: Optional[NonNegativeInt]
     risk_flag: str
     rationale: str
 
 
-class Prediction(BaseModel):
+class Prediction(ContractModel):
     text: str
     filed_at: date
     target_date: date
@@ -71,19 +99,19 @@ class Prediction(BaseModel):
     target_lifecycle: Optional["LifecycleStage"] = None
 
 
-class Trend(BaseModel):
+class Trend(ContractModel):
     keyword: str
     canonical_form: str
     cluster_id: int
     cluster_label: str
     sources: SourceCounts
-    velocity_score: float
+    velocity_score: NonNegativeFloat
     velocity_acceleration: float
-    saturation: float
-    hidden_gem_score: float
-    builder_signal: float
+    saturation: PercentFloat
+    hidden_gem_score: UnitFloat
+    builder_signal: UnitFloat
     lifecycle_stage: LifecycleStage
-    tbts: int
+    tbts: TbtsScore
     convergence: ConvergenceEvent
     summary: str
     summary_confidence: Literal["high", "medium", "low"]
@@ -97,26 +125,34 @@ class Trend(BaseModel):
     # timeline modal (v0.2 Commit 5) consumes it for source attribution.
     aliases: list[str] = []
     source_doc_ids: dict[str, list[str | int]] = {}
+    # v0.2.0 — cross-source consensus signal. sources_confirming is the
+    # subset of {arxiv, github, hackernews, reddit, huggingface} with at
+    # least one attributed doc. consensus_ratio normalizes against the
+    # count of sources that fetched ok for this snapshot, so a topic seen
+    # on 4 of 5 active sources scores 0.8. Both optional with defaults so
+    # snapshots that pre-date them round-trip.
+    sources_confirming: list[str] = []
+    consensus_ratio: UnitFloat = 0.0
 
 
-class DemandQuote(BaseModel):
+class DemandQuote(ContractModel):
     text: str
     source: str
     raw_url: Optional[str] = None
 
 
-class DemandCluster(BaseModel):
+class DemandCluster(ContractModel):
     question_shape: str
-    askers_estimate: int
+    askers_estimate: NonNegativeInt
     quotes: list[DemandQuote]
     sources: list[SourceName]
     weekly_growth_pct: float
-    open_window_days: int
+    open_window_days: NonNegativeInt
     creator_brief: str
     related_trends: list[str]
 
 
-class DailyBriefing(BaseModel):
+class DailyBriefing(ContractModel):
     text: str
     moved_up: list[str]
     moved_down: list[str]
@@ -124,15 +160,15 @@ class DailyBriefing(BaseModel):
     generated_at: datetime
 
 
-class HitRate(BaseModel):
-    rate: float
-    verified: int
-    tracking: int
-    verified_early: int
-    wrong: int
+class HitRate(ContractModel):
+    rate: UnitFloat
+    verified: NonNegativeInt
+    tracking: NonNegativeInt
+    verified_early: NonNegativeInt
+    wrong: NonNegativeInt
 
 
-class Snapshot(BaseModel):
+class Snapshot(ContractModel):
     snapshot_date: date
     generated_at: datetime
     trends: list[Trend]
