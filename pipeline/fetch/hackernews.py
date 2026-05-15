@@ -4,14 +4,19 @@ Per BACKEND_BUILD §7 Step 3 — bridge between research and builder mainstream.
 Top comments hydrate for posts with > 5 replies; demand mining (Step 11)
 consumes them.
 
-Note on the spec's literal URL: the spec wrote `query=AI+OR+LLM+OR+GPT+OR+Claude+OR+model`
-under the assumption Algolia parses `OR`. It does not — Algolia ANDs query
-words and returns near-zero hits for the joined phrase. We instead fire one
-single-keyword search per term and dedupe by `objectID`.
+v0.2.0 four-pass strategy: keyword sweep + Show HN + front_page + Ask HN.
+Each pass uses different points thresholds and tag filters. Front_page
+pass uses a post-fetch AI-relevance filter to strip hardware/general-news
+noise that reaches the front page without our keyword vocabulary.
+
+Note on Algolia query semantics: Algolia ANDs query words, so a single
+"AI OR LLM" query returns near-zero hits. Each keyword is fired as its
+own request and merged by objectID.
 """
 
 from __future__ import annotations
 
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Optional
@@ -21,7 +26,41 @@ from pydantic import BaseModel
 
 HN_SEARCH_URL = "https://hn.algolia.com/api/v1/search"
 HN_ITEM_URL_TEMPLATE = "https://hn.algolia.com/api/v1/items/{item_id}"
-HN_KEYWORDS = ["AI", "LLM", "GPT", "Claude", "model"]
+
+# v0.2.0: tighter keyword set. "AI" and "model" dropped — too noisy
+# without a points floor (catches hardware reviews, fashion models, etc.).
+HN_KEYWORDS = [
+    "LLM",
+    "GPT",
+    "Claude",
+    "Gemini",
+    "transformer",
+    "fine-tuning",
+    "embedding",
+    "RAG",
+    "MCP",
+    "agents",
+    "anthropic",
+    "openai",
+]
+
+# Per-pass points floor. Keyword sweep is permissive; tag-only passes
+# need a higher floor because they don't filter by AI vocabulary.
+HN_MIN_POINTS_KEYWORD = 25
+HN_MIN_POINTS_SHOW_HN = 50
+HN_MIN_POINTS_FRONT_PAGE = 100
+HN_MIN_POINTS_ASK_HN = 10
+
+# Post-fetch relevance filter for the front_page pass. Catches AI stories
+# that use phrasing outside HN_KEYWORDS (e.g. "Anthropic raises $2B").
+AI_SIGNAL_TERMS: frozenset[str] = frozenset({
+    "llm", "language model", "gpt", "claude", "gemini", "mistral", "llama",
+    "anthropic", "openai", "deepmind", "transformer", "fine-tun", "embedding",
+    "neural", "inference", "rag", "agent", "mcp", "model context",
+    "diffusion", "stable diffusion", "image generation", "multimodal",
+    "reinforcement learning", "rlhf", "copilot", "huggingface", "hugging face",
+})
+
 HN_HITS_PER_PAGE = 100
 HN_REQUEST_INTERVAL_SECONDS = 0.3  # polite spacing; Algolia is generous
 HN_USER_AGENT = "ai-alpha-radar/0.1 (+https://github.com/kuhnhomeuk-cell/ai-alpha-radar)"
@@ -103,16 +142,68 @@ def attach_comments(post: HNPost, comments: list[HNComment]) -> HNPost:
     return post.model_copy(update={"comments": comments})
 
 
-def _search(client: httpx.Client, keyword: str, cutoff_ts: int) -> list[HNPost]:
+def _is_ai_relevant(post: HNPost) -> bool:
+    """Cheap substring match for the front_page pass — strips RTX/M4/iPhone
+    noise that hits the front page without our keyword vocabulary.
+    """
+    haystack = (post.title + " " + (post.story_text or "")).lower()
+    return any(term in haystack for term in AI_SIGNAL_TERMS)
+
+
+def _search(
+    client: httpx.Client,
+    keyword: str,
+    cutoff_ts: int,
+    *,
+    min_points: int = HN_MIN_POINTS_KEYWORD,
+) -> list[HNPost]:
     params = {
         "tags": "story",
         "query": keyword,
-        "numericFilters": f"created_at_i>{cutoff_ts}",
+        "numericFilters": f"created_at_i>{cutoff_ts},points>{min_points}",
         "hitsPerPage": HN_HITS_PER_PAGE,
     }
     response = client.get(HN_SEARCH_URL, params=params)
     response.raise_for_status()
     return parse_search_response(response.json())
+
+
+def _search_by_tag(
+    client: httpx.Client,
+    tags: str,
+    cutoff_ts: int,
+    *,
+    min_points: int,
+) -> list[HNPost]:
+    """Tag-only pass — no keyword query, just tag + recency + points floor."""
+    params = {
+        "tags": tags,
+        "numericFilters": f"created_at_i>{cutoff_ts},points>{min_points}",
+        "hitsPerPage": HN_HITS_PER_PAGE,
+    }
+    response = client.get(HN_SEARCH_URL, params=params)
+    response.raise_for_status()
+    return parse_search_response(response.json())
+
+
+def _safe_search(
+    client: httpx.Client, keyword: str, cutoff_ts: int, *, min_points: int
+) -> list[HNPost]:
+    try:
+        return _search(client, keyword, cutoff_ts, min_points=min_points)
+    except (httpx.HTTPError, ValueError, KeyError) as e:
+        print(f"hn keyword pass failed for {keyword!r}: {e}", file=sys.stderr)
+        return []
+
+
+def _safe_search_by_tag(
+    client: httpx.Client, tags: str, cutoff_ts: int, *, min_points: int
+) -> list[HNPost]:
+    try:
+        return _search_by_tag(client, tags, cutoff_ts, min_points=min_points)
+    except (httpx.HTTPError, ValueError, KeyError) as e:
+        print(f"hn tag pass failed for {tags!r}: {e}", file=sys.stderr)
+        return []
 
 
 def _fetch_item(client: httpx.Client, item_id: int) -> dict[str, Any]:
@@ -127,26 +218,61 @@ def fetch_ai_posts(
     keywords: Iterable[str] = HN_KEYWORDS,
     hydrate_top_n: int = 10,
 ) -> list[HNPost]:
-    """Live HN Algolia search across each AI keyword, dedupe by id, then
-    hydrate top-N comment threads for posts with > 5 comments.
+    """Four-pass HN Algolia sweep, deduped by objectID.
+
+    Pass 1: keyword sweep — one request per AI keyword, points > 25.
+    Pass 2: Show HN — builder signal, points > 50.
+    Pass 3: front_page — major AI stories that miss our keyword vocab;
+            post-fetch AI relevance filter applied.
+    Pass 4: Ask HN — demand signal, lower points floor (10).
+
+    Top N most-discussed posts then get comment hydration for demand mining.
     """
     cutoff_ts = int((datetime.now(tz=timezone.utc) - timedelta(days=lookback_days)).timestamp())
     headers = {"User-Agent": HN_USER_AGENT}
     posts_by_id: dict[int, HNPost] = {}
     with httpx.Client(timeout=30, headers=headers) as client:
+        # Pass 1: keyword sweep
         for kw in keywords:
-            for post in _search(client, kw, cutoff_ts):
+            for post in _safe_search(client, kw, cutoff_ts, min_points=HN_MIN_POINTS_KEYWORD):
                 posts_by_id.setdefault(post.id, post)
             time.sleep(HN_REQUEST_INTERVAL_SECONDS)
 
-        # hydrate the top N most-discussed threads for demand mining
+        # Pass 2: Show HN — builder signal
+        for post in _safe_search_by_tag(
+            client, "story,show_hn", cutoff_ts, min_points=HN_MIN_POINTS_SHOW_HN
+        ):
+            posts_by_id.setdefault(post.id, post)
+        time.sleep(HN_REQUEST_INTERVAL_SECONDS)
+
+        # Pass 3: front_page — high-points stories with AI relevance filter
+        for post in _safe_search_by_tag(
+            client, "story,front_page", cutoff_ts, min_points=HN_MIN_POINTS_FRONT_PAGE
+        ):
+            if _is_ai_relevant(post):
+                posts_by_id.setdefault(post.id, post)
+        time.sleep(HN_REQUEST_INTERVAL_SECONDS)
+
+        # Pass 4: Ask HN — demand signal, lower floor
+        for post in _safe_search_by_tag(
+            client, "story,ask_hn", cutoff_ts, min_points=HN_MIN_POINTS_ASK_HN
+        ):
+            if _is_ai_relevant(post):
+                posts_by_id.setdefault(post.id, post)
+        time.sleep(HN_REQUEST_INTERVAL_SECONDS)
+
+        # Hydrate top N most-discussed for demand mining
         candidates = sorted(
             (p for p in posts_by_id.values() if p.num_comments > 5),
             key=lambda p: p.num_comments,
             reverse=True,
         )
         for post in candidates[:hydrate_top_n]:
-            tree = _fetch_item(client, post.id)
+            try:
+                tree = _fetch_item(client, post.id)
+            except (httpx.HTTPError, ValueError, KeyError) as e:
+                print(f"hn item hydration failed for {post.id}: {e}", file=sys.stderr)
+                continue
             posts_by_id[post.id] = attach_comments(post, parse_item_tree(tree, limit=20))
             time.sleep(HN_REQUEST_INTERVAL_SECONDS)
 
