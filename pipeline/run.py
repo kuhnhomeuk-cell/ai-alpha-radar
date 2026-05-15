@@ -340,6 +340,33 @@ def _placeholder_briefing() -> DailyBriefing:
     )
 
 
+CONSENSUS_SOURCES = (
+    "arxiv", "github", "hackernews", "reddit", "huggingface",
+    "producthunt", "replicate", "bluesky", "semantic_scholar",
+)
+
+
+def _sources_confirming_for_topic(
+    sources: SourceCounts, active: list[str]
+) -> list[str]:
+    """Inspect this topic's SourceCounts to determine which of the active
+    sources contributed at least one attributed signal. Source-specific
+    field-existence check; order matches CONSENSUS_SOURCES.
+    """
+    has_signal = {
+        "arxiv": sources.arxiv_30d > 0,
+        "github": sources.github_repos_7d > 0,
+        "hackernews": sources.hn_posts_7d > 0,
+        "reddit": sources.reddit_mentions_7d > 0,
+        "huggingface": (sources.huggingface_likes_7d + sources.huggingface_downloads_7d) > 0,
+        "producthunt": sources.producthunt_launches_7d > 0,
+        "replicate": sources.replicate_runs_7d_delta > 0,
+        "bluesky": sources.bluesky_mentions_7d > 0,
+        "semantic_scholar": sources.semantic_scholar_citations_7d > 0,
+    }
+    return [src for src in active if has_signal.get(src, False)]
+
+
 def _build_trend(
     topic: Topic,
     *,
@@ -358,6 +385,7 @@ def _build_trend(
     novelty_score_val: float = 0.0,
     sparkline: Optional[list[int]] = None,
     papers_by_id: Optional[dict[str, Paper]] = None,
+    active_consensus_sources: Optional[list[str]] = None,
 ) -> Trend:
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
     # v0.2.0 — average venue-boost across this topic's attributed arXiv
@@ -372,6 +400,11 @@ def _build_trend(
         ]
         if boosts:
             hidden_gem_score = min(hidden_gem_score + 0.2 * (sum(boosts) / len(boosts)), 1.0)
+
+    # v0.2.0 — cross-source consensus from the SourceCounts shape.
+    active = active_consensus_sources or list(CONSENSUS_SOURCES)
+    sources_confirming = _sources_confirming_for_topic(sources, active)
+    consensus_ratio = score.cross_source_consensus(sources_confirming, len(active))
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
         github_repos_7d=sources.github_repos_7d,
@@ -412,6 +445,8 @@ def _build_trend(
         sparkline_14d=sparkline or [],
         aliases=list(topic.aliases),
         source_doc_ids=dict(topic.source_doc_ids),
+        sources_confirming=sources_confirming,
+        consensus_ratio=consensus_ratio,
     )
 
 
@@ -798,6 +833,24 @@ def main(
         log("fetch_failed", level="warning", source="bluesky", error=str(e))
         bluesky_counts = {}
 
+    # v0.2.0 — active sources for cross-source consensus: only sources that
+    # fetched at least one doc this run get to vote. Drops to single-digit
+    # active when fetchers are stale, which the consensus_ratio then reflects.
+    active_consensus_sources: list[str] = [
+        s for s in CONSENSUS_SOURCES
+        if (
+            (s == "arxiv" and papers)
+            or (s == "github" and repos)
+            or (s == "hackernews" and posts)
+            or (s == "reddit" and reddit_posts)
+            or (s == "huggingface" and hf_models)
+            or (s == "producthunt" and producthunt_launches)
+            or (s == "replicate" and replicate_models)
+            or (s == "bluesky" and bluesky_counts)
+            or (s == "semantic_scholar" and s2_data)
+        )
+    ]
+
     # Pre-compute SourceCounts and velocity per topic for percentile math.
     counts_per_topic: list[SourceCounts] = []
     velocity_per_topic: list[float] = []
@@ -893,6 +946,7 @@ def main(
                 novelty_score_val=novelty_scores.get(topic.canonical_name, 0.0),
                 sparkline=sparkline,
                 papers_by_id=papers_by_id,
+                active_consensus_sources=active_consensus_sources,
             )
         )
 

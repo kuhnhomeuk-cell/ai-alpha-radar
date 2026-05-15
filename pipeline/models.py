@@ -143,6 +143,14 @@ class Trend(BaseModel):
     # Wave 5 — Perplexity Sonar pain-point enrichment. Default empty so
     # snapshots written before Wave 5 round-trip unchanged.
     pain_points: list[PainPoint] = []
+    # v0.2.0 — cross-source consensus. sources_confirming is the subset of
+    # {arxiv, github, hackernews, reddit, huggingface, producthunt,
+    # replicate, bluesky, semantic_scholar} that contributed at least one
+    # attributed doc to this topic. consensus_ratio normalizes against the
+    # count of sources that fetched successfully on this snapshot. Both
+    # optional with defaults so pre-v0.2 snapshots round-trip cleanly.
+    sources_confirming: list[str] = []
+    consensus_ratio: float = 0.0
 
 
 class DemandQuote(BaseModel):

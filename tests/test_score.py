@@ -383,3 +383,27 @@ def test_venue_boost_zero_on_non_venue_or_old_year() -> None:
     assert score.venue_boost("21 pages, 5 figures") == 0.0
     # Pre-2025 venues don't qualify (pattern is 2025-2039).
     assert score.venue_boost("ICML 2020") == 0.0
+
+
+# ---------- v0.2.0 — cross-source consensus ----------
+
+
+def test_cross_source_consensus_full_match() -> None:
+    active = ["arxiv", "github", "hackernews", "reddit", "huggingface"]
+    assert score.cross_source_consensus(active, len(active)) == 1.0
+
+
+def test_cross_source_consensus_partial_match() -> None:
+    confirming = ["arxiv", "github", "hackernews"]
+    assert score.cross_source_consensus(confirming, 5) == pytest.approx(0.6)
+
+
+def test_cross_source_consensus_zero_active_returns_zero() -> None:
+    """Defensive: never divide by zero even if every fetcher failed."""
+    assert score.cross_source_consensus([], 0) == 0.0
+    assert score.cross_source_consensus(["arxiv"], 0) == 0.0
+
+
+def test_cross_source_consensus_caps_at_one() -> None:
+    """If somehow confirming exceeds active, cap at 1.0."""
+    assert score.cross_source_consensus(["a", "b", "c"], 2) == 1.0

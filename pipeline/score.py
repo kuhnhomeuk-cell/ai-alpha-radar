@@ -45,6 +45,20 @@ def venue_boost(comment: str) -> float:
         return 0.0
     return 0.5 if VENUE_PATTERN.search(comment) else 0.0
 
+
+def cross_source_consensus(
+    sources_confirming: list[str], total_active_sources: int
+) -> float:
+    """Fraction of active sources that contributed at least one doc to a topic.
+
+    A topic seen on 4 of 5 active sources returns 0.8 — the data behind
+    the frontend's "4/5 sources confirm" badge. Returns 0.0 when no
+    sources are active (defensive against ZeroDivision).
+    """
+    if total_active_sources <= 0:
+        return 0.0
+    return min(len(sources_confirming) / total_active_sources, 1.0)
+
 # Saturation weights — BACKEND_BUILD §6.2
 SAT_WEIGHTS = {"github": 0.35, "hn": 0.30, "arxiv": 0.20, "semantic_scholar": 0.15}
 
