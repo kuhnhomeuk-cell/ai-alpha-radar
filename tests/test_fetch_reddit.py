@@ -1,88 +1,91 @@
-"""TDD for pipeline.fetch.reddit — PRAW-shaped Reddit fetcher (audit 3.3)."""
+"""TDD for pipeline.fetch.reddit — public-RSS Reddit fetcher (audit 3.3).
+
+Was PRAW-based before Reddit deprecated new legacy-API script apps in
+late 2024; now sources posts via the public per-subreddit RSS endpoint.
+score / upvote_ratio / num_comments aren't in the RSS feed, so they
+stay at model defaults on every parsed post.
+"""
 
 from __future__ import annotations
 
+import time as _time
 from datetime import datetime, timezone
 from types import SimpleNamespace
+
+import httpx
+import pytest
+import respx
 
 from pipeline.fetch import reddit
 
 
-def _fake_submission(
+def _fake_entry(
     *,
-    id: str,
-    title: str,
-    subreddit: str,
-    score: int,
-    upvote_ratio: float,
-    num_comments: int,
-    created_utc: float,
-    selftext: str = "",
-):
+    id_str: str = "t3_abc123",
+    title: str = "",
+    summary: str = "",
+    link: str = "",
+    published_iso: str = "2026-05-13",
+) -> SimpleNamespace:
     return SimpleNamespace(
-        id=id,
+        id=id_str,
         title=title,
-        subreddit=SimpleNamespace(display_name=subreddit),
-        score=score,
-        upvote_ratio=upvote_ratio,
-        num_comments=num_comments,
-        created_utc=created_utc,
-        selftext=selftext,
-        url=f"https://reddit.com/r/{subreddit}/comments/{id}",
+        summary=summary,
+        link=link,
+        published_parsed=_time.strptime(published_iso, "%Y-%m-%d"),
     )
 
 
-def test_parse_submission_extracts_fields() -> None:
-    sub = _fake_submission(
-        id="abc",
-        title="LLM tool launch",
-        subreddit="LocalLLaMA",
-        score=120,
-        upvote_ratio=0.95,
-        num_comments=44,
-        created_utc=datetime(2026, 5, 13, tzinfo=timezone.utc).timestamp(),
-    )
-    post = reddit.parse_submission(sub)
+def test_parse_rss_entry_extracts_post_id_from_t3_prefix() -> None:
+    entry = _fake_entry(id_str="t3_abc123", title="LLM tool launch")
+    post = reddit.parse_rss_entry(entry, subreddit="LocalLLaMA")
+    assert post.id == "abc123"
     assert post.title == "LLM tool launch"
     assert post.subreddit == "LocalLLaMA"
-    assert post.score == 120
-    assert post.num_comments == 44
+    # RSS doesn't expose engagement counters — they stay at defaults.
+    assert post.score == 0
+    assert post.upvote_ratio == 0.5
+    assert post.num_comments == 0
 
 
-def test_engagement_score_age_decay() -> None:
-    now = datetime(2026, 5, 13, 12, 0, tzinfo=timezone.utc)
-    old = reddit.RedditPost(
+def test_parse_rss_entry_strips_html_from_summary() -> None:
+    entry = _fake_entry(
+        id_str="t3_xyz",
+        title="t",
+        summary="<p>Some <b>selftext</b> body.</p>",
+    )
+    post = reddit.parse_rss_entry(entry, subreddit="StableDiffusion")
+    assert "<" not in post.selftext
+    assert "Some" in post.selftext and "selftext" in post.selftext
+
+
+def test_parse_rss_entry_falls_back_to_url_id_when_t3_prefix_missing() -> None:
+    entry = _fake_entry(
+        id_str="https://www.reddit.com/r/LocalLLaMA/comments/zzz999/title/",
+        title="t",
+    )
+    post = reddit.parse_rss_entry(entry, subreddit="LocalLLaMA")
+    assert post.id  # non-empty
+    assert post.id != entry.id  # parsed something
+
+
+def test_engagement_score_returns_zero_for_rss_sourced_post() -> None:
+    """RSS posts have score=0 and num_comments=0 by default."""
+    post = reddit.RedditPost(
         id="x",
         title="t",
         subreddit="s",
-        score=100,
-        upvote_ratio=0.9,
-        num_comments=20,
-        created_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
-        url="https://x",
-        selftext="",
-    )
-    fresh = reddit.RedditPost(
-        id="y",
-        title="t",
-        subreddit="s",
-        score=100,
-        upvote_ratio=0.9,
-        num_comments=20,
         created_at=datetime(2026, 5, 13, 6, tzinfo=timezone.utc),
         url="https://x",
-        selftext="",
     )
-    assert reddit.engagement_score(fresh, now=now) > reddit.engagement_score(old, now=now)
+    now = datetime(2026, 5, 13, 12, 0, tzinfo=timezone.utc)
+    assert reddit.engagement_score(post, now=now) == 0.0
 
 
 def test_dedupe_by_id() -> None:
     base = dict(
         title="t",
         subreddit="s",
-        score=1,
-        upvote_ratio=0.5,
-        num_comments=0,
         created_at=datetime(2026, 5, 13, tzinfo=timezone.utc),
         url="https://x",
         selftext="",
@@ -103,9 +106,6 @@ def test_top_subreddit_per_term() -> None:
             id=str(i),
             title="LLM ftw" if i < 3 else "Stable Diffusion goes brrr",
             subreddit="LocalLLaMA" if i < 3 else "StableDiffusion",
-            score=10,
-            upvote_ratio=0.9,
-            num_comments=5,
             created_at=datetime(2026, 5, 13, tzinfo=timezone.utc),
             url="https://x",
             selftext="",
@@ -123,9 +123,6 @@ def test_reddit_mentions_per_term() -> None:
             id=str(i),
             title="LLM agent" if i < 2 else "diffusion model",
             subreddit="LocalLLaMA",
-            score=10,
-            upvote_ratio=0.9,
-            num_comments=5,
             created_at=datetime(2026, 5, 13, tzinfo=timezone.utc),
             url="https://x",
             selftext="",
@@ -135,3 +132,69 @@ def test_reddit_mentions_per_term() -> None:
     counts = reddit.mentions_per_term(posts, terms=["llm", "diffusion"])
     assert counts["llm"] == 2
     assert counts["diffusion"] == 2
+
+
+# ---------- HTTP-layer integration tests (respx) ----------
+
+
+_RSS_FIXTURE = """<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>r/LocalLLaMA: top posts of the week</title>
+  <entry>
+    <id>t3_aaa</id>
+    <title>New 7B model drops</title>
+    <link href="https://www.reddit.com/r/LocalLLaMA/comments/aaa/" />
+    <updated>2026-05-13T12:00:00Z</updated>
+    <published>2026-05-13T12:00:00Z</published>
+    <summary type="html">&lt;p&gt;Performance is surprisingly strong.&lt;/p&gt;</summary>
+  </entry>
+  <entry>
+    <id>t3_bbb</id>
+    <title>Best fine-tune recipe?</title>
+    <link href="https://www.reddit.com/r/LocalLLaMA/comments/bbb/" />
+    <updated>2026-05-12T08:00:00Z</updated>
+    <published>2026-05-12T08:00:00Z</published>
+    <summary type="html">&lt;p&gt;Anyone got tips&lt;/p&gt;</summary>
+  </entry>
+</feed>
+"""
+
+
+@pytest.fixture
+def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pipeline.fetch import _retry
+
+    monkeypatch.setattr(_retry.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(reddit.time, "sleep", lambda _s: None)
+
+
+@respx.mock
+def test_fetch_top_posts_parses_rss_per_subreddit(_no_sleep: None) -> None:
+    respx.get(url__regex=r"https://www\.reddit\.com/r/LocalLLaMA/top/\.rss.*").mock(
+        return_value=httpx.Response(200, text=_RSS_FIXTURE),
+    )
+    posts = reddit.fetch_top_posts(subreddits=["LocalLLaMA"], limit_per_sub=10)
+    assert len(posts) == 2
+    ids = {p.id for p in posts}
+    assert ids == {"aaa", "bbb"}
+    assert all(p.subreddit == "LocalLLaMA" for p in posts)
+
+
+@respx.mock
+def test_fetch_top_posts_skips_subreddit_when_rss_429(_no_sleep: None) -> None:
+    respx.get(url__regex=r"https://www\.reddit\.com/r/Rate429/top/\.rss.*").mock(
+        return_value=httpx.Response(429, headers={"retry-after": "1"}),
+    )
+    respx.get(url__regex=r"https://www\.reddit\.com/r/Healthy/top/\.rss.*").mock(
+        return_value=httpx.Response(200, text=_RSS_FIXTURE),
+    )
+    posts = reddit.fetch_top_posts(subreddits=["Rate429", "Healthy"], limit_per_sub=10)
+    # Rate429 retries inside _fetch_rss exhaust → exception caught at fetch_top_posts → skipped.
+    # Healthy succeeds with 2 entries.
+    assert len(posts) == 2
+    assert all(p.subreddit == "Healthy" for p in posts)
+
+
+@respx.mock
+def test_fetch_top_posts_empty_subreddits_returns_empty() -> None:
+    assert reddit.fetch_top_posts(subreddits=[]) == []
