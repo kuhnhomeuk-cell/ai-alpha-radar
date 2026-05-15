@@ -26,7 +26,11 @@ from github import Auth, Github
 from pydantic import BaseModel
 from urllib3.util.retry import Retry
 
-GH_TOPICS = ["ai", "llm", "agents"]
+# v0.2.0 — expanded from 3 to 8 topics. The added tool-category labels
+# (rag/mcp/embedding/fine-tuning/transformer) catch builder/tooling
+# repos that the narrower trio would miss. Total request budget is
+# 8 topics × 2s spacing = ~16s, still inside the 30 req/min ceiling.
+GH_TOPICS = ["ai", "llm", "agents", "rag", "transformer", "mcp", "embedding", "fine-tuning"]
 GH_PER_TOPIC_LIMIT = 30
 GH_REQUEST_INTERVAL_SECONDS = 2.0  # 30 req/min cap per BACKEND_BUILD §9
 # Retry config injected into PyGithub — mirrors _retry.with_retry semantics
