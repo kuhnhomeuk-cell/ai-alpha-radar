@@ -58,3 +58,14 @@ def test_topics_list_has_ai_or_llm_or_agents() -> None:
     ai_relevant = {"ai", "llm", "agents", "artificial-intelligence", "agent", "llms"}
     hits = sum(1 for r in repos if any(t in ai_relevant for t in r.topics))
     assert hits >= 5, f"expected ≥5 repos with an AI topic; got {hits}"
+
+
+def test_gh_topics_includes_expanded_set() -> None:
+    """v0.2.0: GH_TOPICS expanded beyond the original ai/llm/agents trio
+    to also cover tool categories (rag/mcp/embedding/fine-tuning/transformer)
+    so the TRENDING REPOS section catches AlphaSignal-style tooling signal.
+    """
+    required = {"ai", "llm", "agents", "rag", "transformer", "mcp", "embedding", "fine-tuning"}
+    assert required.issubset(set(github.GH_TOPICS)), (
+        f"missing topics: {required - set(github.GH_TOPICS)}"
+    )

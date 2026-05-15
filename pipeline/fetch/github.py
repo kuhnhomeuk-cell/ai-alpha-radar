@@ -25,7 +25,11 @@ from typing import Any, Iterable, Optional
 from github import Auth, Github
 from pydantic import BaseModel
 
-GH_TOPICS = ["ai", "llm", "agents"]
+# v0.2.0: expanded topic set. Total request budget is 8 topics × 2s spacing
+# = ~16s, still inside the 30-req/min ceiling. The added topics (rag, mcp,
+# embedding, fine-tuning, transformer) are the tool-category labels that
+# AlphaSignal's TRENDING REPOS section is built on.
+GH_TOPICS = ["ai", "llm", "agents", "rag", "transformer", "mcp", "embedding", "fine-tuning"]
 GH_PER_TOPIC_LIMIT = 30
 GH_REQUEST_INTERVAL_SECONDS = 2.0  # 30 req/min cap per BACKEND_BUILD §9
 
