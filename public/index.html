@@ -69,6 +69,11 @@
   --glow-cyan: rgba(40, 220, 255, 0.18);
   --glow-champagne: rgba(232, 196, 100, 0.20);
 
+  /* Animated blob field — high saturation, drifting behind glass */
+  --blob-1: #1e90ff;  /* electric blue */
+  --blob-2: #ff2a6f;  /* hot magenta */
+  --blob-3: #2eecae;  /* phosphor green */
+
   /* Stage palette */
   --stage-whisper:   #00d4ff;
   --stage-builder:   #2eecae;
@@ -83,20 +88,20 @@
   --void-2:    #0a0f1e;
 
   /* Noise overlay blend mode (overrides per theme) */
-  --noise-blend: overlay;
-  --noise-opacity: 0.06;
+  --noise-blend: soft-light;
+  --noise-opacity: 0.025;
 }
 
 /* === LIGHT MODE === Studio dim, warm-cream Observatory, deep accent contrast */
 :root[data-theme="light"] {
-  --surface-1: #f5f3ec;         /* warm cream substrate */
+  --surface-1: #f2f2f7;         /* Apple systemGroupedBackground */
   --surface-2: #fbfaf6;
   --surface-3: #ffffff;
   --panel:      rgba(255, 253, 248, 0.72);
   --panel-solid:#ffffff;
   --ink:    #18170f;
   --ink-2:  #54534a;
-  --ink-3:  #797367;            /* WCAG AA on cream */
+  --ink-3:  #6d6657;            /* WCAG AA on neutral light substrate */
   --line:    rgba(40, 30, 10, 0.10);
   --line-hi: rgba(140, 90, 0, 0.32);
   --line-bezel: rgba(0, 0, 0, 0.04);
@@ -106,6 +111,11 @@
   --bad:    #c93450;
   --glow-cyan: rgba(0, 140, 175, 0.10);
   --glow-champagne: rgba(170, 130, 30, 0.16);
+
+  /* Light-mode blobs — pastel variants so glass stays bright without harsh color */
+  --blob-1: #80cfff;
+  --blob-2: #ffb0c8;
+  --blob-3: #a3f0c8;
 
   --stage-whisper:   #006b8a;
   --stage-builder:   #08784a;
@@ -117,7 +127,7 @@
   --champagne-deep: #6a4f0e;
 
   --noise-blend: multiply;
-  --noise-opacity: 0.04;
+  --noise-opacity: 0.02;
 }
 
 /* Observatory page-scope override (dark) */
@@ -141,12 +151,12 @@
   --stage-commodity: #7c98c4;
 }
 
-/* Observatory in light mode = warm paper-cream almanac */
+/* Observatory in light mode = subtle paper warmth, not parchment yellow */
 :root[data-theme="light"] .page-observatory {
-  --surface-1: #f8f1de;
-  --surface-2: #fcf6e6;
-  --surface-3: #fffaee;
-  --panel:      rgba(255, 250, 230, 0.78);
+  --surface-1: #fcfaf5;
+  --surface-2: #fefcf7;
+  --surface-3: #ffffff;
+  --panel:      rgba(255, 253, 248, 0.78);
   --panel-solid:#fffaee;
   --ink:    #2a1f08;
   --ink-2:  #5a4a1f;
@@ -223,32 +233,71 @@ main {
   overflow-y: auto;
 }
 
-/* Atmospheric substrate — radial gradient pools + grid (dark mode default) */
+/* ===========================================================
+   ANIMATED BLOB SUBSTRATE — the colorful, drifting field that
+   makes the glass actually look like Apple Liquid Glass.
+   3 high-saturation blobs, 100px Gaussian blur, slow float.
+   Glass surfaces refract this living color.
+   =========================================================== */
+.bg-stage {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background: var(--surface-1);
+  pointer-events: none;
+  transition: background-color 0.6s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.blob {
+  position: absolute;
+  filter: blur(100px);
+  opacity: 0.55;
+  border-radius: 50%;
+  will-change: transform;
+  animation: blob-float 22s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+.blob-1 {
+  top: -10%; left: -10%;
+  width: 50vw; height: 50vw;
+  background: var(--blob-1);
+  animation-delay: 0s;
+}
+.blob-2 {
+  bottom: -20%; right: -10%;
+  width: 60vw; height: 60vw;
+  background: var(--blob-2);
+  animation-delay: -7s;
+}
+.blob-3 {
+  top: 30%; left: 35%;
+  width: 42vw; height: 42vw;
+  background: var(--blob-3);
+  animation-delay: -14s;
+}
+@keyframes blob-float {
+  0%   { transform: translate(0%, 0%) scale(1); }
+  33%  { transform: translate(8%, 14%) scale(1.12); }
+  66%  { transform: translate(-6%, -8%) scale(0.92); }
+  100% { transform: translate(4%, -4%) scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none; }
+}
+
+/* Subtle dot grid on top of blobs — gives glass a finer-grain detail to refract */
 body::before {
   content: '';
   position: fixed; inset: 0;
-  background:
-    radial-gradient(ellipse 60% 50% at 15% 20%, rgba(44, 230, 255, 0.20), transparent 60%),
-    radial-gradient(ellipse 70% 60% at 85% 15%, rgba(46, 236, 174, 0.14), transparent 60%),
-    radial-gradient(ellipse 50% 60% at 50% 85%, rgba(255, 138, 61, 0.16), transparent 60%),
-    radial-gradient(ellipse 40% 40% at 80% 70%, rgba(150, 50, 200, 0.10), transparent 60%),
-    linear-gradient(rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
-    linear-gradient(90deg, rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
-    var(--surface-1);
-  z-index: -2;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.04) 1px, transparent 1.5px) 0 0 / 22px 22px;
+  z-index: -1;
   pointer-events: none;
-  transition: opacity 0.4s ease;
+  mix-blend-mode: overlay;
+  opacity: 0.7;
 }
-
-/* Light mode substrate — softer warmer pools, subtle warm grid */
 :root[data-theme="light"] body::before {
-  background:
-    radial-gradient(ellipse 60% 50% at 15% 20%, rgba(0, 122, 153, 0.06), transparent 60%),
-    radial-gradient(ellipse 70% 60% at 85% 15%, rgba(160, 120, 30, 0.07), transparent 60%),
-    radial-gradient(ellipse 50% 60% at 50% 85%, rgba(196, 74, 23, 0.05), transparent 60%),
-    linear-gradient(rgba(60,40,10,0.04) 1px, transparent 1px) 0 0 / 32px 32px,
-    linear-gradient(90deg, rgba(60,40,10,0.04) 1px, transparent 1px) 0 0 / 32px 32px,
-    var(--surface-1);
+  background: radial-gradient(circle at center, rgba(40, 50, 70, 0.06) 1px, transparent 1.5px) 0 0 / 22px 22px;
+  mix-blend-mode: multiply;
+  opacity: 0.5;
 }
 
 /* Scanlines — dark only, hidden in light mode */
@@ -315,25 +364,15 @@ html::after {
 .topbar {
   display: flex;
   align-items: center;
-  padding: var(--sp-4) var(--sp-6);
-  border-bottom: 1px solid rgba(244, 241, 234, 0.06);
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: none;
+  border-radius: 0; /* topbar overrides .glass radius */
   position: sticky; top: 0; z-index: 50;
-  background: rgba(5, 7, 13, 0.62);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  /* IMPORTANT: do NOT set backdrop-filter or background here — let .glass do it.
+     Topbar relies on the .glass class above for its lensing + transparency. */
   color: var(--ink);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.03),
-    0 12px 32px -12px rgba(0, 0, 0, 0.45);
-  transition: background-color 0.4s cubic-bezier(0.32, 0.72, 0, 1),
-              border-color 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-}
-:root[data-theme="light"] .topbar {
-  background: rgba(255, 253, 248, 0.72);
-  border-bottom: 1px solid rgba(40, 30, 10, 0.08);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6),
-    0 12px 32px -16px rgba(40, 30, 10, 0.12);
+  transition: border-color 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .brand {
   font-family: var(--serif);
@@ -395,7 +434,13 @@ html::after {
   background: var(--champagne);
   box-shadow: 0 0 8px var(--champagne);
 }
-.topbar .right { margin-left: auto; display: flex; align-items: center; gap: var(--sp-5); flex-shrink: 0; }
+.topbar .right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
 .meta-text {
   font-family: var(--mono);
   font-size: 10px;
@@ -411,9 +456,12 @@ html::after {
   color: var(--ink);
   font-family: var(--serif);
   font-style: italic;
-  font-size: 15px;
+  font-size: 14px;
   padding: 4px;
-  width: 240px;
+  width: clamp(120px, 14vw, 220px);
+  min-width: 0;
+  flex-shrink: 1;
+  text-overflow: ellipsis;
   text-align: right;
   transition: border-bottom-color 0.2s, outline 0.2s;
 }
@@ -526,7 +574,8 @@ html::after {
   font-size: 11px;
   padding: 6px 12px;
   border-radius: 6px;
-  width: 240px;
+  width: clamp(160px, 16vw, 240px);
+  min-width: 0;
   letter-spacing: 0.04em;
   transition: outline 0.15s, border-color 0.15s;
 }
@@ -648,35 +697,9 @@ html::after {
 .briefing {
   margin: var(--sp-5) var(--sp-5) 0;
   padding: 22px 26px;
-  background:
-    radial-gradient(ellipse 80% 100% at 0% 0%, var(--glow-cyan), transparent 60%),
-    radial-gradient(ellipse 80% 100% at 100% 100%, rgba(46, 236, 174, 0.06), transparent 55%),
-    rgba(10, 14, 22, 0.55);
-  border: 1px solid var(--line-hi);
-  border-radius: 16px;
+  /* Background/border/shadow/backdrop-filter all come from .glass — only layout here. */
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow:
-    0 0 0 1px var(--line-bezel),
-    0 2px 8px rgba(0, 0, 0, 0.26),
-    0 20px 50px -16px rgba(0, 0, 0, 0.5),
-    0 32px 80px -24px var(--glow-cyan),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.30);
-}
-:root[data-theme="light"] .briefing {
-  background:
-    radial-gradient(ellipse 80% 100% at 0% 0%, var(--glow-cyan), transparent 60%),
-    radial-gradient(ellipse 80% 100% at 100% 100%, rgba(160, 120, 30, 0.06), transparent 55%),
-    rgba(255, 253, 248, 0.85);
-  box-shadow:
-    0 0 0 1px var(--line-bezel),
-    0 2px 8px rgba(40, 30, 10, 0.06),
-    0 20px 50px -16px rgba(40, 30, 10, 0.12),
-    0 32px 80px -24px var(--glow-cyan),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 .briefing::before {
   content: '';
@@ -714,11 +737,9 @@ html::after {
 .filters {
   display: flex; gap: 10px; align-items: center;
   margin: var(--sp-4) var(--sp-5) 0;
-  padding: 10px 14px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  backdrop-filter: blur(8px);
+  padding: 4px 14px;
+  background: transparent;
+  border: none;
   flex-wrap: wrap;
 }
 .filters .label {
@@ -733,8 +754,8 @@ html::after {
 }
 .chip {
   padding: 5px 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 100px;
   font-family: var(--mono);
   font-size: 10px;
@@ -745,8 +766,13 @@ html::after {
   transition: color 0.2s, border-color 0.2s, background 0.2s;
   user-select: none;
 }
+:root[data-theme="light"] .chip {
+  background: rgba(20, 20, 20, 0.04);
+  border: 1px solid rgba(20, 20, 20, 0.10);
+}
 .chip:hover  { color: var(--ink); border-color: var(--line-hi); }
-.chip.active { color: var(--ink); border-color: var(--line-hi); background: rgba(44, 230, 255, 0.06); }
+.chip.active { color: var(--ink); border-color: var(--line-hi); background: rgba(44, 230, 255, 0.08); }
+:root[data-theme="light"] .chip.active { background: rgba(0, 122, 153, 0.10); }
 
 .stage-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .stage-dot.whisper   { background: var(--stage-whisper);   box-shadow: 0 0 6px var(--stage-whisper); }
@@ -1080,11 +1106,10 @@ html::after {
   border-color: var(--line-hi);
   transform: translateY(-3px);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.10),
     0 4px 12px rgba(0, 0, 0, 0.28),
     0 24px 48px -16px rgba(0, 0, 0, 0.5),
-    0 32px 80px -24px var(--glow-cyan),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 :root[data-theme="light"] .gem-card {
   box-shadow:
@@ -1095,10 +1120,9 @@ html::after {
 }
 :root[data-theme="light"] .gem-card:hover {
   box-shadow:
-    0 0 0 1px rgba(0, 122, 153, 0.18),
+    0 0 0 1px rgba(40, 30, 10, 0.16),
     0 4px 12px rgba(40, 30, 10, 0.08),
     0 24px 48px -16px rgba(40, 30, 10, 0.14),
-    0 32px 80px -24px var(--glow-cyan),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .gem-card.convergence::after {
@@ -2214,72 +2238,111 @@ footer .quote {
    ::before shine inherits the element's actual border-radius,
    so it conforms to chip pills as well as card corners.
    ======================================================== */
-/* Liquid Glass v2 — Awwwards-tier multi-layer refraction */
+/* ============================================================
+   LIQUID GLASS v5 — Apple WWDC25 grade, properly weighted.
+   - Substantial background (30% dark / 60% light) — glass has presence
+   - Heavy 40px blur + 200% saturate — colors behind iridesce
+   - SVG displacement lensing on top (Chrome)
+   - Horizontal hairline rim sweep at top edge
+   - Strong diagonal specular streak
+   ============================================================ */
 .glass {
   position: relative;
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 20px;
+  background: rgba(28, 30, 40, 0.32);
+  backdrop-filter: url(#liquid-lens) blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 26px;
   box-shadow:
-    0 0 0 1px var(--line-bezel),
-    0 2px 8px rgba(0, 0, 0, 0.28),
-    0 24px 60px -12px rgba(0, 0, 0, 0.55),
-    0 40px 100px -32px var(--glow-cyan),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.40);
+    /* outer hairline bezel */
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    /* close shadow */
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    /* mid drop */
+    0 8px 24px -6px rgba(0, 0, 0, 0.32),
+    /* deep ambient depth */
+    0 32px 64px -16px rgba(0, 0, 0, 0.45),
+    /* top rim light */
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    /* underside shadow */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    /* side edge highlights */
+    inset 1px 0 0 rgba(255, 255, 255, 0.06),
+    inset -1px 0 0 rgba(255, 255, 255, 0.06);
   isolation: isolate;
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+              border-color 0.3s ease,
+              box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 :root[data-theme="light"] .glass {
   background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(40, 30, 10, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 0 0 1px var(--line-bezel),
-    0 2px 8px rgba(40, 30, 10, 0.06),
-    0 24px 60px -16px rgba(40, 30, 10, 0.16),
-    0 40px 100px -32px var(--glow-cyan),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(40, 30, 10, 0.08);
+    0 0 0 1px rgba(40, 30, 10, 0.05),
+    0 1px 2px rgba(40, 30, 10, 0.06),
+    0 8px 24px -6px rgba(40, 30, 10, 0.08),
+    0 32px 64px -16px rgba(40, 30, 10, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(40, 30, 10, 0.08),
+    inset 1px 0 0 rgba(255, 255, 255, 0.45),
+    inset -1px 0 0 rgba(255, 255, 255, 0.45);
 }
+
+/* TOP RIM SWEEP — horizontal 90° hairline, fades in and out from sides.
+   This is the canonical Apple "specular rim" — a 1px luminous line at top edge. */
 .glass::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.03) 14%,
-    transparent 32%
-  );
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.40), transparent);
   pointer-events: none;
   z-index: 1;
+  border-radius: inherit;
 }
 :root[data-theme="light"] .glass::before {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.10) 14%,
-    transparent 32%
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
 }
-/* Diagonal specular sheen — the "liquid" signature */
+
+/* DIAGONAL SPECULAR STREAK — the "wet" highlight running across the top-left corner. */
 .glass::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 30%,
-    transparent 70%,
-    rgba(255, 255, 255, 0.02) 100%
+    115deg,
+    rgba(255, 255, 255, 0.30) 0%,
+    rgba(255, 255, 255, 0.08) 14%,
+    transparent 28%,
+    transparent 78%,
+    rgba(255, 255, 255, 0.06) 92%,
+    rgba(255, 255, 255, 0.14) 100%
   );
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
   mix-blend-mode: overlay;
+}
+:root[data-theme="light"] .glass::after {
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.20) 14%,
+    transparent 28%,
+    transparent 78%,
+    rgba(0, 0, 0, 0.03) 92%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+  mix-blend-mode: soft-light;
+}
+
+/* Subtle lift on hover for interactive glass (modals stay put) */
+.glass.interactive:hover { transform: translateY(-1px); }
+
+/* @supports fallback for browsers without backdrop-filter (Safari < 16) */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass { background: rgba(20, 28, 40, 0.85); }
+  :root[data-theme="light"] .glass { background: rgba(255, 253, 248, 0.92); }
 }
 /* Chips keep their pill shape and are the only hover-animated
    glass surfaces, so they're the only place will-change pays off. */
@@ -2296,6 +2359,35 @@ footer .quote {
 </style>
 </head>
 <body>
+
+<!-- ========== ANIMATED BLOB SUBSTRATE ==========
+     The colorful drifting field that glass refracts. -->
+<div class="bg-stage" aria-hidden="true">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<!-- ========== LIQUID GLASS SVG FILTERS ==========
+     Real lensing/refraction via feDisplacementMap. Chrome supports
+     backdrop-filter: url(#id); Safari/Firefox fall back to plain blur. -->
+<svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
+  <defs>
+    <!-- Organic refraction — slow turbulence stretched horizontally.
+         Edges of glass surfaces appear to bend the substrate behind them. -->
+    <filter id="liquid-lens" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="noise"/>
+      <feGaussianBlur in="noise" stdDeviation="2" result="smoothNoise"/>
+      <feDisplacementMap in="SourceGraphic" in2="smoothNoise" scale="18" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <!-- Subtle variant for smaller glass surfaces (chips, badges) -->
+    <filter id="liquid-lens-soft" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="3" result="noise"/>
+      <feGaussianBlur in="noise" stdDeviation="1.5" result="smoothNoise"/>
+      <feDisplacementMap in="SourceGraphic" in2="smoothNoise" scale="8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
 
 <!-- ========== A11Y INFRASTRUCTURE ========== -->
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -2344,28 +2436,28 @@ footer .quote {
 
   <div class="filters">
     <span class="label">Stage</span>
-    <span class="chip glass active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
-    <span class="chip glass active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
-    <span class="chip glass active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
-    <span class="chip glass"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
-    <span class="chip glass"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
+    <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
+    <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
+    <span class="chip active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
+    <span class="chip"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
+    <span class="chip"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
 
     <span class="label" style="margin-left:16px">Source</span>
-    <span class="chip glass active" data-filter="source" data-value="arxiv">arXiv</span>
-    <span class="chip glass active" data-filter="source" data-value="github">GitHub</span>
-    <span class="chip glass active" data-filter="source" data-value="hackernews">HN</span>
-    <span class="chip glass active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
+    <span class="chip active" data-filter="source" data-value="arxiv">arXiv</span>
+    <span class="chip active" data-filter="source" data-value="github">GitHub</span>
+    <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
+    <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
 
     <span class="label" style="margin-left:16px">Sort</span>
-    <span class="chip glass active" data-filter="sort" data-value="tbts">TBTS ↓</span>
-    <span class="chip glass"        data-filter="sort" data-value="velocity">Velocity ↓</span>
-    <span class="chip glass"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
+    <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
+    <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
+    <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
 
     <span class="label" style="margin-left:16px">Overlay</span>
-    <span class="chip glass" data-filter="themes">◇ Themes</span>
+    <span class="chip" data-filter="themes">◇ Themes</span>
 
     <span class="label" style="margin-left:16px">View</span>
-    <span class="chip glass" id="watchlistChip">★ Watchlist (0)</span>
+    <span class="chip" id="watchlistChip">★ Watchlist (0)</span>
   </div>
 
   <div class="radar-grid">
@@ -3208,7 +3300,7 @@ function renderBubble() {
       borderWidth: 1,
       borderRadius: 10,
       padding: [10, 14],
-      extraCssText: 'backdrop-filter: blur(20px) saturate(180%); box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 16px 40px -12px rgba(0,0,0,0.6), 0 24px 60px -20px rgba(40,220,255,0.18);',
+      extraCssText: 'backdrop-filter: blur(20px) saturate(180%); box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 16px 40px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.16);',
       textStyle: { color: '#e2ecf6', fontFamily: 'Geist Mono', fontSize: 11 },
       formatter: p => `
         <div style="font-family:'Geist';font-weight:700;font-size:14px;margin-bottom:8px;color:#e2ecf6;letter-spacing:-0.01em">${p.value[3]}</div>
