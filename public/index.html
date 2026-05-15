@@ -2,6 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="AI Alpha Radar — real-time trend intelligence for AI operators. Track emerging signals, surface hidden gems, and monitor keyword velocity before the crowd arrives.">
+<meta property="og:title" content="AI Alpha Radar · Trend Intelligence Observatory">
+<meta property="og:description" content="Real-time AI trend intelligence. Track emerging signals and surface hidden gems before the crowd arrives.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI Alpha Radar · Trend Intelligence Observatory">
+<meta name="twitter:description" content="Real-time AI trend intelligence. Track emerging signals and surface hidden gems before the crowd arrives.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%2307090c'/><circle cx='16' cy='16' r='10' fill='none' stroke='%2300f0ff' stroke-width='1.5' opacity='0.9'/><circle cx='16' cy='16' r='5' fill='none' stroke='%2300ff9d' stroke-width='1' opacity='0.7'/><circle cx='16' cy='16' r='1.5' fill='%2300f0ff'/></svg>">
 <title>AI Alpha Radar · Trend Intelligence Observatory</title>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=cormorant-garamond:400,500,600|inter:300,400,500,600,700|jetbrains-mono:400,500,600|space-grotesk:500,700" rel="stylesheet">
@@ -85,7 +94,7 @@ html, body {
   font-size: 13px;
   line-height: 1.45;
   overflow-x: hidden;
-  min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -147,6 +156,13 @@ body::after {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%      { opacity: 0.4; transform: scale(0.85); }
 }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 .brand .subtitle {
   font-family: var(--sans);
   font-size: 10px;
@@ -200,7 +216,7 @@ body::after {
   width: 240px;
   text-align: right;
 }
-.niche-input:focus { outline: none; border-bottom-color: var(--champagne); }
+.niche-input:focus { outline: 1px solid var(--champagne); outline-offset: 2px; border-bottom-color: var(--champagne); }
 .niche-input::placeholder { color: #6a6862; }
 
 .watchlist-pill {
@@ -213,7 +229,7 @@ body::after {
   padding: 5px 11px;
   border-radius: 100px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
   white-space: nowrap;
 }
 .watchlist-pill:disabled,
@@ -226,7 +242,7 @@ body::after {
   border-color: rgba(212, 175, 55, 0.45);
 }
 .watchlist-pill.has-items:hover {
-  color: #ffffff;
+  color: var(--ink);
   border-color: var(--champagne);
   background: rgba(212, 175, 55, 0.08);
 }
@@ -245,7 +261,7 @@ body::after {
 }
 .star-btn:hover { color: var(--ink); transform: scale(1.18); opacity: 1; }
 .star-btn.on { color: var(--accent); opacity: 1; }
-.star-btn.on:hover { color: #ffffff; }
+.star-btn.on:hover { color: var(--ink); }
 
 .search-wrap { position: relative; }
 .search-input {
@@ -437,7 +453,7 @@ body::after {
   cursor: pointer;
   color: var(--ink-2);
   display: flex; align-items: center; gap: 6px;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
   user-select: none;
 }
 .chip:hover  { color: var(--ink); border-color: var(--line-hi); }
@@ -1231,7 +1247,7 @@ body::after {
   border: 1px solid var(--line);
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 .audience-row:hover {
   background: rgba(0, 240, 255, 0.12);
@@ -1272,14 +1288,104 @@ body::after {
   border-radius: 100px;
   cursor: pointer;
   margin-left: 6px;
-  transition: all 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
   white-space: nowrap;
 }
 .conv-badge:hover {
   background: rgba(0, 240, 255, 0.20);
   border-color: var(--accent);
-  color: #ffffff;
+  color: var(--ink);
 }
+/* v0.2.0 — cross-source consensus badge.
+   Three tiers: default (low), .medium (>=40%), .strong (>=60%). */
+.cons-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #8b9cb0;
+  background: rgba(139, 156, 176, 0.08);
+  border: 1px solid rgba(139, 156, 176, 0.25);
+  border-radius: 100px;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.cons-badge.medium {
+  color: #ffd84d;
+  background: rgba(255, 216, 77, 0.10);
+  border-color: rgba(255, 216, 77, 0.35);
+}
+.cons-badge.strong {
+  color: #00ff9d;
+  background: rgba(0, 255, 157, 0.10);
+  border-color: rgba(0, 255, 157, 0.40);
+}
+.cons-badge:hover {
+  filter: brightness(1.25);
+}
+.meth-section {
+  margin: 16px 0 22px;
+}
+.meth-section h4 {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.meth-section p {
+  margin: 6px 0 8px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-dim, #b8c5d6);
+}
+.meth-section pre {
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+.meth-section code {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 1px 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+.meth-foot {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(139, 156, 176, 0.25);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: #8b9cb0;
+}
+.meth-foot a { color: var(--accent); text-decoration: none; }
+.meth-foot a:hover { text-decoration: underline; }
+.meth-link {
+  color: #8b9cb0;
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  border-bottom: 1px dashed rgba(139, 156, 176, 0.4);
+  padding-bottom: 1px;
+  cursor: pointer;
+}
+.meth-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 .conv-scrim {
   position: fixed; inset: 0;
   background: rgba(7, 9, 12, 0.7);
@@ -1713,9 +1819,51 @@ footer .quote {
   </div>
 </div>
 
+<!-- ========== METHODOLOGY MODAL (global) ========== -->
+<div class="conv-scrim" id="methScrim" onclick="window.closeMethodology()"></div>
+<div class="conv-modal glass" id="methModal" aria-hidden="true" role="dialog" aria-labelledby="methTitle">
+  <div class="conv-head">
+    <div>
+      <div class="conv-name" id="methTitle">How signals are scored</div>
+      <div class="conv-cluster">Open methodology · v0.2.0</div>
+    </div>
+    <button class="close" onclick="window.closeMethodology()">CLOSE ✕</button>
+  </div>
+  <div class="conv-body">
+    <div class="conv-eyebrow">⌖ The scoring formula on this page</div>
+    <div class="meth-section">
+      <h4>Cross-source consensus</h4>
+      <p>Each topic is attributed to the sources that contributed at least one document — <code>arXiv</code>, <code>GitHub</code>, <code>Hacker News</code>, <code>Reddit</code>, <code>HuggingFace</code>. The <strong>consensus ratio</strong> is the fraction of sources that fetched successfully on this snapshot and confirmed the topic.</p>
+      <pre>consensus_ratio = |sources_confirming| / |active_sources|</pre>
+      <p>A topic seen on 4 of 5 active sources renders as the <span class="cons-badge strong">4/5 ✓</span> badge.</p>
+    </div>
+    <div class="meth-section">
+      <h4>Hidden-gem score</h4>
+      <pre>hidden_gem = 0.40·velocity + 0.35·(1 − saturation/100) + 0.25·builder_signal
++ 0.20·avg(venue_boost)   # capped at 1.0</pre>
+      <p><em>venue_boost</em> fires (0.5) when an attributed arXiv paper's <code>arxiv:comment</code> mentions a top-tier venue (ICML / NeurIPS / ICLR / CVPR / EMNLP / ACL / NAACL / AAAI / SIGKDD / ICDM / ECML / COLM) with a 2025–2039 year.</p>
+    </div>
+    <div class="meth-section">
+      <h4>Trend-Before-Trend Score (TBTS)</h4>
+      <pre>tbts = 100 · (0.35·velocity + 0.30·hidden_gem + 0.20·lifecycle + 0.15·convergence)</pre>
+    </div>
+    <div class="meth-section">
+      <h4>Saturation</h4>
+      <pre>saturation = 0.35·github + 0.30·hn + 0.20·arxiv + 0.15·semantic_scholar
+  (each input is the topic's percentile against today's top-N)</pre>
+    </div>
+    <div class="meth-section">
+      <h4>HuggingFace attribution</h4>
+      <p>HF models are attached to topics post-hoc by id-token overlap: split the model id (e.g. <code>meta-llama/Llama-3-70B</code>) on <code>/-_</code>, keep tokens of length ≥ 4, match against the topic's <code>canonical_form</code> and aliases. A heuristic — known false-positive risk, but lets HF participate in consensus without inflating the Claude prompt.</p>
+    </div>
+    <div class="meth-foot">All code is open: <a href="https://github.com/kuhnhomeuk-cell/ai-alpha-radar" target="_blank" rel="noopener">github.com/kuhnhomeuk-cell/ai-alpha-radar</a></div>
+  </div>
+</div>
+
 <footer>
   <span>// AI Alpha Radar · v0.2 · trend intelligence terminal</span>
   <span class="quote">"By the time it trends on Google, the star has already collapsed."</span>
+  <span><a href="#" class="meth-link" onclick="event.preventDefault(); window.openMethodology();">methodology</a></span>
   <span id="footerStamp">—</span>
 </footer>
 
@@ -1794,10 +1942,15 @@ async function loadData() {
       sources: t.sources || {},
       convergence: t.convergence || { detected: false },
       summary: t.summary,
+      summary_confidence: t.summary_confidence,
       angles: t.angles || {},
       risk: t.risk || {},
       prediction: t.prediction || null,
       sparkline: t.sparkline_14d || [],
+      aliases: t.aliases || [],
+      source_doc_ids: t.source_doc_ids || {},
+      sources_confirming: t.sources_confirming || [],
+      consensus_ratio: t.consensus_ratio || 0,
     }));
     DEMAND        = snap.demand_clusters || [];
     PREDICTIONS   = snap.past_predictions || [];
@@ -2070,7 +2223,10 @@ function renderSourceHealth() {
   const srcClaude = document.getElementById('srcClaude');
   if (!srcList || !srcClaude) return;
 
-  const labels = { arxiv: 'arXiv', github: 'GitHub', hackernews: 'HN', semantic_scholar: 'SemScholar' };
+  const labels = {
+    arxiv: 'arXiv', github: 'GitHub', hackernews: 'HN',
+    reddit: 'Reddit', huggingface: 'HF', semantic_scholar: 'SemScholar',
+  };
   const sources = (META && META.sources) || {};
   const parts = Object.entries(labels).map(([key, label]) => {
     const s = sources[key] || { ok: false, fetched: 0 };
@@ -2294,6 +2450,7 @@ function renderLeaderboard() {
     const kw = t.canonical_form || t.keyword;
     const sel = kw === state.selectedKeyword;
     const conv = hasConvergence(t);
+    const consBadge = renderConsensusBadge(t);
     return `
       <div class="lb-row${sel ? ' selected' : ''}" data-kw="${escapeAttr(kw)}">
         <div class="rank">${String(i + 1).padStart(2, '0')}</div>
@@ -2301,6 +2458,7 @@ function renderLeaderboard() {
           <div class="name">${escapeHtml(t.keyword)}</div>
           <div class="stage-mini" style="color:${STAGE_META[t.stage]?.color || '#8b9cb0'}">
             <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
+            ${consBadge}
             ${conv ? `<span class="conv-badge" data-conv="${escapeAttr(kw)}" title="View convergence timeline">⚡ CONV</span>` : ''}
           </div>
         </div>
@@ -2314,6 +2472,12 @@ function renderLeaderboard() {
   host.innerHTML = html;
   host.querySelectorAll('.lb-row').forEach(row => {
     row.addEventListener('click', (e) => {
+      const consBadge = e.target.closest('.cons-badge');
+      if (consBadge) {
+        e.stopPropagation();
+        openMethodology();
+        return;
+      }
       const badge = e.target.closest('.conv-badge');
       if (badge && badge.dataset.conv) {
         e.stopPropagation();
@@ -2330,6 +2494,18 @@ function velArrow(v) {
   if (!v || v === 0) return '—';
   if (v > 1) return '▲' + v.toFixed(1);
   return '▼' + v.toFixed(1);
+}
+/* v0.2.0 — cross-source consensus badge. "5/7 sources confirm" style.
+   Suppressed when the snapshot pre-dates consensus_ratio (legacy) or the
+   topic has zero confirming sources (edge: empty pipeline). */
+function renderConsensusBadge(t) {
+  const conf = t.sources_confirming || [];
+  const ratio = t.consensus_ratio || 0;
+  if (!conf.length || ratio <= 0) return '';
+  const total = Math.max(1, Math.round(conf.length / ratio));
+  const cls = ratio >= 0.6 ? ' strong' : (ratio >= 0.4 ? ' medium' : '');
+  const title = `Confirmed by ${conf.length} of ${total} active sources: ${conf.join(', ')}. Click to open methodology.`;
+  return `<span class="cons-badge${cls}" data-cons="open" title="${escapeAttr(title)}">${conf.length}/${total} ✓</span>`;
 }
 function renderBriefing() {
   document.getElementById('briefingText').textContent =
@@ -2479,6 +2655,33 @@ document.addEventListener('click', (e) => {
   if (badge.closest('.lb-row')) return; // leaderboard handles its own
   e.stopPropagation();
   openConvergence(badge.dataset.conv);
+});
+
+/* v0.2.0 — methodology modal (open from any .cons-badge or footer link) */
+function openMethodology() {
+  document.getElementById('methScrim').classList.add('visible');
+  const modal = document.getElementById('methModal');
+  modal.classList.add('visible');
+  modal.setAttribute('aria-hidden', 'false');
+}
+function closeMethodology() {
+  document.getElementById('methScrim').classList.remove('visible');
+  const modal = document.getElementById('methModal');
+  modal.classList.remove('visible');
+  modal.setAttribute('aria-hidden', 'true');
+}
+window.openMethodology = openMethodology;
+window.closeMethodology = closeMethodology;
+document.addEventListener('click', (e) => {
+  const badge = e.target.closest('.cons-badge');
+  if (!badge || badge.closest('.lb-row')) return; // leaderboard handles its own
+  e.stopPropagation();
+  openMethodology();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeMethodology();
+  }
 });
 
 /* ==========================================================
