@@ -1,9 +1,9 @@
 {
-  "refreshed_at": "2026-05-15T13:34:47.821223+00:00",
+  "refreshed_at": "2026-05-15T14:27:06.517007+00:00",
   "keywords_queried": [
     "AI tools for creators",
     "ChatGPT tutorial",
-    "Claude AI",
+    "Claude AI Anthropic",
     "ComfyUI",
     "AI agents",
     "Cursor IDE",
@@ -22,6 +22,23 @@
       "published_at": "2026-05-05T05:06:08Z",
       "thumbnail_url": "https://i.ytimg.com/vi/4gS2wYVep-8/maxresdefault.jpg",
       "key_topics": []
+    },
+    {
+      "video_id": "E5L_lKSoYtc",
+      "title": "Explained: Why Indian govt is warning banks about Anthropic's 'Mythos' AI | Claude Mythos",
+      "channel_name": "Business Standard",
+      "view_count": 726422,
+      "channel_baseline_views": 3078,
+      "outlier_multiple": 235.98,
+      "published_at": "2026-04-28T07:29:50Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/E5L_lKSoYtc/maxresdefault.jpg",
+      "key_topics": [
+        "Society",
+        "Business Standard",
+        "BS News",
+        "Business News",
+        "Financial News"
+      ]
     },
     {
       "video_id": "06LSsZFYFkw",
@@ -46,6 +63,22 @@
       "key_topics": []
     },
     {
+      "video_id": "raipKr4s-aM",
+      "title": "This AI Band Is Asking for Donations",
+      "channel_name": "Still Havens",
+      "view_count": 20394,
+      "channel_baseline_views": 142,
+      "outlier_multiple": 143.59,
+      "published_at": "2026-05-07T13:01:38Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/raipKr4s-aM/maxresdefault.jpg",
+      "key_topics": [
+        "Society",
+        "ai band",
+        "ai generated music",
+        "ai music project"
+      ]
+    },
+    {
       "video_id": "Ec6kkQH0Fzo",
       "title": "Jensen Huang & Anirudh Devgan on Design for AI and AI for Design at CadenceLIVE 2026 \u2013 Fireside Chat",
       "channel_name": "Cadence Design Systems",
@@ -57,17 +90,30 @@
       "key_topics": [
         "Knowledge",
         "Technology",
-        "NVIDIA",
         "Cadence",
+        "NVIDIA",
         "Jensen Huang"
+      ]
+    },
+    {
+      "video_id": "KHYSe8tcfkc",
+      "title": "HubSpot Burned the Roadmap for AI | Dharmesh Shah Explains Why",
+      "channel_name": "Get Paid",
+      "view_count": 17040,
+      "channel_baseline_views": 143,
+      "outlier_multiple": 118.95,
+      "published_at": "2026-05-07T15:30:13Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/KHYSe8tcfkc/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge"
       ]
     },
     {
       "video_id": "TMuXTqaGt0w",
       "title": "The AI That Replaces 10 Tools and Saves You HOURS and MONEY Every Day (2026) SKYWORK",
       "channel_name": "AI DOTHA",
-      "view_count": 9965,
-      "channel_baseline_views": 87,
+      "view_count": 10302,
+      "channel_baseline_views": 90,
       "outlier_multiple": 114.44,
       "published_at": "2026-05-03T13:00:51Z",
       "thumbnail_url": "https://i.ytimg.com/vi/TMuXTqaGt0w/maxresdefault.jpg",
@@ -75,8 +121,7 @@
         "Technology",
         "ai tools",
         "skywork",
-        "free ai tools",
-        "ai for beginners"
+        "free ai tools"
       ]
     },
     {
@@ -105,29 +150,17 @@
       "published_at": "2026-05-13T17:03:17Z",
       "thumbnail_url": "https://i.ytimg.com/vi/YNm3JcGi8Co/maxresdefault.jpg",
       "key_topics": [
-        "kimi k2.6 review",
         "agent swarm",
         "open source ai model",
         "multi agent ai"
       ]
     },
     {
-      "video_id": "BTc-yf69oFs",
-      "title": "Forget Grok Ai [FREE unlimited video tool]",
-      "channel_name": "Ayanda Soares",
-      "view_count": 16274,
-      "channel_baseline_views": 266,
-      "outlier_multiple": 60.99,
-      "published_at": "2026-05-10T19:00:10Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/BTc-yf69oFs/maxresdefault.jpg",
-      "key_topics": []
-    },
-    {
       "video_id": "_R83pFpUWyM",
       "title": "The Engineering of AI Agents: Context, Harnessing, and Autonomy",
       "channel_name": "InfoQ",
-      "view_count": 21878,
-      "channel_baseline_views": 386,
+      "view_count": 21924,
+      "channel_baseline_views": 387,
       "outlier_multiple": 56.56,
       "published_at": "2026-05-07T04:09:45Z",
       "thumbnail_url": "https://i.ytimg.com/vi/_R83pFpUWyM/maxresdefault.jpg",
@@ -141,44 +174,10 @@
       ]
     },
     {
-      "video_id": "om8JnuHbqAY",
-      "title": "Former EPIC Records Exec REVEALS What AI Means for Artists!",
-      "channel_name": "The Manager's Playbook",
-      "view_count": 64362,
-      "channel_baseline_views": 1155,
-      "outlier_multiple": 55.68,
-      "published_at": "2026-05-03T14:01:22Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/om8JnuHbqAY/maxresdefault.jpg",
-      "key_topics": [
-        "Independent music",
-        "Society",
-        "artist management",
-        "music industry",
-        "AI music",
-        "creator economy"
-      ]
-    },
-    {
-      "video_id": "ncGo2_Gj7RE",
-      "title": "A-Train's First Game: ChatGPT Controls Everything",
-      "channel_name": "A-Train Antics",
-      "view_count": 11885,
-      "channel_baseline_views": 252,
-      "outlier_multiple": 47.04,
-      "published_at": "2026-05-02T04:00:47Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/ncGo2_Gj7RE/maxresdefault.jpg",
-      "key_topics": [
-        "Action-adventure game",
-        "Casual game",
-        "retro gaming",
-        "ASMR"
-      ]
-    },
-    {
       "video_id": "II59lFGElKE",
       "title": "Agents Can Tell If You Used AI (Before You Query)",
       "channel_name": "The Novelist Studio",
-      "view_count": 51402,
+      "view_count": 51428,
       "channel_baseline_views": 1440,
       "outlier_multiple": 35.69,
       "published_at": "2026-04-21T20:40:12Z",
@@ -207,8 +206,8 @@
       "video_id": "MlcnA_1a3e8",
       "title": "This AI LEGO Video About Black History Is HITTING People HARD",
       "channel_name": "Lamont Tyson",
-      "view_count": 60921,
-      "channel_baseline_views": 2022,
+      "view_count": 61685,
+      "channel_baseline_views": 2047,
       "outlier_multiple": 30.12,
       "published_at": "2026-05-12T11:00:46Z",
       "thumbnail_url": "https://i.ytimg.com/vi/MlcnA_1a3e8/sddefault.jpg",
@@ -221,7 +220,7 @@
       "video_id": "4L2DNpq8ufE",
       "title": "How to Add Claude Code in Cursor (2026)",
       "channel_name": "The Code City",
-      "view_count": 6071,
+      "view_count": 6084,
       "channel_baseline_views": 208,
       "outlier_multiple": 29.18,
       "published_at": "2026-04-26T09:34:51Z",
@@ -235,10 +234,28 @@
       ]
     },
     {
+      "video_id": "ot6qX9_XcNc",
+      "title": "AI Agents Explained Like No Course Will",
+      "channel_name": "Kunaal Naik | AI Agents",
+      "view_count": 19644,
+      "channel_baseline_views": 752,
+      "outlier_multiple": 26.12,
+      "published_at": "2026-04-23T12:31:15Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/ot6qX9_XcNc/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "Technology",
+        "ai agents",
+        "n8n",
+        "n8n ai automation",
+        "autonomous agents"
+      ]
+    },
+    {
       "video_id": "qvvtbS4Wj8g",
       "title": "Use ChatGPT 5.5 in OpenClaw Without API Costs",
       "channel_name": "Phil Lougher",
-      "view_count": 6271,
+      "view_count": 6264,
       "channel_baseline_views": 252,
       "outlier_multiple": 24.83,
       "published_at": "2026-05-04T18:43:20Z",
@@ -251,11 +268,29 @@
       ]
     },
     {
+      "video_id": "NwKt_tMkcAY",
+      "title": "Anthropic Case Study: The Rise of Claude",
+      "channel_name": "Bet-David Consulting",
+      "view_count": 74271,
+      "channel_baseline_views": 3425,
+      "outlier_multiple": 21.68,
+      "published_at": "2026-04-15T23:00:20Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/NwKt_tMkcAY/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge",
+        "anthropic case study",
+        "claude ai",
+        "claude vs openai",
+        "claude business model",
+        "AI industry analysis"
+      ]
+    },
+    {
       "video_id": "L7FF8Zgab3M",
       "title": "What is OpenClaw? Inside AI Agents, LLMs and the Agentic Loop",
       "channel_name": "IBM Technology",
-      "view_count": 167793,
-      "channel_baseline_views": 7807,
+      "view_count": 167922,
+      "channel_baseline_views": 7813,
       "outlier_multiple": 21.49,
       "published_at": "2026-04-27T11:00:36Z",
       "thumbnail_url": "https://i.ytimg.com/vi/L7FF8Zgab3M/maxresdefault.jpg",
@@ -281,44 +316,24 @@
       ]
     },
     {
-      "video_id": "UgmtNV74kA4",
-      "title": "\ud83d\udc49Best way to learn English with Chatgpt // #english",
-      "channel_name": "Rimjhim English classes",
-      "view_count": 13507,
-      "channel_baseline_views": 765,
-      "outlier_multiple": 17.65,
-      "published_at": "2026-05-12T12:32:05Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/UgmtNV74kA4/maxresdefault.jpg",
+      "video_id": "V3_R-OQxcwI",
+      "title": "BEST BUSINESS AUTOMATION SOFTWARE 2026",
+      "channel_name": "41JUSBERI",
+      "view_count": 9634,
+      "channel_baseline_views": 553,
+      "outlier_multiple": 17.42,
+      "published_at": "2026-05-11T21:08:31Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/V3_R-OQxcwI/maxresdefault.jpg",
       "key_topics": [
-        "Knowledge",
-        "English",
-        "English lessons",
-        "Spoken English"
-      ]
-    },
-    {
-      "video_id": "W3RLgeUiUXY",
-      "title": "Anthropic Unveils AI Agents for Financial Services Tasks",
-      "channel_name": "Bloomberg Television",
-      "view_count": 133591,
-      "channel_baseline_views": 7975,
-      "outlier_multiple": 16.75,
-      "published_at": "2026-05-06T15:32:34Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/W3RLgeUiUXY/maxresdefault.jpg",
-      "key_topics": [
-        "Business",
-        "Society",
-        "Bloomberg",
-        "Bloomberg TV",
-        "artificial intelligence"
+        "Business"
       ]
     },
     {
       "video_id": "DX5RUweuf8I",
-      "title": "LTX 2.3 v1.1 on 8GB VRAM! Free 4K 50fps ComfyUI Workflow \ud83e\udd2f",
+      "title": "LTX 2.3 v1.1 on 8GB VRAM! Free 4K 50fps ComfyUI Workflow",
       "channel_name": "Tensor Alchemist",
-      "view_count": 57436,
-      "channel_baseline_views": 3491,
+      "view_count": 57483,
+      "channel_baseline_views": 3494,
       "outlier_multiple": 16.45,
       "published_at": "2026-04-30T14:07:01Z",
       "thumbnail_url": "https://i.ytimg.com/vi/DX5RUweuf8I/maxresdefault.jpg",
@@ -328,6 +343,19 @@
         "comfyui workflow",
         "8gb vram",
         "ai video generator"
+      ]
+    },
+    {
+      "video_id": "cqMpTbTrMW4",
+      "title": "AI Insider: The Fastest Way To Use AI Agents In Your Business, Content & Life (Open Claw & Claude)",
+      "channel_name": "The Calum Johnson Show",
+      "view_count": 516781,
+      "channel_baseline_views": 34133,
+      "outlier_multiple": 15.14,
+      "published_at": "2026-04-27T12:01:08Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/cqMpTbTrMW4/maxresdefault.jpg",
+      "key_topics": [
+        "Knowledge"
       ]
     },
     {
@@ -346,21 +374,6 @@
       ]
     },
     {
-      "video_id": "r2vYObllqJU",
-      "title": "Claude AI Tutorial for Beginners (Step-by-Step)",
-      "channel_name": "Kevin Stratvert",
-      "view_count": 199767,
-      "channel_baseline_views": 16387,
-      "outlier_multiple": 12.19,
-      "published_at": "2026-04-30T07:00:55Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/r2vYObllqJU/maxresdefault.jpg",
-      "key_topics": [
-        "claude ai",
-        "claude ai tutorial",
-        "anthropic claude"
-      ]
-    },
-    {
       "video_id": "89-rzF95vMA",
       "title": "How I Got ChatGPT-5.5 for Free (5 min setup)",
       "channel_name": "Tech Fire",
@@ -372,7 +385,6 @@
       "key_topics": [
         "Technology",
         "chatgpt business free",
-        "chatgpt free trial 2025",
         "free chatgpt plus alternative"
       ]
     },
@@ -380,8 +392,8 @@
       "video_id": "K7j0TVY1iwk",
       "title": "5 Things You Should NEVER Tell ChatGPT",
       "channel_name": "Abhasa - Mental Health",
-      "view_count": 496592,
-      "channel_baseline_views": 43637,
+      "view_count": 496698,
+      "channel_baseline_views": 43646,
       "outlier_multiple": 11.38,
       "published_at": "2026-04-29T10:50:13Z",
       "thumbnail_url": "https://i.ytimg.com/vi/K7j0TVY1iwk/maxresdefault.jpg",
@@ -402,32 +414,29 @@
         "Technology",
         "Claude Code",
         "Claude Desktop app",
-        "AI coding tools",
-        "Agentic Development tools"
+        "AI coding tools"
       ]
     },
     {
       "video_id": "lpbhButGZyk",
       "title": "TradingView + Claude Code 4.7 Built a Pro SMC Indicator \u2014 Full AI Automation 2026",
       "channel_name": "Power of Trading",
-      "view_count": 44956,
-      "channel_baseline_views": 4886,
+      "view_count": 44977,
+      "channel_baseline_views": 4888,
       "outlier_multiple": 9.2,
       "published_at": "2026-04-22T21:00:49Z",
       "thumbnail_url": "https://i.ytimg.com/vi/lpbhButGZyk/maxresdefault.jpg",
       "key_topics": [
         "Claude Code 4.7",
-        "ai trading 2026",
-        "ai automation trading",
-        "claude code tutorial"
+        "ai automation trading"
       ]
     },
     {
       "video_id": "yyTpoMFYvYk",
       "title": "Seedance 2.0 and ComfyUI Local Video AI Comparison",
       "channel_name": "Pixovert",
-      "view_count": 2314,
-      "channel_baseline_views": 287,
+      "view_count": 2310,
+      "channel_baseline_views": 286,
       "outlier_multiple": 8.05,
       "published_at": "2026-04-16T19:35:28Z",
       "thumbnail_url": "https://i.ytimg.com/vi/yyTpoMFYvYk/maxresdefault.jpg",
@@ -436,29 +445,19 @@
       ]
     },
     {
-      "video_id": "Qsi9MeLh95Q",
-      "title": "RIP Paid Tools: Make LONG AI Videos With Consistency!",
-      "channel_name": "Mr Void",
-      "view_count": 48239,
-      "channel_baseline_views": 6380,
-      "outlier_multiple": 7.56,
-      "published_at": "2026-05-01T15:36:58Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/Qsi9MeLh95Q/maxresdefault.jpg",
-      "key_topics": []
-    },
-    {
-      "video_id": "fpdecvBRsOk",
-      "title": "ChatGPT Images 2 for Architects Full Tutorial | Better than Midjourney?",
-      "channel_name": "altArch",
-      "view_count": 12425,
-      "channel_baseline_views": 1994,
-      "outlier_multiple": 6.23,
-      "published_at": "2026-04-30T15:01:25Z",
-      "thumbnail_url": "https://i.ytimg.com/vi/fpdecvBRsOk/maxresdefault.jpg",
+      "video_id": "QC-yvvOWvuk",
+      "title": "Create LONG AI Animated Videos Using Completely FREE AI Tools With ONE PROMPT",
+      "channel_name": "Ai Lockup",
+      "view_count": 9555,
+      "channel_baseline_views": 1252,
+      "outlier_multiple": 7.63,
+      "published_at": "2026-05-06T19:48:38Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/QC-yvvOWvuk/maxresdefault.jpg",
       "key_topics": [
-        "chatgpt images tutorial",
-        "ai for architects",
-        "ai image generator"
+        "free ai animation video generator",
+        "ai animation",
+        "ai filmmaking",
+        "free ai animation tools"
       ]
     }
   ]

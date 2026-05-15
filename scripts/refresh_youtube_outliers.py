@@ -12,8 +12,17 @@ Usage
 -----
 1. In a Claude Code session, for each keyword in `data/youtube_keywords.json`:
 
-       vidiq_outliers(keyword=kw, limit=10, contentType="long",
-                      publishedWithin="thisMonth", sort="score")
+       vidiq_outliers(
+           keyword=kw,
+           limit=10,
+           contentType="long",
+           publishedWithin="thisMonth",
+           sort="score",
+           # Wave 5 follow-up: drop news/corporate channels that pollute
+           # the "AI tools for solo creators" niche (e.g. CNBC, Bloomberg,
+           # Cadence Design Systems, large media outlets).
+           maxSubscribers=2_000_000,
+       )
 
    Collect all responses into one JSON object keyed by keyword:
 
