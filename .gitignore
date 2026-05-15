@@ -34,3 +34,8 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code runtime — worktrees, skill scratch, session metadata
+.claude/
+.agents/
+skills-lock.json
