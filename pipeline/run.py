@@ -357,8 +357,21 @@ def _build_trend(
     burst_score_val: float = 0.0,
     novelty_score_val: float = 0.0,
     sparkline: Optional[list[int]] = None,
+    papers_by_id: Optional[dict[str, Paper]] = None,
 ) -> Trend:
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
+    # v0.2.0 — average venue-boost across this topic's attributed arXiv
+    # papers and add 0.2 * avg to hidden_gem_score (capped at 1.0). Papers
+    # accepted at ICML/NeurIPS/ICLR/etc. surface as hidden gems faster.
+    if papers_by_id:
+        arxiv_ids = topic.source_doc_ids.get("arxiv", [])
+        boosts = [
+            score.venue_boost(papers_by_id[doc_id].comment)
+            for doc_id in arxiv_ids
+            if isinstance(doc_id, str) and doc_id in papers_by_id
+        ]
+        if boosts:
+            hidden_gem_score = min(hidden_gem_score + 0.2 * (sum(boosts) / len(boosts)), 1.0)
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
         github_repos_7d=sources.github_repos_7d,
@@ -757,6 +770,9 @@ def main(
 
     # ---- 7. Per-topic metrics ----
     doc_timestamps = _build_doc_timestamps(papers, posts, repos)
+    # v0.2.0 — index by arxiv id so _build_trend can compute venue_boost from
+    # each topic's attributed papers' arxiv:comment fields.
+    papers_by_id: dict[str, Paper] = {p.id: p for p in papers}
 
     # External-source aggregations per topic (new in this phase).
     hf_per_topic = _huggingface_per_topic(hf_models, topic_list)
@@ -871,6 +887,7 @@ def main(
                 burst_score_val=burst_val,
                 novelty_score_val=novelty_scores.get(topic.canonical_name, 0.0),
                 sparkline=sparkline,
+                papers_by_id=papers_by_id,
             )
         )
 

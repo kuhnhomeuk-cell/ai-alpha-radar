@@ -365,3 +365,21 @@ def test_velocity_from_topic_docs_doc_outside_30d_window_excluded() -> None:
     )
     assert m7 == 0
     assert m30 == 0
+
+
+# ---------- v0.2.0 — venue_boost from arxiv:comment ----------
+
+
+def test_venue_boost_fires_on_top_venue_with_recent_year() -> None:
+    assert score.venue_boost("ICML2026") == 0.5
+    assert score.venue_boost("Accepted at NeurIPS 2026") == 0.5
+    assert score.venue_boost("ICLR 2027 oral") == 0.5
+    assert score.venue_boost("CVPR 2026") == 0.5
+
+
+def test_venue_boost_zero_on_non_venue_or_old_year() -> None:
+    assert score.venue_boost("") == 0.0
+    assert score.venue_boost("Work in Progress") == 0.0
+    assert score.venue_boost("21 pages, 5 figures") == 0.0
+    # Pre-2025 venues don't qualify (pattern is 2025-2039).
+    assert score.venue_boost("ICML 2020") == 0.0

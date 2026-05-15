@@ -107,3 +107,27 @@ def test_fetch_recent_papers_malformed_body_returns_empty(_no_sleep: None) -> No
     # feedparser tolerates garbage; we expect zero entries parsed, not a raise
     papers = arxiv.fetch_recent_papers(TARGET_CATEGORIES, lookback_days=0)
     assert papers == []
+
+
+# ---------- v0.2.0 — comment + all_categories extraction ----------
+
+
+def test_parse_atom_feed_extracts_comment_when_present() -> None:
+    """arxiv:comment is populated for entries that have one
+    (fixture contains 'ICML2026' and 'Work in Progress').
+    """
+    papers = _papers()
+    comments = [p.comment for p in papers if p.comment]
+    assert comments, "expected at least one paper with a non-empty comment"
+    # At least one venue-acceptance or progress-state comment should appear.
+    assert any(
+        v in c for c in comments for v in ("ICML", "NeurIPS", "ICLR", "Work in Progress")
+    ), f"expected a venue or status comment, got {comments[:5]!r}"
+
+
+def test_parse_atom_feed_includes_primary_in_all_categories() -> None:
+    """all_categories always contains primary_category plus cross-listed categories."""
+    for p in _papers():
+        assert p.primary_category in p.all_categories, (
+            f"{p.id}: primary {p.primary_category!r} missing from {p.all_categories}"
+        )
