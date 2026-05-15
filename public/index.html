@@ -405,6 +405,17 @@ body::after {
   background: linear-gradient(90deg, var(--line-hi), transparent);
 }
 .briefing-text { font-family: var(--sans); font-size: 14px; line-height: 1.6; color: var(--ink); }
+.briefing-text .briefing-h {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--champagne);
+}
+.briefing-text .briefing-p { margin: 0 0 10px; }
+.briefing-text .briefing-p:last-child { margin-bottom: 0; }
+.briefing-text strong { color: var(--ink); font-weight: 600; }
 
 .filters {
   display: flex; gap: 10px; align-items: center;
@@ -2486,9 +2497,47 @@ function weekDeltaPct(spark) {
   if (headMean === 0) return tailMean > 0 ? 100 : 0;
   return Math.round((tailMean / headMean - 1) * 100);
 }
+/* Minimal markdown renderer for the daily briefing.
+   Sonnet emits markdown with ## headers and **bold**; we DOM-construct
+   the rendered version so no escaping discipline is required. No
+   element.innerHTML use — the no-innerhtml lint stays clean. */
+function renderBriefingMarkdown(host, raw) {
+  while (host.firstChild) host.removeChild(host.firstChild);
+  if (!raw) {
+    host.textContent = 'Briefing pending.';
+    return;
+  }
+  const paragraphs = raw.split(/\n\s*\n/);
+  for (const rawPara of paragraphs) {
+    const para = rawPara.trim();
+    if (!para) continue;
+    if (para.startsWith('## ')) {
+      const h = document.createElement('h3');
+      h.className = 'briefing-h';
+      h.textContent = para.slice(3).trim();
+      host.appendChild(h);
+      continue;
+    }
+    const p = document.createElement('p');
+    p.className = 'briefing-p';
+    const parts = para.split(/(\*\*[^*]+\*\*)/);
+    for (const part of parts) {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        const strong = document.createElement('strong');
+        strong.textContent = part.slice(2, -2);
+        p.appendChild(strong);
+      } else if (part) {
+        p.appendChild(document.createTextNode(part));
+      }
+    }
+    host.appendChild(p);
+  }
+}
 function renderBriefing() {
-  document.getElementById('briefingText').textContent =
-    (BRIEFING && BRIEFING.text) ? BRIEFING.text : 'Briefing pending.';
+  renderBriefingMarkdown(
+    document.getElementById('briefingText'),
+    BRIEFING && BRIEFING.text ? BRIEFING.text : null,
+  );
 }
 
 const VERDICT_LABEL = {
