@@ -244,9 +244,13 @@ main {
 }
 /* Leaderboard is the headline content (TOP 20); themes is supporting.
    The leaderboard panel gets ~3× the vertical space so it actually shows
-   a meaningful slice of trends instead of 2 rows. */
-.page.active > .radar-grid > .radar-side > .panel:first-child { flex: 3; }
-.page.active > .radar-grid > .radar-side > .panel:nth-child(2) { flex: 1; }
+   a meaningful slice of trends instead of 2 rows. Today's Pick (#13) sits
+   above the leaderboard at content-size so it doesn't eat that space. */
+.page.active > .radar-grid > .radar-side > .panel.today-pick { flex: 0 0 auto; }
+.page.active > .radar-grid > .radar-side > .panel.today-pick + .panel { flex: 3; }
+.page.active > .radar-grid > .radar-side > .panel.today-pick + .panel + .panel { flex: 1; }
+.page.active > .radar-grid > .radar-side > .panel.today-pick[hidden] ~ .panel:nth-of-type(1) { flex: 3; }
+.page.active > .radar-grid > .radar-side > .panel.today-pick[hidden] ~ .panel:nth-of-type(2) { flex: 1; }
 .page.active > .radar-grid > .radar-side > .panel > .leaderboard,
 .page.active > .radar-grid > .radar-side > .panel > #themesList {
   flex: 1;
@@ -384,8 +388,7 @@ html::after {
 
 /* ========== TOPBAR — premium glass top bar ========== */
 .topbar {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
   gap: var(--sp-4);
   padding: var(--sp-3) var(--sp-5);
@@ -434,9 +437,11 @@ html::after {
 }
 .nav {
   display: flex;
-  justify-self: center;
+  flex: 1;
+  justify-content: center;
   gap: var(--sp-1);
-  flex-shrink: 0;
+  flex-shrink: 1;
+  flex-wrap: wrap;
 }
 .nav button {
   background: transparent; border: none;
@@ -486,11 +491,11 @@ html::after {
   box-shadow: 0 0 8px var(--champagne);
 }
 .topbar .right {
-  justify-self: end;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   min-width: 0;
+  flex-shrink: 0;
 }
 .meta-text {
   font-family: var(--mono);
@@ -5743,7 +5748,7 @@ function renderBubbleFallback(el) {
     return { jx, jy };
   };
   const _sortedTrendsByTbts = [...TRENDS].sort((a, b) => (b.tbts || 0) - (a.tbts || 0));
-  const _topN = 5;
+  const _topN = 4;
   const _labeledKws = new Map(_sortedTrendsByTbts.slice(0, _topN).map((t, i) => [t.canonical_form || t.keyword, i]));
   const _truncLabel = (s) => (s && s.length > 24) ? (s.slice(0, 22) + '…') : (s || '');
 
@@ -5780,7 +5785,7 @@ function renderBubbleFallback(el) {
         const inTopN = rank !== undefined;
         const spaceAbove = cy - pad.top;
         const spaceBelow = (pad.top + plotH) - cy;
-        const stepPx = 14;
+        const stepPx = 18;
         let placeAbove = spaceAbove >= spaceBelow;
         let labelY = placeAbove
           ? (cy - r - 10 - (inTopN ? rank * stepPx : 0))
@@ -5831,7 +5836,7 @@ function renderBubbleFallback(el) {
     .sort((a, b) => a.rank - b.rank)
     .forEach(g => {
       const box = _approxLabelBox(g);
-      const overlap = _placedBoxes.some(b => _boxOverlapRatio(box, b) > 0.5);
+      const overlap = _placedBoxes.some(b => _boxOverlapRatio(box, b) > 0.3);
       if (!overlap) {
         _placedBoxes.push(box);
         _topNVisible.add(g.kw);
