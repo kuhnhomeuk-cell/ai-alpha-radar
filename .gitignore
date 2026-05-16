@@ -37,6 +37,10 @@ build/
 # Cloudflare Worker runtime cache
 worker/.wrangler/
 
+# Scratch redesign sandbox — copies of public/index.html and public/data.json
+# that get sent to outside models. Iterations stay out of git until promoted.
+redesign/
+
 # OS
 .DS_Store
 Thumbs.db
