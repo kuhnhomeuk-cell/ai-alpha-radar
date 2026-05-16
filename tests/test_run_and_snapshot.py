@@ -293,6 +293,47 @@ def test_orchestrator_loads_existing_predictions_into_hit_rate(tmp_path: Path) -
     assert snap.hit_rate.rate == 1.0
 
 
+def test_orchestrator_appends_new_predictions_to_log(tmp_path: Path) -> None:
+    """append_prediction was defined in pipeline.predict but never invoked
+    from the orchestrator — the predictions log stayed frozen at whatever
+    a manual session last wrote, so past_predictions was always [].
+    Each trend with a non-None prediction (placeholder or Claude-backed)
+    should now append a JSONL row, deduplicated on (keyword, target_lifecycle).
+    """
+    from pipeline import predict
+
+    log = tmp_path / "predictions.jsonl"
+    assert not log.exists()
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        use_claude=False,
+        extract_topics_fn=_stub_extract_topics,
+        public_dir=tmp_path,
+        predictions_log=log,
+    )
+    assert log.exists(), "predictions.jsonl should be created"
+    preds_on_disk = predict.load_predictions(log)
+    # Every trend with a prediction surface should appear in the log
+    expected = sum(1 for t in snap.trends if t.prediction is not None)
+    assert len(preds_on_disk) == expected
+    # Re-running with the same fixtures must NOT duplicate rows
+    run.main(
+        today=date(2026, 5, 14),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        use_claude=False,
+        extract_topics_fn=_stub_extract_topics,
+        public_dir=tmp_path,
+        predictions_log=log,
+    )
+    preds_after_second_run = predict.load_predictions(log)
+    assert len(preds_after_second_run) == expected
+
+
 def test_orchestrator_demand_clusters_populate_in_snapshot(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

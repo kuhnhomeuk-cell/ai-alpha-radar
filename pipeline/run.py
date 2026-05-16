@@ -1263,6 +1263,33 @@ def main(
     assert len(updated_preds) == len(preds), (
         f"prediction count drift: loaded {len(preds)} but updated to {len(updated_preds)}"
     )
+    # File NEW predictions for trends not yet in the log. append_prediction
+    # was defined but never called from the orchestrator, so the on-disk
+    # log was frozen at whatever a manual session last wrote — every
+    # subsequent daily run re-read the same N rows and produced
+    # past_predictions: []. This re-enables the accountability loop.
+    newly_filed = 0
+    for t in trends:
+        pred = t.prediction
+        if pred is None:
+            continue
+        if predict.already_filed(
+            updated_preds, keyword=pred.keyword, target_lifecycle=pred.target_lifecycle
+        ):
+            continue
+        try:
+            predict.append_prediction(pred, predictions_log)
+            updated_preds.append(pred)
+            newly_filed += 1
+        except Exception as e:
+            log(
+                "prediction_append_failed",
+                level="warning",
+                keyword=pred.keyword,
+                error=str(e),
+            )
+    if newly_filed:
+        log("predictions_filed", level="info", count=newly_filed)
     hit_rate = predict.compute_hit_rate(updated_preds)
     past_predictions = [p for p in updated_preds if p.verdict != "pending"]
     stuck_pending = [p for p in updated_preds if p.verdict == "pending"]
