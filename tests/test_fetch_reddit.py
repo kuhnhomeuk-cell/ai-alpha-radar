@@ -198,3 +198,151 @@ def test_fetch_top_posts_skips_subreddit_when_rss_429(_no_sleep: None) -> None:
 @respx.mock
 def test_fetch_top_posts_empty_subreddits_returns_empty() -> None:
     assert reddit.fetch_top_posts(subreddits=[]) == []
+
+
+# ---------- OAuth path ----------
+
+
+def test_oauth_token_returns_none_when_creds_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for var in (
+        "REDDIT_CLIENT_ID",
+        "REDDIT_CLIENT_SECRET",
+        "REDDIT_USERNAME",
+        "REDDIT_PASSWORD",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    assert reddit._oauth_token() is None
+
+
+def test_oauth_token_returns_none_when_one_cred_blank(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("REDDIT_USERNAME", "user")
+    monkeypatch.setenv("REDDIT_PASSWORD", "   ")  # whitespace-only
+    assert reddit._oauth_token() is None
+
+
+@respx.mock
+def test_oauth_token_round_trips_access_token(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("REDDIT_USERNAME", "user")
+    monkeypatch.setenv("REDDIT_PASSWORD", "pass")
+    route = respx.post(reddit.REDDIT_OAUTH_TOKEN_URL).mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "access_token": "tok_42",
+                "token_type": "bearer",
+                "expires_in": 86400,
+                "scope": "*",
+            },
+        )
+    )
+    assert reddit._oauth_token() == "tok_42"
+    assert route.called
+
+
+@respx.mock
+def test_oauth_token_returns_none_on_401(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("REDDIT_USERNAME", "user")
+    monkeypatch.setenv("REDDIT_PASSWORD", "wrong")
+    respx.post(reddit.REDDIT_OAUTH_TOKEN_URL).mock(
+        return_value=httpx.Response(401, json={"error": "invalid_grant"})
+    )
+    assert reddit._oauth_token() is None
+
+
+@respx.mock
+def test_fetch_top_oauth_parses_rich_json_fields(_no_sleep: None) -> None:
+    """OAuth response carries score/upvote_ratio/num_comments — fields the
+    RSS path can't fill. Confirm they round-trip into RedditPost."""
+    payload = {
+        "data": {
+            "children": [
+                {
+                    "data": {
+                        "id": "abc123",
+                        "title": "Claude 4.7 just dropped",
+                        "score": 412,
+                        "upvote_ratio": 0.95,
+                        "num_comments": 88,
+                        "created_utc": 1747396800,  # 2026-05-16
+                        "permalink": "/r/ClaudeAI/comments/abc123/claude_47/",
+                        "selftext": "What a release.",
+                    }
+                },
+                {
+                    "data": {
+                        # An item missing 'id' must be skipped, not raise
+                        "title": "broken row",
+                    }
+                },
+            ]
+        }
+    }
+    respx.get(
+        url__regex=r"https://oauth\.reddit\.com/r/ClaudeAI/top.*"
+    ).mock(return_value=httpx.Response(200, json=payload))
+    posts = reddit._fetch_top_oauth(
+        "tok", "ClaudeAI", time_filter="week", limit=25
+    )
+    assert len(posts) == 1
+    p = posts[0]
+    assert p.id == "abc123"
+    assert p.score == 412
+    assert p.upvote_ratio == 0.95
+    assert p.num_comments == 88
+    assert p.subreddit == "ClaudeAI"
+
+
+@respx.mock
+def test_fetch_top_posts_prefers_oauth_when_token_available(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("REDDIT_USERNAME", "user")
+    monkeypatch.setenv("REDDIT_PASSWORD", "pass")
+    respx.post(reddit.REDDIT_OAUTH_TOKEN_URL).mock(
+        return_value=httpx.Response(200, json={"access_token": "tok"})
+    )
+    payload = {
+        "data": {
+            "children": [
+                {
+                    "data": {
+                        "id": "x1",
+                        "title": "OAuth-fetched",
+                        "score": 1,
+                        "upvote_ratio": 0.5,
+                        "num_comments": 0,
+                        "created_utc": 1747396800,
+                        "permalink": "/r/LocalLLaMA/comments/x1/",
+                        "selftext": "",
+                    }
+                }
+            ]
+        }
+    }
+    respx.get(url__regex=r"https://oauth\.reddit\.com/r/LocalLLaMA/top.*").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    # Make sure the RSS path is never invoked when OAuth succeeds
+    rss_route = respx.get(
+        url__regex=r"https://www\.reddit\.com/r/LocalLLaMA/top/\.rss.*"
+    ).mock(return_value=httpx.Response(500))
+    posts = reddit.fetch_top_posts(subreddits=["LocalLLaMA"], limit_per_sub=5)
+    assert len(posts) == 1
+    assert posts[0].title == "OAuth-fetched"
+    assert not rss_route.called

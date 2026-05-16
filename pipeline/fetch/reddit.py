@@ -52,6 +52,8 @@ REDDIT_USER_AGENT_FALLBACK = (
     "ai-alpha-radar/0.1 (+https://github.com/kuhnhomeuk-cell/ai-alpha-radar)"
 )
 REDDIT_RSS_URL_TEMPLATE = "https://www.reddit.com/r/{sub}/top/.rss"
+REDDIT_OAUTH_TOKEN_URL = "https://www.reddit.com/api/v1/access_token"
+REDDIT_OAUTH_BASE = "https://oauth.reddit.com"
 REDDIT_REQUEST_INTERVAL_SECONDS = 2.0  # Reddit rate-limits aggressively
 TIME_FILTER_DEFAULT = "week"
 LIMIT_PER_SUB_DEFAULT = 25
@@ -195,6 +197,108 @@ def _fetch_rss(url: str, user_agent: str) -> str:
         return response.text
 
 
+# ---------- OAuth path (preferred when creds are present) ----------
+
+# Reddit's public RSS endpoint returns 403 to datacenter IPs since
+# 2026-05 — CI runs cannot reach it. OAuth bypasses that wall and also
+# gives us richer fields (score, upvote_ratio, num_comments) that the
+# RSS path leaves at defaults. Creds come from a Reddit "script" app
+# created at https://www.reddit.com/prefs/apps; user must add four env
+# vars (CLIENT_ID, CLIENT_SECRET, USERNAME, PASSWORD) to .env.local.
+
+
+def _oauth_token() -> Optional[str]:
+    """Exchange password-grant creds for a Bearer token.
+
+    Returns None when any of the four env vars is missing or blank, or
+    when Reddit rejects the credentials. Callers fall back to the RSS
+    path in either case (which will likely also fail from CI, but lets
+    a local dev still get something).
+    """
+    import sys
+
+    client_id = os.environ.get("REDDIT_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("REDDIT_CLIENT_SECRET", "").strip()
+    username = os.environ.get("REDDIT_USERNAME", "").strip()
+    password = os.environ.get("REDDIT_PASSWORD", "").strip()
+    if not (client_id and client_secret and username and password):
+        return None
+    user_agent = os.environ.get("REDDIT_USER_AGENT", REDDIT_USER_AGENT_FALLBACK)
+    headers = {"User-Agent": user_agent}
+    data = {"grant_type": "password", "username": username, "password": password}
+    try:
+        with httpx.Client(
+            timeout=30,
+            headers=headers,
+            auth=httpx.BasicAuth(client_id, client_secret),
+        ) as client:
+            response = client.post(REDDIT_OAUTH_TOKEN_URL, data=data)
+            response.raise_for_status()
+            token = response.json().get("access_token")
+            return token if isinstance(token, str) and token else None
+    except Exception as e:
+        print(f"reddit: OAuth token request failed: {e}", file=sys.stderr)
+        return None
+
+
+def _parse_oauth_listing(payload: dict[str, Any], subreddit: str) -> list[RedditPost]:
+    """Convert one /r/{sub}/top JSON response into RedditPosts.
+
+    The JSON has richer fields than RSS — score, upvote_ratio,
+    num_comments are populated. Items missing the required `id` are
+    silently skipped (some moderator-removed posts have a stripped
+    payload).
+    """
+    out: list[RedditPost] = []
+    for child in (payload.get("data") or {}).get("children") or []:
+        post = child.get("data") or {}
+        post_id = post.get("id")
+        if not post_id:
+            continue
+        created_utc = float(post.get("created_utc") or 0)
+        if created_utc <= 0:
+            ts = datetime.now(tz=timezone.utc)
+        else:
+            ts = datetime.fromtimestamp(created_utc, tz=timezone.utc)
+        permalink = post.get("permalink") or ""
+        full_url = (
+            f"https://www.reddit.com{permalink}"
+            if permalink.startswith("/")
+            else (post.get("url") or "")
+        )
+        out.append(
+            RedditPost(
+                id=post_id,
+                title=(post.get("title") or "").strip(),
+                subreddit=subreddit,
+                score=int(post.get("score") or 0),
+                upvote_ratio=float(post.get("upvote_ratio") or 0.5),
+                num_comments=int(post.get("num_comments") or 0),
+                created_at=ts,
+                url=full_url,
+                selftext=post.get("selftext") or "",
+            )
+        )
+    return out
+
+
+@with_retry(attempts=2, base_delay=1.0, max_delay=10.0)
+def _fetch_top_oauth(
+    token: str, subreddit: str, *, time_filter: str, limit: int
+) -> list[RedditPost]:
+    user_agent = os.environ.get("REDDIT_USER_AGENT", REDDIT_USER_AGENT_FALLBACK)
+    headers = {
+        "Authorization": f"bearer {token}",
+        "User-Agent": user_agent,
+    }
+    url = f"{REDDIT_OAUTH_BASE}/r/{subreddit}/top"
+    params = {"t": time_filter, "limit": limit, "raw_json": 1}
+    with httpx.Client(timeout=30, headers=headers) as client:
+        response = client.get(url, params=params)
+        response.raise_for_status()
+        return _parse_oauth_listing(response.json(), subreddit)
+
+
 def fetch_top_posts(
     *,
     subreddits: Optional[Sequence[str]] = None,
@@ -221,6 +325,35 @@ def fetch_top_posts(
         subreddits = load_subreddit_list()
     if not subreddits:
         return []
+
+    # Prefer OAuth — bypasses Reddit's datacenter-IP 403 wall and also
+    # surfaces score / upvote_ratio / num_comments. Falls through to RSS
+    # only when creds are missing/invalid; both paths degrade silently
+    # so a missing config never parks the daily pipeline.
+    token = _oauth_token()
+    if token:
+        oauth_out: list[RedditPost] = []
+        for sub_name in subreddits:
+            try:
+                oauth_out.extend(
+                    _fetch_top_oauth(
+                        token,
+                        sub_name,
+                        time_filter=time_filter,
+                        limit=limit_per_sub,
+                    )
+                )
+            except Exception as e:
+                print(
+                    f"reddit (oauth): r/{sub_name} failed: "
+                    f"{type(e).__name__}: {e}",
+                    file=sys.stderr,
+                )
+                continue
+            time.sleep(REDDIT_REQUEST_INTERVAL_SECONDS)
+        if oauth_out:
+            return dedupe_posts(oauth_out)
+        # OAuth produced nothing across every sub — fall through to RSS.
 
     out: list[RedditPost] = []
     failures: list[tuple[str, str]] = []
