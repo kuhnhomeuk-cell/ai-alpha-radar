@@ -34,7 +34,13 @@ MAX_OUTPUT_TOKENS = 8000
 ABSTRACT_PREVIEW_CHARS = 400
 DESCRIPTION_PREVIEW_CHARS = 200
 MAX_ARXIV_PAPERS_IN_PROMPT = 60
-MAX_HN_POSTS_IN_PROMPT = 80
+# Raised from 80 → 200 so the full HN fetch (~180 posts/run) reaches the
+# topic extractor. The previous cap silently dropped ~55% of HN posts
+# before Claude saw them, which is why hn_posts_7d was 0 on most trends.
+# MAX_USER_PROMPT_CHARS still caps the whole prompt — if the HN block
+# pushes us past the char budget, the truncation marker fires explicitly
+# rather than silently slicing posts off the head.
+MAX_HN_POSTS_IN_PROMPT = 200
 MAX_GITHUB_REPOS_IN_PROMPT = 80
 MAX_CANDIDATE_HINTS_IN_PROMPT = 200
 MAX_USER_PROMPT_CHARS = 60_000
