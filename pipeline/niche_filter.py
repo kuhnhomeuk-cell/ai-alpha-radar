@@ -29,9 +29,14 @@ on "rage" because adjacent letters in real titles almost never appear.
 
 from __future__ import annotations
 
+import re
 from typing import Callable, Iterable, Optional, TypeVar
 
 T = TypeVar("T")
+
+# Tokenizer for word-boundary mode. Matches lowercase alphanumeric tokens,
+# allowing internal hyphens and apostrophes ("rag-eval", "what's").
+_WORD_RE = re.compile(r"[a-z0-9][a-z0-9\-']*")
 
 # Curated lowercase substrings. Order doesn't matter; matching is
 # any-of. Keep this list tight — every term added widens the funnel.
@@ -97,8 +102,30 @@ CREATOR_NICHE_TERMS: frozenset[str] = frozenset({
 })
 
 
+def _split_vocab(
+    terms: Iterable[str],
+) -> tuple[frozenset[str], tuple[str, ...]]:
+    """Split a vocab into (single-token set, multi-word phrase tuple).
+
+    Used by word_boundary mode: single tokens get word-boundary matching
+    (so "ai" doesn't match "accident" or "fail"). Multi-word phrases keep
+    substring matching — those are specific enough that substring is fine.
+    """
+    singles: set[str] = set()
+    phrases: list[str] = []
+    for kw in terms:
+        if " " in kw or "-" in kw:
+            phrases.append(kw)
+        else:
+            singles.add(kw)
+    return frozenset(singles), tuple(phrases)
+
+
 def is_niche_relevant(
-    text: str, *, terms: Optional[Iterable[str]] = CREATOR_NICHE_TERMS
+    text: str,
+    *,
+    terms: Optional[Iterable[str]] = CREATOR_NICHE_TERMS,
+    word_boundary: bool = False,
 ) -> bool:
     """Return True when `text` contains any term in the niche keyword set.
 
@@ -106,13 +133,29 @@ def is_niche_relevant(
     is intentional so callers can flip the filter on/off without forking
     the function. `terms=CREATOR_NICHE_TERMS` (the default) applies the
     project's curated list.
+
+    `word_boundary=False` (default) does substring matching — appropriate
+    for short structured text like paper/repo titles where short tokens
+    are unambiguous.
+
+    `word_boundary=True` matches single tokens on word boundaries (so "ai"
+    doesn't false-positive on "fail" or "accident") while keeping substring
+    matching for multi-word/hyphenated phrases. Use this for natural-language
+    text like HN comments. The 2026-05-16 live-HN inspection caught the
+    "ai-in-fail" false positive, which is the reason this mode exists.
     """
     if terms is None:
         return True
     if not text:
         return False
     lower = text.lower()
-    return any(term in lower for term in terms)
+    if not word_boundary:
+        return any(term in lower for term in terms)
+    singles, phrases = _split_vocab(terms)
+    if any(p in lower for p in phrases):
+        return True
+    tokens = set(_WORD_RE.findall(lower))
+    return bool(tokens & singles)
 
 
 def filter_niche_relevant(

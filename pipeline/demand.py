@@ -24,7 +24,6 @@ into the DemandCluster schema's `sources` field for week-4 expansion.
 
 from __future__ import annotations
 
-import re
 import time
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -38,6 +37,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from pipeline.cluster import _get_model
 from pipeline.fetch.hackernews import HNComment, HNPost
 from pipeline.models import DemandCluster, DemandQuote
+from pipeline.niche_filter import is_niche_relevant as _shared_is_niche_relevant
 from pipeline.summarize import (
     BATCH_API_DISCOUNT,
     HAIKU_INPUT_DOLLARS_PER_MILLION_TOKENS,
@@ -65,11 +65,13 @@ DEFAULT_DEDUPE_THRESHOLD = 0.85
 # both for cache-key parity.
 MAX_OUTPUT_TOKENS_DEMAND = 1200
 
-# Niche-relevance vocabulary for "AI tools for solo creators". Inline here
-# because Agent A is building the shared niche filter in parallel and we
-# can't depend on their work yet. A keyword hit on the comment text or its
-# parent post title qualifies. Tuned to keep AI-relevant indie/creator
-# discussion and drop hardware reviews, recipes, sports, etc.
+# Niche-relevance vocabulary for HN comment filtering. Differs from
+# pipeline.niche_filter.CREATOR_NICHE_TERMS by design: that set is tuned
+# for short structured text (paper/repo titles, substring-matched). This
+# set is tuned for natural-language HN comments (word-boundary matched)
+# and includes short tokens like "ai" / "api" / "ide" that would false-
+# positive under substring matching. A keyword hit on the comment text
+# itself qualifies — niche-relevant parent posts don't pull every reply.
 NICHE_KEYWORDS_AI_TOOLS_FOR_SOLO_CREATORS: frozenset[str] = frozenset({
     # AI vocabulary
     "ai", "llm", "gpt", "claude", "gemini", "mistral", "llama", "anthropic",
@@ -165,53 +167,22 @@ def is_question_shaped(text: str) -> bool:
     return any(head.startswith(prefix) for prefix in _QUESTION_INTENT_PREFIXES)
 
 
-# ---------- New architecture: niche filter (inline) ----------
-
-
-_WORD_RE = re.compile(r"[a-z0-9][a-z0-9\-']*")
-
-
-def _split_niche_vocab(
-    niche_keywords: frozenset[str],
-) -> tuple[frozenset[str], tuple[str, ...]]:
-    """Split the vocab into (single-token set, multi-word phrase tuple).
-
-    Single tokens get word-boundary matching (so "ai" doesn't match
-    "accident" or "fail"). Multi-word phrases keep substring matching —
-    those are specific enough that substring is fine.
-    """
-    singles: set[str] = set()
-    phrases: list[str] = []
-    for kw in niche_keywords:
-        if " " in kw or "-" in kw:
-            phrases.append(kw)
-        else:
-            singles.add(kw)
-    return frozenset(singles), tuple(phrases)
+# ---------- Niche filter: thin delegate to pipeline.niche_filter ----------
 
 
 def is_niche_relevant(
     text: str, *, niche_keywords: frozenset[str] = NICHE_KEYWORDS_AI_TOOLS_FOR_SOLO_CREATORS
 ) -> bool:
-    """Word-boundary aware niche test.
+    """Word-boundary aware niche test for HN comments.
 
-    Live-HN inspection on 2026-05-16 caught a false-positive on substring
-    "ai" inside words like "accident" and "fail" — short tokens MUST be
-    matched on word boundaries, not substring. Multi-word phrases (e.g.
-    "stable diffusion") keep substring matching: they're specific enough.
-
-    Inlined (not pulled from a shared filter module) because Agent A is
-    building that shared filter in a parallel worktree — we can't import
-    their work yet. When their module merges, swap this for a passthrough.
+    Delegates to pipeline.niche_filter.is_niche_relevant with
+    word_boundary=True. The duplicated regex/split logic that lived here
+    pre-2026-05-16 is now centralised in niche_filter — this wrapper
+    preserves the comment-specific keyword default and call-site shape.
     """
-    if not text:
-        return False
-    haystack = text.lower()
-    singles, phrases = _split_niche_vocab(niche_keywords)
-    if any(p in haystack for p in phrases):
-        return True
-    tokens = set(_WORD_RE.findall(haystack))
-    return bool(tokens & singles)
+    return _shared_is_niche_relevant(
+        text, terms=niche_keywords, word_boundary=True
+    )
 
 
 # ---------- Comment gathering ----------
