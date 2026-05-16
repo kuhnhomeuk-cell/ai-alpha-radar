@@ -476,6 +476,11 @@ def _maybe_enrich_with_perplexity(
     Stops early when `budget_cents` is exhausted (remaining trends keep their
     empty `pain_points`). Individual failures degrade silently — pain-points
     are enrichment, not a hard input. Returns (enriched_trends, total_cents).
+
+    Every successful pain-point fetch is also persisted to the perplexity
+    corpus (data/perplexity_corpus.json) keyed by trend keyword, so a paid
+    Sonar call survives a downstream pipeline crash and can be inspected
+    out-of-band.
     """
     if not trends:
         return trends, 0.0
@@ -489,6 +494,27 @@ def _maybe_enrich_with_perplexity(
         spent_cents += cost
         if points:
             out.append(t.model_copy(update={"pain_points": points}))
+            try:
+                persist.update_corpus(
+                    "perplexity",
+                    [
+                        {
+                            "trend": t.keyword,
+                            "canonical_form": t.canonical_form,
+                            "pain_points": [pp.model_dump() for pp in points],
+                            "cost_cents": cost,
+                        }
+                    ],
+                    id_field="trend",
+                )
+            except Exception as e:
+                log(
+                    "corpus_update_failed",
+                    level="warning",
+                    source="perplexity",
+                    trend=t.keyword,
+                    error=str(e),
+                )
         else:
             out.append(t)
     return out, spent_cents
