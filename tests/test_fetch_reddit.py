@@ -418,7 +418,155 @@ def test_fetch_top_posts_prefers_oauth_when_token_available(
     rss_route = respx.get(
         url__regex=r"https://www\.reddit\.com/r/LocalLLaMA/top/\.rss.*"
     ).mock(return_value=httpx.Response(500))
+    arctic_route = respx.get(
+        url__regex=r"https://arctic-shift\.photon-reddit\.com/.*"
+    ).mock(return_value=httpx.Response(500))
     posts = reddit.fetch_top_posts(subreddits=["LocalLLaMA"], limit_per_sub=5)
     assert len(posts) == 1
     assert posts[0].title == "OAuth-fetched"
     assert not rss_route.called
+    assert not arctic_route.called
+
+
+# ---------- Arctic Shift archive fallback ----------
+
+
+_ARCTIC_PAYLOAD = {
+    "data": [
+        {
+            "id": "arc1",
+            "title": "Mid-score post",
+            "score": 50,
+            "upvote_ratio": 0.9,
+            "num_comments": 5,
+            "created_utc": 1747396800,
+            "permalink": "/r/LocalLLaMA/comments/arc1/",
+            "selftext": "body",
+            "url": "https://www.reddit.com/r/LocalLLaMA/comments/arc1/",
+        },
+        {
+            "id": "arc2",
+            "title": "Top-score post",
+            "score": 999,
+            "upvote_ratio": 0.97,
+            "num_comments": 80,
+            "created_utc": 1747396900,
+            "permalink": "/r/LocalLLaMA/comments/arc2/",
+            "selftext": "",
+            "url": "https://www.reddit.com/r/LocalLLaMA/comments/arc2/",
+        },
+        {
+            # Missing id → must be skipped without raising
+            "title": "broken row",
+            "score": 100,
+        },
+    ]
+}
+
+
+@respx.mock
+def test_fetch_top_arctic_shift_parses_and_sorts_by_score(_no_sleep: None) -> None:
+    respx.get(url__startswith=reddit.ARCTIC_SHIFT_SEARCH_URL).mock(
+        return_value=httpx.Response(200, json=_ARCTIC_PAYLOAD),
+    )
+    posts = reddit._fetch_top_arctic_shift(
+        "LocalLLaMA", time_filter="week", limit=2
+    )
+    assert len(posts) == 2
+    # Sorted by score desc — arc2 (999) before arc1 (50).
+    assert [p.id for p in posts] == ["arc2", "arc1"]
+    assert posts[0].score == 999
+    assert posts[0].upvote_ratio == 0.97
+    assert posts[0].num_comments == 80
+    assert posts[0].subreddit == "LocalLLaMA"
+    assert posts[0].url.startswith("https://www.reddit.com/r/LocalLLaMA/")
+
+
+@respx.mock
+def test_fetch_top_arctic_shift_sends_subreddit_and_time_window(
+    _no_sleep: None,
+) -> None:
+    captured: list[httpx.URL] = []
+
+    def _handler(request: httpx.Request) -> httpx.Response:
+        captured.append(request.url)
+        return httpx.Response(200, json={"data": []})
+
+    respx.get(url__startswith=reddit.ARCTIC_SHIFT_SEARCH_URL).mock(
+        side_effect=_handler
+    )
+    reddit._fetch_top_arctic_shift("ClaudeAI", time_filter="week", limit=10)
+    assert len(captured) == 1
+    qs = dict(captured[0].params)
+    assert qs["subreddit"] == "ClaudeAI"
+    assert qs["sort"] == "desc"
+    # Oversample: limit*4 = 40, capped at ARCTIC_SHIFT_MAX_LIMIT=100.
+    assert int(qs["limit"]) == 40
+    # Time window for 'week' adds an `after` cutoff ~7 days back.
+    assert "after" in qs
+    cutoff = int(qs["after"])
+    now = int(datetime.now(tz=timezone.utc).timestamp())
+    seconds_in_7d = 7 * 24 * 3600
+    # Allow a couple-minute window of clock skew between the test and the
+    # cutoff Python computed inside the call.
+    assert now - seconds_in_7d - 120 <= cutoff <= now - seconds_in_7d + 120
+
+
+@respx.mock
+def test_fetch_top_arctic_shift_omits_after_for_all_time_filter(
+    _no_sleep: None,
+) -> None:
+    captured: list[httpx.URL] = []
+
+    def _handler(request: httpx.Request) -> httpx.Response:
+        captured.append(request.url)
+        return httpx.Response(200, json={"data": []})
+
+    respx.get(url__startswith=reddit.ARCTIC_SHIFT_SEARCH_URL).mock(
+        side_effect=_handler
+    )
+    reddit._fetch_top_arctic_shift("LocalLLaMA", time_filter="all", limit=5)
+    qs = dict(captured[0].params)
+    assert "after" not in qs
+
+
+@respx.mock
+def test_fetch_top_posts_falls_back_to_arctic_shift_when_rss_empty(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    """No OAuth creds + RSS returns 0 entries → Arctic Shift fills the gap."""
+    for var in ("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET"):
+        monkeypatch.delenv(var, raising=False)
+    # RSS returns an empty feed (200 OK, no entries) for every sub.
+    respx.get(
+        url__regex=r"https://www\.reddit\.com/r/LocalLLaMA/top/\.rss.*"
+    ).mock(
+        return_value=httpx.Response(
+            200,
+            text="<?xml version='1.0'?><feed xmlns='http://www.w3.org/2005/Atom'/>",
+        )
+    )
+    respx.get(url__startswith=reddit.ARCTIC_SHIFT_SEARCH_URL).mock(
+        return_value=httpx.Response(200, json=_ARCTIC_PAYLOAD)
+    )
+    posts = reddit.fetch_top_posts(subreddits=["LocalLLaMA"], limit_per_sub=10)
+    assert len(posts) == 2
+    assert {p.id for p in posts} == {"arc1", "arc2"}
+
+
+@respx.mock
+def test_fetch_top_posts_skips_arctic_shift_when_rss_succeeds(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    """RSS returning posts must short-circuit before Arctic Shift fires."""
+    for var in ("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET"):
+        monkeypatch.delenv(var, raising=False)
+    respx.get(
+        url__regex=r"https://www\.reddit\.com/r/LocalLLaMA/top/\.rss.*"
+    ).mock(return_value=httpx.Response(200, text=_RSS_FIXTURE))
+    arctic_route = respx.get(
+        url__startswith=reddit.ARCTIC_SHIFT_SEARCH_URL
+    ).mock(return_value=httpx.Response(500))
+    posts = reddit.fetch_top_posts(subreddits=["LocalLLaMA"], limit_per_sub=10)
+    assert len(posts) == 2
+    assert not arctic_route.called

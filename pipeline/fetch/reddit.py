@@ -35,7 +35,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence
 
@@ -54,9 +54,25 @@ REDDIT_USER_AGENT_FALLBACK = (
 REDDIT_RSS_URL_TEMPLATE = "https://www.reddit.com/r/{sub}/top/.rss"
 REDDIT_OAUTH_TOKEN_URL = "https://www.reddit.com/api/v1/access_token"
 REDDIT_OAUTH_BASE = "https://oauth.reddit.com"
+ARCTIC_SHIFT_SEARCH_URL = (
+    "https://arctic-shift.photon-reddit.com/api/posts/search"
+)
+ARCTIC_SHIFT_MAX_LIMIT = 100
 REDDIT_REQUEST_INTERVAL_SECONDS = 2.0  # Reddit rate-limits aggressively
 TIME_FILTER_DEFAULT = "week"
 LIMIT_PER_SUB_DEFAULT = 25
+
+# Arctic Shift sorts by time, not by Reddit score, so we map each Reddit
+# time_filter to a lower bound on created_utc, pull more than `limit`
+# results within that window, and sort by score client-side.
+_ARCTIC_SHIFT_TIME_FILTER_DAYS = {
+    "hour": 1,  # coarsest grain Arctic Shift accepts is days
+    "day": 1,
+    "week": 7,
+    "month": 30,
+    "year": 365,
+    "all": None,
+}
 
 
 class RedditPost(BaseModel):
@@ -344,6 +360,97 @@ def _fetch_top_oauth(
         return _parse_oauth_listing(response.json(), subreddit)
 
 
+# ---------- Arctic Shift archive path (no-auth fallback) ----------
+
+# Arctic Shift (https://arctic-shift.photon-reddit.com) is a community-
+# maintained Reddit mirror with rich JSON, no auth, and a generous
+# ~2000-req rate window. It works from datacenter IPs (no 403), so it
+# fills the gap when both OAuth (creds missing) and RSS (Reddit's IP
+# wall) produce zero.
+#
+# Freshness vs. quality tradeoff: Arctic Shift captures each post ~30s
+# after creation and never updates it, so every archived post has
+# score=1 and num_comments=0 — same engagement-counter blindness as the
+# RSS path. The signal we keep is identical to RSS: "did this topic
+# surface in a creator-relevant subreddit at all," which is what
+# mentions_per_term / top_subreddit_per_term consume downstream.
+
+
+def _parse_arctic_shift_listing(
+    payload: dict[str, Any], subreddit: str
+) -> list[RedditPost]:
+    """Convert an Arctic Shift /api/posts/search response into RedditPosts.
+
+    Arctic Shift mirrors Reddit's post JSON verbatim, so the field names
+    match the OAuth path exactly (id, title, score, upvote_ratio,
+    num_comments, created_utc, permalink, selftext, url).
+    """
+    out: list[RedditPost] = []
+    for raw in payload.get("data") or []:
+        post_id = raw.get("id")
+        if not post_id:
+            continue
+        created_utc = float(raw.get("created_utc") or 0)
+        ts = (
+            datetime.fromtimestamp(created_utc, tz=timezone.utc)
+            if created_utc > 0
+            else datetime.now(tz=timezone.utc)
+        )
+        permalink = raw.get("permalink") or ""
+        full_url = (
+            f"https://www.reddit.com{permalink}"
+            if permalink.startswith("/")
+            else (raw.get("url") or "")
+        )
+        out.append(
+            RedditPost(
+                id=post_id,
+                title=(raw.get("title") or "").strip(),
+                subreddit=subreddit,
+                score=int(raw.get("score") or 0),
+                upvote_ratio=float(raw.get("upvote_ratio") or 0.5),
+                num_comments=int(raw.get("num_comments") or 0),
+                created_at=ts,
+                url=full_url,
+                selftext=raw.get("selftext") or "",
+            )
+        )
+    return out
+
+
+@with_retry(attempts=2, base_delay=1.0, max_delay=10.0)
+def _fetch_top_arctic_shift(
+    subreddit: str, *, time_filter: str, limit: int
+) -> list[RedditPost]:
+    """Fetch recent posts within the time window from Arctic Shift.
+
+    Arctic Shift sorts by time (sort=desc = newest first). Since every
+    archived post has score=1 (see section comment), the client-side
+    sort-by-score is effectively a no-op — but it's kept defensively in
+    case Arctic Shift ever starts surfacing updated scores. Oversample
+    (limit*4, capped at ARCTIC_SHIFT_MAX_LIMIT) gives downstream
+    mentions_per_term a wider net of titles to match against.
+    """
+    user_agent = os.environ.get("REDDIT_USER_AGENT", REDDIT_USER_AGENT_FALLBACK)
+    headers = {"User-Agent": user_agent}
+    fetch_limit = min(max(limit * 4, limit), ARCTIC_SHIFT_MAX_LIMIT)
+    params: dict[str, Any] = {
+        "subreddit": subreddit,
+        "limit": fetch_limit,
+        "sort": "desc",
+    }
+    days = _ARCTIC_SHIFT_TIME_FILTER_DAYS.get(time_filter, 7)
+    if days is not None:
+        cutoff = datetime.now(tz=timezone.utc) - timedelta(days=days)
+        params["after"] = int(cutoff.timestamp())
+    with httpx.Client(timeout=30, headers=headers) as client:
+        response = client.get(ARCTIC_SHIFT_SEARCH_URL, params=params)
+        response.raise_for_status()
+        posts = _parse_arctic_shift_listing(response.json(), subreddit)
+    posts.sort(key=lambda p: p.score, reverse=True)
+    return posts[:limit]
+
+
 def fetch_top_posts(
     *,
     subreddits: Optional[Sequence[str]] = None,
@@ -413,18 +520,47 @@ def fetch_top_posts(
         for entry in feed.entries[:limit_per_sub]:
             out.append(parse_rss_entry(entry, subreddit=sub_name))
         time.sleep(REDDIT_REQUEST_INTERVAL_SECONDS)
-    if failures and not out:
-        # All subreddits failed — Reddit is blocking the whole batch.
-        # Log a single summary line so the operator sees the real issue
-        # in the daily run output. Per-sub detail still goes to stderr.
+    if out:
+        return dedupe_posts(out)
+
+    # Both OAuth (if attempted) and RSS produced nothing — Reddit is
+    # unreachable from this host. Fall back to Arctic Shift's archive
+    # mirror, which is no-auth and works from datacenter IPs.
+    arctic_out: list[RedditPost] = []
+    arctic_failures: list[tuple[str, str]] = []
+    for sub_name in subreddits:
+        try:
+            arctic_out.extend(
+                _fetch_top_arctic_shift(
+                    sub_name,
+                    time_filter=time_filter,
+                    limit=limit_per_sub,
+                )
+            )
+        except Exception as e:
+            arctic_failures.append((sub_name, f"{type(e).__name__}: {e}"))
+            continue
+        time.sleep(REDDIT_REQUEST_INTERVAL_SECONDS)
+    if arctic_out:
         print(
-            f"reddit: all {len(failures)} subreddits failed "
-            f"(likely 403 from anonymous RSS; need OAuth path)",
+            f"reddit: live fetch returned 0 across {len(subreddits)} subs; "
+            f"hydrated {len(arctic_out)} posts from Arctic Shift archive",
             file=sys.stderr,
         )
-        for sub_name, reason in failures[:3]:
+        return dedupe_posts(arctic_out)
+
+    # All three paths produced nothing. Log a single summary line so the
+    # operator sees the real issue in the daily run output.
+    if failures or arctic_failures:
+        print(
+            f"reddit: all paths failed "
+            f"(rss: {len(failures)} sub failures, "
+            f"arctic-shift: {len(arctic_failures)} sub failures)",
+            file=sys.stderr,
+        )
+        for sub_name, reason in (failures + arctic_failures)[:3]:
             print(f"  r/{sub_name}: {reason}", file=sys.stderr)
-    return dedupe_posts(out)
+    return []
 
 
 if __name__ == "__main__":
