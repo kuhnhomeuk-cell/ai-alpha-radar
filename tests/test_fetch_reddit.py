@@ -216,13 +216,19 @@ def test_oauth_token_returns_none_when_creds_missing(
     assert reddit._oauth_token() is None
 
 
-def test_oauth_token_returns_none_when_one_cred_blank(
+def test_oauth_token_returns_none_when_client_secret_blank(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Blank CLIENT_SECRET short-circuits before any HTTP call.
+
+    USERNAME/PASSWORD are no longer required (client_credentials is the
+    default grant), so blank user creds alone won't return None — only
+    missing CLIENT_ID or CLIENT_SECRET will.
+    """
     monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
-    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
-    monkeypatch.setenv("REDDIT_USERNAME", "user")
-    monkeypatch.setenv("REDDIT_PASSWORD", "   ")  # whitespace-only
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "   ")  # whitespace-only
+    monkeypatch.delenv("REDDIT_USERNAME", raising=False)
+    monkeypatch.delenv("REDDIT_PASSWORD", raising=False)
     assert reddit._oauth_token() is None
 
 
@@ -261,6 +267,76 @@ def test_oauth_token_returns_none_on_401(
         return_value=httpx.Response(401, json={"error": "invalid_grant"})
     )
     assert reddit._oauth_token() is None
+
+
+@respx.mock
+def test_oauth_token_uses_client_credentials_grant_when_only_app_creds_set(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    """USERNAME/PASSWORD are optional — CLIENT_ID + CLIENT_SECRET alone
+    must yield a token via the client_credentials grant."""
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.delenv("REDDIT_USERNAME", raising=False)
+    monkeypatch.delenv("REDDIT_PASSWORD", raising=False)
+
+    captured: list[bytes] = []
+
+    def _handler(request: httpx.Request) -> httpx.Response:
+        captured.append(request.content)
+        return httpx.Response(200, json={"access_token": "tok_app_only"})
+
+    respx.post(reddit.REDDIT_OAUTH_TOKEN_URL).mock(side_effect=_handler)
+    assert reddit._oauth_token() == "tok_app_only"
+    assert len(captured) == 1
+    assert b"grant_type=client_credentials" in captured[0]
+    # No username/password leak into the request body.
+    assert b"username" not in captured[0]
+    assert b"password" not in captured[0]
+
+
+@respx.mock
+def test_oauth_token_falls_back_to_password_grant_when_app_only_fails(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    """If client_credentials is refused but USERNAME/PASSWORD are set,
+    the password grant is attempted as a fallback."""
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("REDDIT_USERNAME", "user")
+    monkeypatch.setenv("REDDIT_PASSWORD", "pass")
+
+    grants: list[str] = []
+
+    def _handler(request: httpx.Request) -> httpx.Response:
+        body = request.content.decode()
+        if "grant_type=client_credentials" in body:
+            grants.append("client_credentials")
+            return httpx.Response(401, json={"error": "unauthorized_client"})
+        grants.append("password")
+        return httpx.Response(200, json={"access_token": "tok_password"})
+
+    respx.post(reddit.REDDIT_OAUTH_TOKEN_URL).mock(side_effect=_handler)
+    assert reddit._oauth_token() == "tok_password"
+    assert grants == ["client_credentials", "password"]
+
+
+@respx.mock
+def test_oauth_token_no_fallback_when_user_creds_missing(
+    monkeypatch: pytest.MonkeyPatch, _no_sleep: None
+) -> None:
+    """When client_credentials fails and no USERNAME/PASSWORD are set,
+    return None without a second request — don't pointlessly retry."""
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "abc")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.delenv("REDDIT_USERNAME", raising=False)
+    monkeypatch.delenv("REDDIT_PASSWORD", raising=False)
+
+    route = respx.post(reddit.REDDIT_OAUTH_TOKEN_URL).mock(
+        return_value=httpx.Response(401, json={"error": "unauthorized_client"})
+    )
+    assert reddit._oauth_token() is None
+    assert route.call_count == 1
 
 
 @respx.mock

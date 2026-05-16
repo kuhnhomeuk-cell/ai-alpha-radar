@@ -200,45 +200,90 @@ def _fetch_rss(url: str, user_agent: str) -> str:
 # ---------- OAuth path (preferred when creds are present) ----------
 
 # Reddit's public RSS endpoint returns 403 to datacenter IPs since
-# 2026-05 — CI runs cannot reach it. OAuth bypasses that wall and also
-# gives us richer fields (score, upvote_ratio, num_comments) that the
-# RSS path leaves at defaults. Creds come from a Reddit "script" app
-# created at https://www.reddit.com/prefs/apps; user must add four env
-# vars (CLIENT_ID, CLIENT_SECRET, USERNAME, PASSWORD) to .env.local.
+# 2026-05 — CI runs cannot reach it. OAuth bypasses that wall (traffic
+# routes through oauth.reddit.com, not www.reddit.com) and also gives
+# us richer fields (score, upvote_ratio, num_comments) that the RSS
+# path leaves at defaults.
+#
+# Two grant types are tried in order:
+#   1. client_credentials — app-only, read-only. Needs only CLIENT_ID +
+#      CLIENT_SECRET. No user account involved, no plaintext password
+#      stored. Tokens valid 3600s. Sufficient for the only thing this
+#      fetcher reads: public subreddit /top listings.
+#   2. password — fallback. Needs USERNAME + PASSWORD in addition to
+#      the script-app creds. Only used if app-only is refused (e.g. a
+#      particular client_id has the grant disabled).
+#
+# Creds come from a pre-Nov-2025 Reddit "script" app at
+# https://www.reddit.com/prefs/apps. New apps are gated behind the
+# Responsible Builder Policy (Nov 2025) and silently fail to create —
+# apply via Reddit's Developer Support form if you need fresh creds.
 
 
-def _oauth_token() -> Optional[str]:
-    """Exchange password-grant creds for a Bearer token.
-
-    Returns None when any of the four env vars is missing or blank, or
-    when Reddit rejects the credentials. Callers fall back to the RSS
-    path in either case (which will likely also fail from CI, but lets
-    a local dev still get something).
-    """
+def _request_token(
+    grant_data: dict[str, str],
+    *,
+    client_id: str,
+    client_secret: str,
+    user_agent: str,
+) -> Optional[str]:
+    """POST to Reddit's token endpoint; return access_token or None."""
     import sys
 
-    client_id = os.environ.get("REDDIT_CLIENT_ID", "").strip()
-    client_secret = os.environ.get("REDDIT_CLIENT_SECRET", "").strip()
-    username = os.environ.get("REDDIT_USERNAME", "").strip()
-    password = os.environ.get("REDDIT_PASSWORD", "").strip()
-    if not (client_id and client_secret and username and password):
-        return None
-    user_agent = os.environ.get("REDDIT_USER_AGENT", REDDIT_USER_AGENT_FALLBACK)
     headers = {"User-Agent": user_agent}
-    data = {"grant_type": "password", "username": username, "password": password}
     try:
         with httpx.Client(
             timeout=30,
             headers=headers,
             auth=httpx.BasicAuth(client_id, client_secret),
         ) as client:
-            response = client.post(REDDIT_OAUTH_TOKEN_URL, data=data)
+            response = client.post(REDDIT_OAUTH_TOKEN_URL, data=grant_data)
             response.raise_for_status()
             token = response.json().get("access_token")
             return token if isinstance(token, str) and token else None
     except Exception as e:
-        print(f"reddit: OAuth token request failed: {e}", file=sys.stderr)
+        grant = grant_data.get("grant_type", "?")
+        print(
+            f"reddit: OAuth token request failed ({grant}): {e}",
+            file=sys.stderr,
+        )
         return None
+
+
+def _oauth_token() -> Optional[str]:
+    """Obtain a Reddit OAuth bearer token.
+
+    Tries client_credentials (app-only, read-only) first — needs only
+    CLIENT_ID + CLIENT_SECRET. Falls back to the password grant when
+    app-only is refused and USERNAME + PASSWORD are configured.
+    Returns None when no path produces a token; callers fall back to
+    the RSS path.
+    """
+    client_id = os.environ.get("REDDIT_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("REDDIT_CLIENT_SECRET", "").strip()
+    if not (client_id and client_secret):
+        return None
+    user_agent = os.environ.get("REDDIT_USER_AGENT", REDDIT_USER_AGENT_FALLBACK)
+
+    token = _request_token(
+        {"grant_type": "client_credentials"},
+        client_id=client_id,
+        client_secret=client_secret,
+        user_agent=user_agent,
+    )
+    if token:
+        return token
+
+    username = os.environ.get("REDDIT_USERNAME", "").strip()
+    password = os.environ.get("REDDIT_PASSWORD", "").strip()
+    if not (username and password):
+        return None
+    return _request_token(
+        {"grant_type": "password", "username": username, "password": password},
+        client_id=client_id,
+        client_secret=client_secret,
+        user_agent=user_agent,
+    )
 
 
 def _parse_oauth_listing(payload: dict[str, Any], subreddit: str) -> list[RedditPost]:
