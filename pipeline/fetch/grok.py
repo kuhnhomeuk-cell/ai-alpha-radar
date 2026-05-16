@@ -45,7 +45,15 @@ DEFAULT_MAX_TOOL_CALLS = 2
 DEFAULT_TIMEOUT_SECONDS = 180
 
 # xAI bills in "USD ticks" where 100M ticks = $1.00. So 1¢ = 1_000_000 ticks.
-_TICKS_PER_CENT = 1_000_000
+# xAI returns `usage.cost_in_usd_ticks`. Per the docstring on
+# estimate_cost_cents the field was assumed to be 100M ticks = $1
+# (→ 1M ticks/cent). Empirical evidence from a 27-trend live run on
+# 2026-05-16 contradicts that — the orchestrator reported 6050¢ spent
+# while the actual xAI invoice for the same call burst was $0.64.
+# Reverse-fitting: ticks-per-cent must be 100M, not 1M. Treat the
+# original assumption as wrong by 100× and align with the operator's
+# real billing dashboard.
+_TICKS_PER_CENT = 100_000_000
 
 # Hosts that count as an X / Twitter post for the citations filter.
 _X_HOSTS = frozenset({"x.com", "www.x.com", "twitter.com", "www.twitter.com"})
@@ -107,7 +115,15 @@ def count_x_mentions(payload: dict[str, Any]) -> int:
 
 
 def estimate_cost_cents(payload: dict[str, Any]) -> int:
-    """Convert `usage.cost_in_usd_ticks` to cents, ceiling, floor of 1¢."""
+    """Convert `usage.cost_in_usd_ticks` to cents, ceiling, floor of 1¢.
+
+    Empirical conversion (see _TICKS_PER_CENT note): 100,000,000 ticks
+    = 1¢, NOT $1 as originally documented. The 100× error meant a real
+    $0.64 X-Search burst was reported as $60.50 of "spend", which
+    in turn meant the cron's --max-cost-cents=50 cap was throttling
+    Grok at ~$0.005 of true spend instead of ~$0.50. Both bugs fixed
+    by this constant change.
+    """
     usage = payload.get("usage") or {}
     ticks = usage.get("cost_in_usd_ticks")
     if not ticks:

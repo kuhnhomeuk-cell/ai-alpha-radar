@@ -60,11 +60,15 @@ def test_count_x_mentions_empty_returns_zero() -> None:
 
 
 def test_estimate_cost_cents_from_usage_ticks() -> None:
-    """xAI usage.cost_in_usd_ticks: 100,000,000 ticks = $1 USD = 100¢."""
+    """xAI usage.cost_in_usd_ticks: empirically, 100,000,000 ticks = 1¢.
+
+    The original assumption of 100M ticks = $1 was 100× too generous
+    and was caught when a 27-trend live run reported $60.50 of spend
+    while the actual xAI invoice was $0.64.
+    """
     cost = grok.estimate_cost_cents(_load())
-    # 250_000_000 ticks = $2.50 = 250¢. The fixture is exaggerated; real
-    # per-call cost is sub-cent. We just check the math.
-    assert cost == 250
+    # 250_000_000 ticks under the corrected conversion = 2.5¢, ceiled to 3¢.
+    assert cost == 3
 
 
 def test_estimate_cost_cents_missing_usage_returns_one() -> None:
@@ -146,7 +150,8 @@ def test_fetch_x_mention_count_e2e(
     )
     count, cost = grok.fetch_x_mention_count("ComfyUI")
     assert count == 9
-    assert cost == 250
+    # 250_000_000 ticks under the corrected conversion (100M ticks = 1¢) = 3¢.
+    assert cost == 3
 
 
 @respx.mock

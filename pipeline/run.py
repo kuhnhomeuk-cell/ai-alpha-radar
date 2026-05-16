@@ -1258,8 +1258,13 @@ def _cli() -> int:
     parser.add_argument(
         "--max-cost-cents",
         type=float,
-        default=None,
-        help="Audit 1.2 — abort with exit code 3 if the estimated batch cost exceeds this cap.",
+        default=50.0,
+        help=(
+            "Audit 1.2 — abort with exit code 3 if the estimated batch cost exceeds "
+            "this cap. Default 50¢ matches .github/workflows/daily-snapshot.yml so "
+            "manual runs are bounded by the same envelope as the cron. Pass an "
+            "explicit value (or 0 for unlimited via main()) to override."
+        ),
     )
     args = parser.parse_args()
 
