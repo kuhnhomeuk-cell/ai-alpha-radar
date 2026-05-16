@@ -384,7 +384,8 @@ html::after {
 
 /* ========== TOPBAR — premium glass top bar ========== */
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--sp-4);
   padding: var(--sp-3) var(--sp-5);
@@ -431,7 +432,12 @@ html::after {
   padding-left: var(--sp-3);
   margin-left: var(--sp-1);
 }
-.nav { display: flex; margin-left: 48px; gap: var(--sp-1); flex-shrink: 0; }
+.nav {
+  display: flex;
+  justify-self: center;
+  gap: var(--sp-1);
+  flex-shrink: 0;
+}
 .nav button {
   background: transparent; border: none;
   color: var(--ink-2);
@@ -457,7 +463,7 @@ html::after {
   box-shadow: 0 0 8px var(--champagne);
 }
 .topbar .right {
-  margin-left: auto;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -484,12 +490,24 @@ html::after {
 }
 @media (max-width: 1480px) {
   .topbar #snapshotStamp { display: none; }
-  .topbar .niche-input { display: none; }
+  .topbar .niche-wrap { display: none; }
   .topbar .search-input { width: clamp(160px, 14vw, 220px); }
+}
+.niche-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+}
+.niche-prefix {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
 }
 .niche-input {
   background: transparent; border: none;
-  border-bottom: 1px solid var(--line);
   color: var(--ink);
   font-family: var(--serif);
   font-style: italic;
@@ -502,6 +520,7 @@ html::after {
   text-align: right;
   transition: border-bottom-color 0.2s, outline 0.2s;
 }
+.niche-wrap:focus-within { border-bottom-color: var(--champagne); }
 .niche-input:focus { outline: 1px solid var(--champagne); outline-offset: 2px; border-bottom-color: var(--champagne); }
 .niche-input::placeholder { color: var(--ink-3); }
 
@@ -515,6 +534,9 @@ html::after {
   padding: 5px 11px;
   border-radius: 100px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition: color 0.2s, border-color 0.2s, background 0.2s;
   white-space: nowrap;
   box-shadow: 0 0 0 1px var(--line-bezel), inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -533,6 +555,18 @@ html::after {
   color: var(--ink);
   border-color: var(--champagne);
   background: rgba(232, 196, 100, 0.08);
+}
+.watchlist-pill .wl-star {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--champagne);
+  line-height: 1;
+}
+.watchlist-pill:disabled .wl-star { color: var(--ink-3); }
+.watchlist-pill.active {
+  color: var(--ink);
+  border-color: var(--champagne);
+  background: rgba(232, 196, 100, 0.10);
 }
 
 .star-btn {
@@ -685,7 +719,17 @@ html::after {
   color: var(--ink-3);
   letter-spacing: 0.06em;
 }
-.src-list { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.src-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 4px 16px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.src-list .refreshed {
+  grid-column: 1 / -1;
+}
 .src-item { display: inline-flex; align-items: center; gap: 5px; }
 .src-item .name  { color: var(--ink-2); }
 .src-item .ok    { color: var(--good); }
@@ -785,13 +829,28 @@ html::after {
 }
 .filters .label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ink-3);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding-right: 6px;
-  border-right: 1px solid var(--line);
-  margin-right: 6px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+:root[data-theme="light"] .filters .label {
+  border-right-color: rgba(0, 0, 0, 0.16);
+}
+.filter-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.filter-more-group[hidden] { display: none; }
+.filter-more {
+  font-style: italic;
+  color: var(--ink-3);
 }
 .chip {
   padding: 5px 10px;
@@ -3119,9 +3178,8 @@ main {
 }
 
 .filters .label {
-  border-right: 0;
-  padding-right: 0;
-  margin-right: 0;
+  /* keep border-right + padding-right from the base rule so each section
+     reads as a clear divider (see #31) rather than another chip */
   color: var(--ink-3);
 }
 
@@ -3164,9 +3222,14 @@ main {
   gap: 14px;
 }
 
+/* All panels share .panel-head — same 14px/16px padding everywhere so the
+   ●-dot sits at a predictable x relative to each panel's left edge and the
+   meta sits at a predictable distance from the right edge (see #32). */
 .panel-head {
   padding: 14px 16px;
   border-bottom: 1px solid var(--line);
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 .panel-head .title {
@@ -4609,17 +4672,22 @@ footer .quote {
   <div class="right">
     <div class="search-wrap">
       <label class="sr-only" for="searchInput">Search trends, clusters, and demand</label>
-      <input class="search-input" id="searchInput" type="search" placeholder="search trends, clusters, demand…" autocomplete="off">
+      <input class="search-input" id="searchInput" type="search" placeholder="Search trends, clusters, sources" autocomplete="off">
       <div class="search-results" id="searchResults"></div>
     </div>
-    <button class="watchlist-pill" id="watchlistPill" type="button" disabled>★ Watchlist (0)</button>
+    <button class="watchlist-pill" id="watchlistPill" type="button" disabled
+            title="Global watchlist — toggle to filter the Radar to only your starred trends"
+            aria-pressed="false"><span class="wl-star" aria-hidden="true">★</span><span class="wl-label">Watchlist (0)</span></button>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme">
       <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <span class="meta-text" id="snapshotStamp">snapshot · —</span>
     <label class="sr-only" for="nicheInput">Your niche</label>
-    <input class="niche-input" id="nicheInput" placeholder="your niche…" value="AI tools for solo creators">
+    <div class="niche-wrap" title="Your niche — used by the briefing + Hidden Gems filters">
+      <span class="niche-prefix">NICHE</span>
+      <input class="niche-input" id="nicheInput" placeholder="your niche…" value="AI tools for solo creators">
+    </div>
   </div>
 </header>
 
@@ -4639,30 +4707,40 @@ footer .quote {
             onclick="window.toggleBriefing && window.toggleBriefing()">
       ⚡ Daily Briefing
     </button>
-    <span class="label">Stage</span>
-    <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
-    <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
-    <span class="chip active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
-    <span class="chip"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
-    <span class="chip"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
+    <div class="filter-group">
+      <span class="label">Stage</span>
+      <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
+      <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
+      <span class="chip active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
+      <span class="chip"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
+      <span class="chip"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
+    </div>
 
-    <span class="label" style="margin-left:16px">Source</span>
-    <span class="chip active" data-filter="source" data-value="arxiv">arXiv</span>
-    <span class="chip active" data-filter="source" data-value="github">GitHub</span>
-    <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
-    <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
-    <span class="chip active" data-filter="source" data-value="digg">Digg</span>
+    <div class="filter-group">
+      <span class="label">Source</span>
+      <span class="chip active" data-filter="source" data-value="arxiv">arXiv</span>
+      <span class="chip active" data-filter="source" data-value="github">GitHub</span>
+      <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
+      <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
+      <span class="chip active" data-filter="source" data-value="digg">Digg</span>
+    </div>
 
-    <span class="label" style="margin-left:16px">Sort</span>
-    <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
-    <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
-    <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
+    <div class="filter-group">
+      <span class="label">Sort</span>
+      <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
+      <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
+      <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
+    </div>
 
-    <span class="label" style="margin-left:16px">Overlay</span>
-    <span class="chip" data-filter="themes">◇ Themes</span>
-
-    <span class="label" style="margin-left:16px">View</span>
-    <span class="chip" id="watchlistChip">★ Watchlist (0)</span>
+    <button type="button" class="chip filter-more" id="filterMoreToggle"
+            aria-expanded="false" aria-controls="filterMore"
+            onclick="window.toggleFilterMore && window.toggleFilterMore()">
+      … More filters
+    </button>
+    <div class="filter-group filter-more-group" id="filterMore" hidden>
+      <span class="label">Overlay</span>
+      <span class="chip" data-filter="themes">◇ Themes</span>
+    </div>
   </div>
 
   <div class="radar-grid">
@@ -4685,7 +4763,7 @@ footer .quote {
       <div class="panel">
         <div class="panel-head">
           <div class="title">Top 20 · TBTS Leaderboard</div>
-          <div class="meta">06:00 UTC daily</div>
+          <div class="meta" id="leaderboardMeta">refreshed 06:00 UTC</div>
         </div>
         <div class="leaderboard" id="leaderboard"></div>
       </div>
@@ -5049,12 +5127,12 @@ function updateWatchlistUI() {
   const n = WATCHLIST.size;
   const pill = document.getElementById('watchlistPill');
   if (pill) {
-    pill.textContent = `★ Watchlist (${n})`;
+    const lbl = pill.querySelector('.wl-label');
+    if (lbl) lbl.textContent = `Watchlist (${n})`;
+    else pill.textContent = `★ Watchlist (${n})`;
     pill.classList.toggle('has-items', n > 0);
     pill.disabled = n === 0;
   }
-  const chip = document.getElementById('watchlistChip');
-  if (chip) chip.textContent = `★ Watchlist (${n})`;
 }
 
 async function loadData() {
@@ -5254,21 +5332,17 @@ document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(c => {
   });
 });
 
-/* Watchlist chip (Radar): toggles state.watchlistOnly */
-document.getElementById('watchlistChip').addEventListener('click', () => {
-  state.watchlistOnly = !state.watchlistOnly;
-  document.getElementById('watchlistChip').classList.toggle('active', state.watchlistOnly);
-  applyState();
-});
-/* Watchlist pill (topbar): switches to Radar + activates the chip */
+/* Watchlist pill (topbar): single global entry point — navigates to Radar
+   then toggles state.watchlistOnly. The duplicate filter-row chip was
+   removed in favour of this one (see #11). */
 document.getElementById('watchlistPill').addEventListener('click', () => {
   if (WATCHLIST.size === 0) return;
   document.querySelector('.nav button[data-page="radar"]').click();
-  if (!state.watchlistOnly) {
-    state.watchlistOnly = true;
-    document.getElementById('watchlistChip').classList.add('active');
-    applyState();
-  }
+  state.watchlistOnly = !state.watchlistOnly;
+  const pill = document.getElementById('watchlistPill');
+  pill.classList.toggle('active', state.watchlistOnly);
+  pill.setAttribute('aria-pressed', String(state.watchlistOnly));
+  applyState();
 });
 /* Global star click delegation — stopPropagation so leaderboard row click doesn't fire */
 document.addEventListener('click', (e) => {
@@ -5475,18 +5549,20 @@ function renderBubbleFallback(el) {
 
   // Quadrant tinted backgrounds — opportunity-coded.
   //   TR green (whisper), TL orange (exploding), BR blue (watch), BL red (skip).
+  // emoji is held in a separate field so we can render it at a fixed offset
+  // (see #36) and the sublabel aligns with the label *text*, not the emoji.
   const QUADRANTS = [
     { id: 'tr', x: xDivider, y: pad.top,    w: (pad.left + plotW) - xDivider, h: yDivider - pad.top,
-      label: '⚡ WHISPER · whitespace',  tag: 'Get there first',
+      emoji: '⚡', label: 'WHISPER · whitespace',  tag: 'Get there first',
       anchor: 'end',   tx: pad.left + plotW - 12, ty: pad.top + 18, fill: 'rgba(0, 210, 190, 0.07)' },
     { id: 'tl', x: pad.left, y: pad.top,    w: xDivider - pad.left,           h: yDivider - pad.top,
-      label: '🔥 EXPLODING',              tag: 'Compete only if fast',
+      emoji: '🔥', label: 'EXPLODING',              tag: 'Compete only if fast',
       anchor: 'start', tx: pad.left + 12,         ty: pad.top + 18, fill: 'rgba(255, 156, 28, 0.07)' },
     { id: 'br', x: xDivider, y: yDivider,   w: (pad.left + plotW) - xDivider, h: (pad.top + plotH) - yDivider,
-      label: '🌱 PRE-BREAKOUT',           tag: 'Watch · not moving yet',
+      emoji: '🌱', label: 'PRE-BREAKOUT',           tag: 'Watch · not moving yet',
       anchor: 'end',   tx: pad.left + plotW - 12, ty: pad.top + plotH - 12, fill: 'rgba(0, 145, 255, 0.06)' },
     { id: 'bl', x: pad.left, y: yDivider,   w: xDivider - pad.left,           h: (pad.top + plotH) - yDivider,
-      label: '💀 SATURATED',              tag: 'Skip · over-crowded',
+      emoji: '💀', label: 'SATURATED',              tag: 'Skip · over-crowded',
       anchor: 'start', tx: pad.left + 12,         ty: pad.top + plotH - 12, fill: 'rgba(255, 77, 109, 0.06)' },
   ];
   const quadrantMarkup = QUADRANTS.map(q => `
@@ -5495,16 +5571,24 @@ function renderBubbleFallback(el) {
   // Quadrant labels wrap a translucent dark pill so they stay legible even
   // when bubbles cluster in the same corner (e.g. PRE-BREAKOUT bottom-right).
   // Width is hardcoded to the widest pair across all four quadrants.
+  // Emoji sits in a fixed 18px slot (see #36) so the label text and sublabel
+  // share the same x — emojis no longer offset the optical left edge.
   const QLABEL_W = 168;
   const QLABEL_H = 38;
+  const EMOJI_W = 18;
   const quadrantLabels = QUADRANTS.map(q => {
     const rectX = q.anchor === 'end' ? (q.tx + 4 - QLABEL_W) : (q.tx - 4);
     const rectY = q.ty - 14;
+    const textTx = q.anchor === 'start' ? (q.tx + EMOJI_W) : q.tx;
+    const emojiTx = q.anchor === 'start'
+      ? q.tx
+      : (q.tx - (q.label.length * 6.2) - 4);
     return `
       <g class="quad-label-group">
         <rect x="${rectX}" y="${rectY}" width="${QLABEL_W}" height="${QLABEL_H}" rx="6" class="quad-label-bg" />
-        <text x="${q.tx}" y="${q.ty}" class="quad-label" text-anchor="${q.anchor}">${q.label}</text>
-        <text x="${q.tx}" y="${q.ty + 14}" class="quad-sublabel" text-anchor="${q.anchor}">${q.tag}</text>
+        <text x="${emojiTx}" y="${q.ty}" class="quad-label quad-emoji" text-anchor="start">${q.emoji}</text>
+        <text x="${textTx}" y="${q.ty}" class="quad-label" text-anchor="${q.anchor}">${q.label}</text>
+        <text x="${textTx}" y="${q.ty + 14}" class="quad-sublabel" text-anchor="${q.anchor}">${q.tag}</text>
       </g>
     `;
   }).join('');
@@ -6135,6 +6219,21 @@ window.toggleBriefing = function () {
   if (!panel) return;
   if (panel.classList.contains('visible')) window.closeBriefing();
   else window.openBriefing();
+};
+window.toggleFilterMore = function () {
+  const grp = document.getElementById('filterMore');
+  const btn = document.getElementById('filterMoreToggle');
+  if (!grp || !btn) return;
+  const open = grp.hasAttribute('hidden');
+  if (open) {
+    grp.removeAttribute('hidden');
+    btn.setAttribute('aria-expanded', 'true');
+    btn.textContent = '× Fewer filters';
+  } else {
+    grp.setAttribute('hidden', '');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.textContent = '… More filters';
+  }
 };
 // Esc closes the briefing panel (parallel to detail panel behavior).
 document.addEventListener('keydown', (e) => {
