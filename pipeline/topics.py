@@ -60,7 +60,11 @@ Your job: extract the 30–50 most distinct AI research/builder TOPICS being dis
 For each topic, return:
 - canonical_name: 2–5 word noun phrase, lowercased except for acronyms and proper nouns
 - canonical_form: the canonical_name lowercased and hyphenated
-- aliases: 0–3 alternative phrasings or acronyms (e.g. "MoE" is an alias of "mixture-of-experts routing")
+- aliases: 2–4 alternative phrasings, MAXIMIZING the chance that an external news headline or social post about this topic contains at least one of them. Include:
+    * the acronym (e.g. "MoE" for mixture-of-experts, "RAG" for retrieval-augmented generation, "RLHF" for reinforcement learning from human feedback, "SFT" for supervised fine-tuning)
+    * the most common colloquial / press name (e.g. "world models", "agents", "test-time scaling")
+    * a noun-only short form when the canonical_name carries a verb ("self-distillation" → also list "distilled models")
+  Aliases must be substrings real journalists would write — NOT just hyphen-stripped versions of canonical_form.
 - description: ONE plain-English sentence describing the topic, max 22 words, no jargon
 - arxiv_ids: list of arXiv paper IDs (from the input) that mention this topic
 - hn_post_ids: list of HN post IDs that mention this topic
@@ -71,6 +75,7 @@ Rules:
 - Prefer specificity. "agentic memory architectures" beats "memory".
 - Merge near-duplicates. "world models" and "world model agents" collapse to one topic with both as aliases.
 - Do not invent topics not grounded in the source documents.
+- Aliases must be REAL phrasings that appear in either the input docs or in mainstream AI press — when in doubt, list the acronym. The match against external sources (Digg, X, news feeds) uses substring overlap so a too-academic-only alias set silently zeros out the cross-source consensus signal.
 - Return ONLY valid JSON matching the schema. No prose, no markdown fences.
 
 Structured-output schema:
