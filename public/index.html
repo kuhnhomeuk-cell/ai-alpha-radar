@@ -213,8 +213,12 @@ main {
 /* Each page fills the remaining main area; inner content scrolls if needed */
 .page { display: none; flex: 1; min-height: 0; overflow-y: auto; }
 .page.active { display: flex; flex-direction: column; }
-/* Radar page: grid flexes to fill remaining space after briefing + filters */
-.page.active > .radar-grid { flex: 1; min-height: 0; }
+/* Radar page: grid flexes to fill remaining space after briefing + filters.
+   Explicit min-height keeps the grid from collapsing to ~180px when the
+   briefing block is hidden (the chart-host's min-height was being clipped
+   by the parent panel's overflow:hidden). 70vh leaves room for the
+   filters/source-health/footer while giving the chart real estate. */
+.page.active > .radar-grid { flex: 1; min-height: 70vh; }
 .page.active > .radar-grid > .panel,
 .page.active > .radar-grid > .radar-side > .panel {
   display: flex;
@@ -1931,6 +1935,70 @@ html::after {
    to `.detail-panel.glass` (specificity 0,0,2,0) so the modal actually
    scrolls when content exceeds viewport height. */
 .detail-panel.glass { overflow-y: auto; }
+
+/* ===== LEFT-SIDE BRIEFING PANEL (mirror of detail-panel) ===== */
+.briefing-panel {
+  position: fixed;
+  top: 73px; left: 0; bottom: 0;
+  width: 440px;
+  background: rgba(7, 9, 12, 0.96);
+  border-right: 1px solid var(--line-hi);
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 40;
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  border-radius: 0;
+}
+.briefing-panel.glass { overflow-y: auto; }
+.briefing-panel.visible { transform: translateX(0); }
+.briefing-panel .bp-head {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px;
+}
+.briefing-panel .bp-head .name {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.briefing-panel .bp-head .cluster {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.briefing-panel .close {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 5px 9px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+}
+.briefing-panel .close:hover { color: var(--ink); border-color: var(--line-hi); }
+.briefing-panel .body { padding: 18px 20px; }
+.briefing-toggle {
+  cursor: pointer;
+  border: 1px solid rgba(0, 210, 190, 0.35) !important;
+  color: var(--accent) !important;
+  background: rgba(0, 210, 190, 0.06);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.briefing-toggle:hover {
+  background: rgba(0, 210, 190, 0.12);
+  border-color: rgba(0, 210, 190, 0.55) !important;
+}
 .detail-panel .painpoint .source-chip:hover {
   color: var(--champagne);
   border-color: var(--champagne);
@@ -3076,12 +3144,50 @@ main {
 }
 
 .page.active > .radar-grid > .panel > .chart-host {
-  /* Lowered min-height to leave room for the caption inside the panel's
-     overflow:hidden boundary. 44vh was claiming so much vertical space on
-     ~1080px viewports that the caption rendered below the panel and got
-     clipped. 30vh + 380px upper bound still gives the bubble chart room
-     to breathe; the caption sits naturally below it. */
-  min-height: clamp(240px, 30vh, 380px);
+  /* Bumped back up now that the chart hosts the quadrant strategy grid
+     and we've reclaimed the bottom wasted space. 56vh on a 1080px
+     viewport ≈ 605px which gives the four quadrants room to breathe.
+     Caption is single-line and short so it still fits inside the panel. */
+  min-height: clamp(360px, 56vh, 640px);
+}
+
+/* Quadrant strategy grid (renderBubbleFallback v2) */
+.quad-zone {
+  pointer-events: none;
+}
+.quad-divider {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+}
+.quad-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.quad-sublabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  fill: var(--ink-3);
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+:root[data-theme="light"] .quad-label,
+:root[data-theme="light"] .quad-sublabel {
+  stroke: rgba(255, 255, 255, 0.85);
+}
+:root[data-theme="light"] .quad-divider {
+  stroke: rgba(0, 0, 0, 0.18);
 }
 
 .bubble-fallback-svg {
@@ -4446,12 +4552,18 @@ footer .quote {
 
 <!-- ========== RADAR (Bloomberg) ========== -->
 <div class="page active" data-page="radar">
-  <div class="briefing glass">
-    <div class="label">⚡ Daily Movers · Editorial Briefing</div>
-    <div class="briefing-text" id="briefingText">—</div>
-  </div>
+  <!-- Briefing now opens via the chip in the filter row → slide-in panel
+       at the left edge. Keeping the #briefingText element in the DOM so
+       legacy renderBriefing() calls still work; we just mirror its
+       contents into the panel when the panel opens. -->
+  <div class="briefing-text" id="briefingText" hidden>—</div>
 
   <div class="filters">
+    <button type="button" class="chip briefing-toggle" id="briefingToggle"
+            aria-label="Open Daily Movers briefing"
+            onclick="window.toggleBriefing && window.toggleBriefing()">
+      ⚡ Daily Briefing
+    </button>
     <span class="label">Stage</span>
     <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
     <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
@@ -4547,6 +4659,23 @@ footer .quote {
       </div>
     </div>
   </div>
+
+  <!-- LEFT-SIDE BRIEFING PANEL — toggled by the chip in the filter row.
+       Mirrors the right-side detail-panel pattern. Keeps the editorial
+       briefing accessible on demand without claiming the top third of
+       the dashboard. -->
+  <aside class="briefing-panel glass" id="briefingPanel" aria-hidden="true" aria-label="Daily Movers briefing">
+    <div class="bp-head">
+      <div>
+        <div class="name">⚡ Daily Movers · Editorial Briefing</div>
+        <div class="cluster">refreshed 06:00 UTC daily</div>
+      </div>
+      <button class="close" type="button" aria-label="Close briefing panel" onclick="window.closeBriefing && window.closeBriefing()">CLOSE ✕</button>
+    </div>
+    <div class="body">
+      <div class="briefing-text" id="briefingTextPanel">—</div>
+    </div>
+  </aside>
 </div>
 
 <!-- ========== HIDDEN GEMS (Bloomberg) ========== -->
@@ -5232,48 +5361,103 @@ function renderBubbleFallback(el) {
   const stageOrder = ['whisper','builder','creator','hype','commodity'];
   const width = Math.max(640, el.clientWidth || 900);
   const height = Math.max(320, el.clientHeight || 440);
-  const pad = { left: 66, right: 34, top: 34, bottom: 58 };
+  const pad = { left: 66, right: 34, top: 50, bottom: 58 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
-  const x = v => pad.left + (Math.max(0, Math.min(100, v || 0)) / 100) * plotW;
-  const y = v => pad.top + (1 - Math.max(0, Math.min(100, v || 0)) / 100) * plotH;
 
-  const grid = [0, 20, 40, 60, 80, 100].map(tick => `
-    <line x1="${x(tick)}" y1="${pad.top}" x2="${x(tick)}" y2="${height - pad.bottom}" class="fallback-grid"/>
-    <line x1="${pad.left}" y1="${y(tick)}" x2="${width - pad.right}" y2="${y(tick)}" class="fallback-grid"/>
-    <text x="${x(tick)}" y="${height - pad.bottom + 22}" class="fallback-tick" text-anchor="middle">${tick}</text>
-    <text x="${pad.left - 12}" y="${y(tick) + 4}" class="fallback-tick" text-anchor="end">${tick}</text>
+  // ----- QUADRANT MODE -----
+  // X axis: HEADROOM = 100 - saturation. High X (right) = niche / untapped.
+  // Y axis: VELOCITY (auto-zoomed to data range). High Y (top) = accelerating.
+  // The two divider lines split the chart into four creator-action zones:
+  //   TR = whisper / whitespace (get there first)
+  //   TL = already exploding   (compete only if you ship fast)
+  //   BR = pre-breakout         (watch — not moving yet)
+  //   BL = saturated            (skip — over-crowded, no momentum)
+  const visibleTrends = TRENDS.filter(t =>
+    state.stages.has(t.stage) && trendVisibleBySource(t) && trendVisibleByWatchlist(t)
+  );
+  const maxVelocity = Math.max(1.5, ...visibleTrends.map(t => t.velocity || 0)) * 1.15;
+  const X_DIVIDER_HEADROOM = 50;   // fixed midpoint — saturation==50% is the niche/mainstream split
+  const Y_DIVIDER_VELOCITY = 1.0;  // fixed — anything >1× is genuinely accelerating
+  const x = saturation => {
+    const headroom = Math.max(0, Math.min(100, 100 - (saturation || 0)));
+    return pad.left + (headroom / 100) * plotW;
+  };
+  const y = velocity => {
+    const v = Math.max(0, Math.min(maxVelocity, velocity || 0));
+    return pad.top + (1 - v / maxVelocity) * plotH;
+  };
+  const xDivider = x(100 - X_DIVIDER_HEADROOM); // mid-saturation
+  const yDivider = y(Y_DIVIDER_VELOCITY);
+
+  // Quadrant tinted backgrounds — opportunity-coded.
+  //   TR green (whisper), TL orange (exploding), BR blue (watch), BL red (skip).
+  const QUADRANTS = [
+    { id: 'tr', x: xDivider, y: pad.top,    w: (pad.left + plotW) - xDivider, h: yDivider - pad.top,
+      label: '⚡ WHISPER · whitespace',  tag: 'Get there first',
+      anchor: 'end',   tx: pad.left + plotW - 12, ty: pad.top + 18, fill: 'rgba(0, 210, 190, 0.07)' },
+    { id: 'tl', x: pad.left, y: pad.top,    w: xDivider - pad.left,           h: yDivider - pad.top,
+      label: '🔥 EXPLODING',              tag: 'Compete only if fast',
+      anchor: 'start', tx: pad.left + 12,         ty: pad.top + 18, fill: 'rgba(255, 156, 28, 0.07)' },
+    { id: 'br', x: xDivider, y: yDivider,   w: (pad.left + plotW) - xDivider, h: (pad.top + plotH) - yDivider,
+      label: '🌱 PRE-BREAKOUT',           tag: 'Watch · not moving yet',
+      anchor: 'end',   tx: pad.left + plotW - 12, ty: pad.top + plotH - 12, fill: 'rgba(0, 145, 255, 0.06)' },
+    { id: 'bl', x: pad.left, y: yDivider,   w: xDivider - pad.left,           h: (pad.top + plotH) - yDivider,
+      label: '💀 SATURATED',              tag: 'Skip · over-crowded',
+      anchor: 'start', tx: pad.left + 12,         ty: pad.top + plotH - 12, fill: 'rgba(255, 77, 109, 0.06)' },
+  ];
+  const quadrantMarkup = QUADRANTS.map(q => `
+    <rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" class="quad-zone" fill="${q.fill}" />
+  `).join('');
+  const quadrantLabels = QUADRANTS.map(q => `
+    <text x="${q.tx}" y="${q.ty}" class="quad-label" text-anchor="${q.anchor}">${q.label}</text>
+    <text x="${q.tx}" y="${q.ty + 14}" class="quad-sublabel" text-anchor="${q.anchor}">${q.tag}</text>
+  `).join('');
+  const dividerLines = `
+    <line x1="${xDivider}" y1="${pad.top}" x2="${xDivider}" y2="${pad.top + plotH}" class="quad-divider"/>
+    <line x1="${pad.left}" y1="${yDivider}" x2="${pad.left + plotW}" y2="${yDivider}" class="quad-divider"/>
+  `;
+
+  // Axis ticks: X (saturation), Y (velocity, auto-zoom)
+  const xTicks = [0, 25, 50, 75, 100].map(satTick => {
+    const px = x(satTick);
+    const label = satTick === 0 ? 'MAINSTREAM' : satTick === 100 ? 'NICHE' : (100 - satTick) + '%';
+    return `
+      <text x="${px}" y="${height - pad.bottom + 22}" class="fallback-tick" text-anchor="middle">${label}</text>
+    `;
+  }).join('');
+  const yTickValues = [];
+  const yTickStep = maxVelocity >= 3 ? 1 : 0.5;
+  for (let v = 0; v <= maxVelocity; v += yTickStep) yTickValues.push(v);
+  const yTicks = yTickValues.map(vt => `
+    <line x1="${pad.left}" y1="${y(vt)}" x2="${width - pad.right}" y2="${y(vt)}" class="fallback-grid"/>
+    <text x="${pad.left - 12}" y="${y(vt) + 4}" class="fallback-tick" text-anchor="end">${vt.toFixed(vt < 10 ? 1 : 0)}×</text>
   `).join('');
 
   const regionMarkup = state.showThemes ? clusterRegions().map(r => {
-    const x0 = x(r.minX);
-    const y0 = y(r.maxY);
-    const w = Math.max(10, x(r.maxX) - x0);
-    const h = Math.max(10, y(r.minY) - y0);
+    // clusterRegions returns saturation/tbts bounds; remap to headroom/velocity.
+    // Without a true velocity range from clusterRegions we draw a centroid hint.
+    const cxR = (x(r.minX) + x(r.maxX)) / 2;
+    const cyR = pad.top + plotH * 0.5;
     return `
-      <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="8" class="fallback-region${r.active ? ' active' : ''}" data-cluster="${r.id}"/>
-      <text x="${x0 + w / 2}" y="${Math.max(16, y0 - 6)}" text-anchor="middle" class="fallback-region-label">${escapeHtml(r.label)}</text>
+      <circle cx="${cxR}" cy="${cyR}" r="20" class="fallback-region${r.active ? ' active' : ''}" data-cluster="${r.id}"/>
+      <text x="${cxR}" y="${cyR - 26}" text-anchor="middle" class="fallback-region-label">${escapeHtml(r.label)}</text>
     `;
   }).join('') : '';
 
-  // Top-N labels + deterministic jitter. The current snapshot has 24 trends
-  // sharing TBTS=17, stacking at the same plot coordinate, so the chart
-  // visually reads as 4-7 lonely bubbles. (a) Showing the top-10 by TBTS as
-  // labels surfaces what's actually in the snapshot. (b) Deterministic
-  // jitter from a keyword hash nudges stacked bubbles a few pixels apart
-  // so the operator can see there's more than one trend at that coordinate.
+  // Hash jitter — wider amplitude in quadrant mode so the 24 trends piling
+  // up at velocity≈0.43, saturation=0 actually scatter inside the BR / TR
+  // zones instead of stacking invisibly.
   const _hashJitter = (kw) => {
     let h = 0;
     for (let i = 0; i < kw.length; i++) h = ((h * 31) + kw.charCodeAt(i)) | 0;
-    const jx = ((h & 0xff) / 255 - 0.5) * 12;       // -6 .. +6 px
-    const jy = (((h >> 8) & 0xff) / 255 - 0.5) * 12; // -6 .. +6 px
+    const jx = ((h & 0xff) / 255 - 0.5) * 64;        // ±32 px
+    const jy = (((h >> 8) & 0xff) / 255 - 0.5) * 48; // ±24 px
     return { jx, jy };
   };
   const _sortedTrendsByTbts = [...TRENDS].sort((a, b) => (b.tbts || 0) - (a.tbts || 0));
   const _topN = 5;
   const _labeledKws = new Map(_sortedTrendsByTbts.slice(0, _topN).map((t, i) => [t.canonical_form || t.keyword, i]));
-  // Truncate long keywords so labels stay compact (was bleeding into the
-  // x-axis title and adjacent bubbles).
   const _truncLabel = (s) => (s && s.length > 24) ? (s.slice(0, 22) + '…') : (s || '');
 
   const points = stageOrder.flatMap(stage => {
@@ -5288,24 +5472,19 @@ function renderBubbleFallback(el) {
         const r = Math.max(9, 8 + (t.hidden_gem || 0) * 32);
         const color = STAGE_META[stage]?.color || '#9aa7ba';
         const { jx, jy } = _hashJitter(kw);
-        const cx = x(t.saturation) + jx;
-        const cy = y(t.tbts) + jy;
+        // Clamp jittered position inside the plot so bubbles don't escape.
+        const cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, x(t.saturation) + jx));
+        const cy = Math.max(pad.top + r,  Math.min(pad.top + plotH - r, y(t.velocity || 0) + jy));
         const rank = _labeledKws.get(kw);
         const inTopN = rank !== undefined;
         const showLabel = sel || (lit && inTopN);
-        // Smart placement: pick the vertical side with more room (so labels
-        // never clip), then stagger by rank inside that side so 5 labels
-        // stack 14px apart instead of stomping each other.
         const spaceAbove = cy - pad.top;
-        const spaceBelow = (height - pad.bottom) - cy;
+        const spaceBelow = (pad.top + plotH) - cy;
         const placeAbove = spaceAbove >= spaceBelow;
         const stepPx = 14;
         const labelY = placeAbove
           ? (cy - r - 10 - (inTopN ? rank * stepPx : 0))
           : (cy + r + 18 + (inTopN ? rank * stepPx : 0));
-        // Anchor side based on bubble's horizontal position so labels never
-        // run off the plot edge. Left third → anchor start (extends right).
-        // Right third → anchor end (extends left). Middle third → middle.
         const _bubbleXFrac = (cx - pad.left) / plotW;
         const labelAnchor = _bubbleXFrac < 0.25 ? 'start'
                           : _bubbleXFrac > 0.75 ? 'end'
@@ -5320,14 +5499,14 @@ function renderBubbleFallback(el) {
             <circle cx="${cx}" cy="${cy}" r="${r}" class="fallback-bubble" />
             <circle cx="${cx - 1.4}" cy="${cy + 1.4}" r="${Math.max(3, r * 0.26)}" class="fallback-glint" />
             ${showLabel ? `<text x="${labelX}" y="${labelY}" class="fallback-label" text-anchor="${labelAnchor}">${escapeHtml(labelText)}</text>` : ''}
-            <title>${escapeHtml(t.keyword)} · TBTS ${t.tbts} · saturation ${Math.round(t.saturation)}%</title>
+            <title>${escapeHtml(t.keyword)} · velocity ${(t.velocity || 0).toFixed(2)}× · saturation ${Math.round(t.saturation)}%</title>
           </g>
         `;
       });
   }).join('');
 
   el.innerHTML = `
-    <svg class="bubble-fallback-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Saturation by TBTS scatter plot">
+    <svg class="bubble-fallback-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Creator-strategy quadrant: headroom × velocity">
       <defs>
         <filter id="fallbackGlow" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="2.2" result="blur"/>
@@ -5340,11 +5519,15 @@ function renderBubbleFallback(el) {
         </filter>
       </defs>
       <rect x="${pad.left}" y="${pad.top}" width="${plotW}" height="${plotH}" rx="8" class="fallback-plot"/>
-      ${grid}
+      ${quadrantMarkup}
+      ${yTicks}
+      ${dividerLines}
+      ${quadrantLabels}
+      ${xTicks}
       ${regionMarkup}
       ${points}
-      <text x="${pad.left + plotW / 2}" y="${height - 14}" class="fallback-axis" text-anchor="middle">SATURATION %  ->  MAINSTREAM</text>
-      <text x="16" y="${pad.top + plotH / 2}" class="fallback-axis rotate">TBTS  ->  COMPOSITE</text>
+      <text x="${pad.left + plotW / 2}" y="${height - 14}" class="fallback-axis" text-anchor="middle">← MAINSTREAM   ·   HEADROOM   ·   NICHE →</text>
+      <text x="16" y="${pad.top + plotH / 2}" class="fallback-axis rotate">VELOCITY (× growth)</text>
     </svg>
   `;
 
@@ -5740,11 +5923,56 @@ function renderBriefingMarkdown(host, raw) {
   }
 }
 function renderBriefing() {
-  renderBriefingMarkdown(
-    document.getElementById('briefingText'),
-    BRIEFING && BRIEFING.text ? BRIEFING.text : null,
-  );
+  // The hidden #briefingText element is kept in the DOM as the historical
+  // mount point. We also render into the slide-in panel mount so opening
+  // the panel always shows the latest briefing.
+  const inline = document.getElementById('briefingText');
+  if (inline) {
+    renderBriefingMarkdown(
+      inline,
+      BRIEFING && BRIEFING.text ? BRIEFING.text : null,
+    );
+  }
+  const panelMount = document.getElementById('briefingTextPanel');
+  if (panelMount) {
+    renderBriefingMarkdown(
+      panelMount,
+      BRIEFING && BRIEFING.text ? BRIEFING.text : null,
+    );
+  }
 }
+
+// ===== Briefing panel open/close =====
+window.openBriefing = function () {
+  const panel = document.getElementById('briefingPanel');
+  if (!panel) return;
+  // Re-render in case BRIEFING was updated since the last open.
+  const panelMount = document.getElementById('briefingTextPanel');
+  if (panelMount) {
+    renderBriefingMarkdown(panelMount, BRIEFING && BRIEFING.text ? BRIEFING.text : null);
+  }
+  panel.classList.add('visible');
+  panel.setAttribute('aria-hidden', 'false');
+};
+window.closeBriefing = function () {
+  const panel = document.getElementById('briefingPanel');
+  if (!panel) return;
+  panel.classList.remove('visible');
+  panel.setAttribute('aria-hidden', 'true');
+};
+window.toggleBriefing = function () {
+  const panel = document.getElementById('briefingPanel');
+  if (!panel) return;
+  if (panel.classList.contains('visible')) window.closeBriefing();
+  else window.openBriefing();
+};
+// Esc closes the briefing panel (parallel to detail panel behavior).
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const bp = document.getElementById('briefingPanel');
+    if (bp && bp.classList.contains('visible')) window.closeBriefing();
+  }
+});
 
 const VERDICT_LABEL = {
   verified: 'Verified', verified_early: 'Verified Early',
