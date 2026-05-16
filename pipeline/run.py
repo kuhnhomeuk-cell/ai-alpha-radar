@@ -139,6 +139,34 @@ def _build_doc_timestamps(
     return out
 
 
+def _hydrate_from_corpus(
+    source: str, model_cls: Any, *, lookback_days: int
+) -> list:
+    """Read-fallback for free fetchers: when today's live call returned
+    no items, rehydrate Pydantic models from the recent corpus so the
+    snapshot doesn't degrade on an outage.
+
+    Mirrors digg.load_recent_corpus_stories() — uses the per-source
+    JSON corpus written by persist.update_corpus on every successful
+    fetch. Records that fail to round-trip into model_cls are skipped
+    (typically because the dataclass schema evolved since they were
+    written); the rest carry their original published_at / created_at
+    so velocity_from_topic_docs still windows correctly.
+    """
+    try:
+        raw = persist.load_recent_corpus(source, lookback_days=lookback_days)
+    except Exception as e:
+        log("corpus_read_failed", level="warning", source=source, error=str(e))
+        return []
+    out: list = []
+    for item in raw:
+        try:
+            out.append(model_cls.model_validate(item))
+        except Exception:
+            continue
+    return out
+
+
 def _topic_match_strings_for_form(t: Trend) -> list[str]:
     """Same idea as _topic_match_strings but reads from a fully-built Trend."""
     out = {t.canonical_form.lower(), t.keyword.lower()}
@@ -774,6 +802,14 @@ def main(
             )
         except Exception as e:
             log("corpus_update_failed", level="warning", source="arxiv", error=str(e))
+    else:
+        # Live arXiv returned nothing — hydrate up to 14 days of cached
+        # papers so the snapshot doesn't ship with arxiv_30d=0 across all
+        # trends on a feedparser outage.
+        papers = _hydrate_from_corpus("arxiv", Paper, lookback_days=ARXIV_LOOKBACK_DAYS)
+        if papers:
+            log("hydrated_from_corpus", source="arxiv", count=len(papers))
+            fetch_health["arxiv"] = True
     if posts is None:
         try:
             # v0.2.0 — enable points-floored keyword sweep + 3 tag-only passes
@@ -811,6 +847,13 @@ def main(
                 source="hackernews",
                 error=str(e),
             )
+    else:
+        posts = _hydrate_from_corpus(
+            "hackernews", HNPost, lookback_days=HN_LOOKBACK_DAYS
+        )
+        if posts:
+            log("hydrated_from_corpus", source="hackernews", count=len(posts))
+            fetch_health["hackernews"] = True
     if repos is None:
         gh_pat = os.environ.get("GH_PAT", "")
         if gh_pat:
@@ -835,6 +878,13 @@ def main(
                 source="github",
                 error=str(e),
             )
+    else:
+        # GH trending rotates daily, so a 2-day lookback is enough for a
+        # transient outage. Older entries would mostly be stale anyway.
+        repos = _hydrate_from_corpus("github", RepoStat, lookback_days=2)
+        if repos:
+            log("hydrated_from_corpus", source="github", count=len(repos))
+            fetch_health["github"] = True
 
     # Hugging Face Hub trending — no auth, free public endpoint.
     if hf_models is None:
@@ -848,7 +898,6 @@ def main(
         except Exception as e:
             log("fetch_failed", level="warning", source="huggingface", error=str(e))
             hf_models = []
-    fetch_health["huggingface"] = len(hf_models) > 0
     if hf_models:
         try:
             persist.update_corpus(
@@ -863,6 +912,11 @@ def main(
                 source="huggingface",
                 error=str(e),
             )
+    else:
+        hf_models = _hydrate_from_corpus("huggingface", HFModel, lookback_days=2)
+        if hf_models:
+            log("hydrated_from_corpus", source="huggingface", count=len(hf_models))
+    fetch_health["huggingface"] = len(hf_models) > 0
 
     # Newsletter RSS cross-mentions — no auth.
     if newsletter_signals is None:

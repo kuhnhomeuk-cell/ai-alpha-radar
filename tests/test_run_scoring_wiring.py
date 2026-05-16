@@ -166,6 +166,51 @@ def test_builder_signal_uses_repo_count_plus_star_velocity(
     }
 
 
+def test_hydrate_from_corpus_round_trips_models(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The read-fallback path: when a live fetch returns empty, we should
+    rehydrate Pydantic models from the recent corpus so the snapshot
+    doesn't degrade. Mirrors digg.load_recent_corpus_stories — but for
+    the free fetchers via pipeline.persist."""
+    from pipeline import persist
+
+    monkeypatch.setattr(persist, "ROOT_DATA", tmp_path)
+    # Seed one paper stamped at wall-clock now() so the default lookback
+    # window in persist.load_recent_corpus picks it up. (The freshness
+    # gate itself is exercised in test_persist.py — this test only locks
+    # in the round-trip into Paper.)
+    paper = _paper("http://arxiv.org/abs/2605.11111v1", days_ago=1)
+    persist.update_corpus("arxiv", [paper.model_dump()], id_field="id")
+    out = run._hydrate_from_corpus("arxiv", Paper, lookback_days=14)
+    assert len(out) == 1
+    assert out[0].id == "http://arxiv.org/abs/2605.11111v1"
+    # Round-tripped Paper carries the original published_at so
+    # velocity_from_topic_docs still windows correctly.
+    assert out[0].published_at == paper.published_at
+
+
+def test_hydrate_from_corpus_skips_invalid_entries(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Records that fail model_validate (e.g. dataclass schema evolved
+    since the corpus was written) should be silently dropped, not crash
+    the orchestrator."""
+    from pipeline import persist
+
+    monkeypatch.setattr(persist, "ROOT_DATA", tmp_path)
+    fresh = _paper("http://arxiv.org/abs/2605.11111v1", days_ago=1)
+    persist.update_corpus(
+        "arxiv",
+        [fresh.model_dump(), {"id": "garbage", "title": "missing fields"}],
+        id_field="id",
+        now=fresh.published_at,
+    )
+    out = run._hydrate_from_corpus("arxiv", Paper, lookback_days=14)
+    assert len(out) == 1
+    assert out[0].id == "http://arxiv.org/abs/2605.11111v1"
+
+
 def test_bluesky_counts_for_topics_maps_short_keywords_via_needle_overlap() -> None:
     """The Bluesky subscriber stores posts whose text matches short
     keywords ('llm', 'agent'). The orchestrator must convert those
