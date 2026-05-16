@@ -34,6 +34,9 @@ build/
 # Claude Code runtime — worktrees, skill scratch, session metadata
 .claude/
 
+# Cloudflare Worker runtime cache
+worker/.wrangler/
+
 # OS
 .DS_Store
 Thumbs.db
