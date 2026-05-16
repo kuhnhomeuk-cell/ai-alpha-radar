@@ -235,9 +235,13 @@ main {
   gap: var(--sp-4);
 }
 .page.active > .radar-grid > .radar-side > .panel {
-  flex: 1;
   min-height: 0;
 }
+/* Leaderboard is the headline content (TOP 20); themes is supporting.
+   The leaderboard panel gets ~3× the vertical space so it actually shows
+   a meaningful slice of trends instead of 2 rows. */
+.page.active > .radar-grid > .radar-side > .panel:first-child { flex: 3; }
+.page.active > .radar-grid > .radar-side > .panel:nth-child(2) { flex: 1; }
 .page.active > .radar-grid > .radar-side > .panel > .leaderboard,
 .page.active > .radar-grid > .radar-side > .panel > #themesList {
   flex: 1;
@@ -5267,17 +5271,10 @@ function renderBubbleFallback(el) {
   };
   const _sortedTrendsByTbts = [...TRENDS].sort((a, b) => (b.tbts || 0) - (a.tbts || 0));
   const _topN = 5;
-  // Map kw → rank so we can stagger label Y offsets and keep them readable
-  // when many trends pile up at the same TBTS coordinate.
   const _labeledKws = new Map(_sortedTrendsByTbts.slice(0, _topN).map((t, i) => [t.canonical_form || t.keyword, i]));
-  // Rank 0 sits flush, then alternate -28/+28/-50/+50 so 5 labels at the same
-  // Y don't collide.
-  const _labelYOffset = (rank) => {
-    if (rank === 0) return 4;
-    const side = rank % 2 === 1 ? -1 : 1; // odd ranks above, even ranks below
-    const step = Math.ceil(rank / 2) * 22;
-    return 4 + side * step;
-  };
+  // Truncate long keywords so labels stay compact (was bleeding into the
+  // x-axis title and adjacent bubbles).
+  const _truncLabel = (s) => (s && s.length > 24) ? (s.slice(0, 22) + '…') : (s || '');
 
   const points = stageOrder.flatMap(stage => {
     const stageActive = state.stages.has(stage);
@@ -5296,13 +5293,33 @@ function renderBubbleFallback(el) {
         const rank = _labeledKws.get(kw);
         const inTopN = rank !== undefined;
         const showLabel = sel || (lit && inTopN);
-        const labelDy = inTopN ? _labelYOffset(rank) : 4;
+        // Smart placement: pick the vertical side with more room (so labels
+        // never clip), then stagger by rank inside that side so 5 labels
+        // stack 14px apart instead of stomping each other.
+        const spaceAbove = cy - pad.top;
+        const spaceBelow = (height - pad.bottom) - cy;
+        const placeAbove = spaceAbove >= spaceBelow;
+        const stepPx = 14;
+        const labelY = placeAbove
+          ? (cy - r - 10 - (inTopN ? rank * stepPx : 0))
+          : (cy + r + 18 + (inTopN ? rank * stepPx : 0));
+        // Anchor side based on bubble's horizontal position so labels never
+        // run off the plot edge. Left third → anchor start (extends right).
+        // Right third → anchor end (extends left). Middle third → middle.
+        const _bubbleXFrac = (cx - pad.left) / plotW;
+        const labelAnchor = _bubbleXFrac < 0.25 ? 'start'
+                          : _bubbleXFrac > 0.75 ? 'end'
+                          : 'middle';
+        const labelX = labelAnchor === 'start' ? (cx + r + 6)
+                     : labelAnchor === 'end'   ? (cx - r - 6)
+                     : cx;
+        const labelText = sel ? t.keyword : _truncLabel(t.keyword);
         return `
           <g class="fallback-point${sel ? ' selected' : ''}${lit ? '' : ' muted'}" data-bubble-kw="${escapeAttr(kw)}" style="--pt:${color}">
             <ellipse cx="${cx + r * 0.42}" cy="${cy + r * 0.62}" rx="${r * 0.95}" ry="${r * 0.42}" class="fallback-contact" />
             <circle cx="${cx}" cy="${cy}" r="${r}" class="fallback-bubble" />
             <circle cx="${cx - 1.4}" cy="${cy + 1.4}" r="${Math.max(3, r * 0.26)}" class="fallback-glint" />
-            ${showLabel ? `<text x="${cx + r + 8}" y="${cy + labelDy}" class="fallback-label">${escapeHtml(t.keyword)}</text>` : ''}
+            ${showLabel ? `<text x="${labelX}" y="${labelY}" class="fallback-label" text-anchor="${labelAnchor}">${escapeHtml(labelText)}</text>` : ''}
             <title>${escapeHtml(t.keyword)} · TBTS ${t.tbts} · saturation ${Math.round(t.saturation)}%</title>
           </g>
         `;
