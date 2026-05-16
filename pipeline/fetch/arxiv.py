@@ -31,6 +31,14 @@ class Paper(BaseModel):
     published_at: datetime
     primary_category: str
     url: str
+    # v0.2.0 — cross-listed categories (e.g. cs.AI primary + cs.LG cross-list)
+    # and arxiv:comment (often carries venue acceptance like "ICML2026").
+    # Both optional with defaults so older snapshots round-trip.
+    all_categories: list[str] = []
+    comment: str = ""
+
+
+WITHDRAWN_MARKER = "This submission has been withdrawn"
 
 
 def _parse_arxiv_datetime(value: str) -> datetime:
@@ -39,7 +47,7 @@ def _parse_arxiv_datetime(value: str) -> datetime:
 
 def parse_atom_feed(xml_text: str, *, categories: Iterable[str]) -> list[Paper]:
     """Parse an arXiv Atom XML response, keeping only entries whose primary
-    category is in the supplied set.
+    category is in the supplied set. Withdrawn papers are dropped.
     """
     allowed = set(categories)
     feed = feedparser.parse(xml_text)
@@ -48,18 +56,25 @@ def parse_atom_feed(xml_text: str, *, categories: Iterable[str]) -> list[Paper]:
         primary = entry.get("arxiv_primary_category", {}).get("term", "")
         if primary not in allowed:
             continue
+        summary = entry.get("summary", "")
+        if WITHDRAWN_MARKER in summary:
+            continue
         authors = [a.get("name", "").strip() for a in entry.get("authors", [])]
         authors = [a for a in authors if a]
         published_iso = entry.get("published") or entry.get("updated") or ""
+        all_cats = [t.get("term", "") for t in entry.get("tags", []) if t.get("term")]
+        comment = (entry.get("arxiv_comment", "") or "").strip()
         papers.append(
             Paper(
                 id=entry.id,
                 title=entry.title.strip(),
-                abstract=entry.summary.strip(),
+                abstract=summary.strip(),
                 authors=authors,
                 published_at=_parse_arxiv_datetime(published_iso),
                 primary_category=primary,
                 url=entry.link,
+                all_categories=all_cats,
+                comment=comment,
             )
         )
     return papers

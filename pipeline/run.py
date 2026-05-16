@@ -340,6 +340,33 @@ def _placeholder_briefing() -> DailyBriefing:
     )
 
 
+CONSENSUS_SOURCES = (
+    "arxiv", "github", "hackernews", "reddit", "huggingface",
+    "producthunt", "replicate", "bluesky", "semantic_scholar",
+)
+
+
+def _sources_confirming_for_topic(
+    sources: SourceCounts, active: list[str]
+) -> list[str]:
+    """Inspect this topic's SourceCounts to determine which of the active
+    sources contributed at least one attributed signal. Source-specific
+    field-existence check; order matches CONSENSUS_SOURCES.
+    """
+    has_signal = {
+        "arxiv": sources.arxiv_30d > 0,
+        "github": sources.github_repos_7d > 0,
+        "hackernews": sources.hn_posts_7d > 0,
+        "reddit": sources.reddit_mentions_7d > 0,
+        "huggingface": (sources.huggingface_likes_7d + sources.huggingface_downloads_7d) > 0,
+        "producthunt": sources.producthunt_launches_7d > 0,
+        "replicate": sources.replicate_runs_7d_delta > 0,
+        "bluesky": sources.bluesky_mentions_7d > 0,
+        "semantic_scholar": sources.semantic_scholar_citations_7d > 0,
+    }
+    return [src for src in active if has_signal.get(src, False)]
+
+
 def _build_trend(
     topic: Topic,
     *,
@@ -357,8 +384,27 @@ def _build_trend(
     burst_score_val: float = 0.0,
     novelty_score_val: float = 0.0,
     sparkline: Optional[list[int]] = None,
+    papers_by_id: Optional[dict[str, Paper]] = None,
+    active_consensus_sources: Optional[list[str]] = None,
 ) -> Trend:
     hidden_gem_score = score.hidden_gem(velocity_score, saturation_pct, builder_signal)
+    # v0.2.0 — average venue-boost across this topic's attributed arXiv
+    # papers and add 0.2 * avg to hidden_gem_score (capped at 1.0). Papers
+    # accepted at ICML/NeurIPS/ICLR/etc. surface as hidden gems faster.
+    if papers_by_id:
+        arxiv_ids = topic.source_doc_ids.get("arxiv", [])
+        boosts = [
+            score.venue_boost(papers_by_id[doc_id].comment)
+            for doc_id in arxiv_ids
+            if isinstance(doc_id, str) and doc_id in papers_by_id
+        ]
+        if boosts:
+            hidden_gem_score = min(hidden_gem_score + 0.2 * (sum(boosts) / len(boosts)), 1.0)
+
+    # v0.2.0 — cross-source consensus from the SourceCounts shape.
+    active = active_consensus_sources or list(CONSENSUS_SOURCES)
+    sources_confirming = _sources_confirming_for_topic(sources, active)
+    consensus_ratio = score.cross_source_consensus(sources_confirming, len(active))
     lifecycle = score.lifecycle_stage(
         arxiv_30d=sources.arxiv_30d,
         github_repos_7d=sources.github_repos_7d,
@@ -399,6 +445,8 @@ def _build_trend(
         sparkline_14d=sparkline or [],
         aliases=list(topic.aliases),
         source_doc_ids=dict(topic.source_doc_ids),
+        sources_confirming=sources_confirming,
+        consensus_ratio=consensus_ratio,
     )
 
 
@@ -565,7 +613,14 @@ def main(
             fetch_health["arxiv"] = False
     if posts is None:
         try:
-            posts = hackernews.fetch_ai_posts(HN_LOOKBACK_DAYS)
+            # v0.2.0 — enable points-floored keyword sweep + 3 tag-only passes
+            # (Show HN / front_page / Ask HN). Tests that pin call counts call
+            # fetch_ai_posts with explicit keyword/extra_passes args.
+            posts = hackernews.fetch_ai_posts(
+                HN_LOOKBACK_DAYS,
+                min_points=hackernews.HN_MIN_POINTS_KEYWORD,
+                extra_passes=hackernews.EXTRA_PASS_NAMES,
+            )
         except Exception as e:
             log("fetch_failed", level="warning", source="hackernews", error=str(e))
             posts = []
@@ -586,7 +641,12 @@ def main(
     # Hugging Face Hub trending — no auth, free public endpoint.
     if hf_models is None:
         try:
-            hf_models = huggingface.fetch_trending_models()
+            # v0.2.0 — pass snapshots_dir so download velocity attaches
+            # against the 7-day-prior snapshot. Day-1 (no prior) is fine:
+            # warming_up stays True, downloads_7d_delta stays None.
+            hf_models = huggingface.fetch_trending_models(
+                snapshots_dir=public_dir / "snapshots",
+            )
         except Exception as e:
             log("fetch_failed", level="warning", source="huggingface", error=str(e))
             hf_models = []
@@ -750,6 +810,9 @@ def main(
 
     # ---- 7. Per-topic metrics ----
     doc_timestamps = _build_doc_timestamps(papers, posts, repos)
+    # v0.2.0 — index by arxiv id so _build_trend can compute venue_boost from
+    # each topic's attributed papers' arxiv:comment fields.
+    papers_by_id: dict[str, Paper] = {p.id: p for p in papers}
 
     # External-source aggregations per topic (new in this phase).
     hf_per_topic = _huggingface_per_topic(hf_models, topic_list)
@@ -769,6 +832,24 @@ def main(
     except Exception as e:
         log("fetch_failed", level="warning", source="bluesky", error=str(e))
         bluesky_counts = {}
+
+    # v0.2.0 — active sources for cross-source consensus: only sources that
+    # fetched at least one doc this run get to vote. Drops to single-digit
+    # active when fetchers are stale, which the consensus_ratio then reflects.
+    active_consensus_sources: list[str] = [
+        s for s in CONSENSUS_SOURCES
+        if (
+            (s == "arxiv" and papers)
+            or (s == "github" and repos)
+            or (s == "hackernews" and posts)
+            or (s == "reddit" and reddit_posts)
+            or (s == "huggingface" and hf_models)
+            or (s == "producthunt" and producthunt_launches)
+            or (s == "replicate" and replicate_models)
+            or (s == "bluesky" and bluesky_counts)
+            or (s == "semantic_scholar" and s2_data)
+        )
+    ]
 
     # Pre-compute SourceCounts and velocity per topic for percentile math.
     counts_per_topic: list[SourceCounts] = []
@@ -864,6 +945,8 @@ def main(
                 burst_score_val=burst_val,
                 novelty_score_val=novelty_scores.get(topic.canonical_name, 0.0),
                 sparkline=sparkline,
+                papers_by_id=papers_by_id,
+                active_consensus_sources=active_consensus_sources,
             )
         )
 
@@ -1068,6 +1151,9 @@ def main(
             "prediction_calibration": calibration_summary,
             "predictions_on_disk": len(preds),
             "predictions_pending_unmatched": len(stuck_pending),
+            # v0.2.0 — persist per-model lifetime downloads so the next-day
+            # snapshot can compute downloads_7d_delta against this baseline.
+            "hf_downloads": {m.id: m.downloads for m in hf_models},
         },
     )
     snapshot.write_snapshot(snap, public_dir=public_dir)

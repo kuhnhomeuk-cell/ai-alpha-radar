@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-15T00:00:00Z",
+  "title": "Design System: AI Alpha Radar",
+  "extensions": {
+    "colorMeta": {
+      "surface-1": { "role": "neutral", "displayName": "Void Black", "canonical": "oklch(13% 0.01 240)", "tonalRamp": ["#04060a", "#07090c", "#0a0d11", "#0d1117", "#11161e", "#1a212c", "#252e3c", "#3a4555"] },
+      "surface-2": { "role": "neutral", "displayName": "Slate Surface", "canonical": "oklch(17% 0.012 240)", "tonalRamp": ["#06080c", "#0a0e13", "#0c1015", "#11161e", "#1a212c", "#252e3c", "#3a4555", "#52607a"] },
+      "surface-3": { "role": "neutral", "displayName": "Deep Ash", "canonical": "oklch(20% 0.015 240)", "tonalRamp": ["#080b10", "#0c1015", "#11161e", "#1a212c", "#252e3c", "#3a4555", "#52607a", "#7689a3"] },
+      "panel-solid": { "role": "neutral", "displayName": "Panel Solid", "canonical": "oklch(22% 0.015 240)", "tonalRamp": ["#0a0e13", "#11161e", "#121821", "#1a212c", "#252e3c", "#3a4555", "#52607a", "#7689a3"] },
+      "ink": { "role": "neutral", "displayName": "Bloomberg Ink", "canonical": "oklch(88% 0.025 240)", "tonalRamp": ["#5a6878", "#7689a3", "#8b9cb0", "#a3b4c8", "#bccadc", "#d6e1ee", "#e8eef7", "#f4f7fc"] },
+      "ink-2": { "role": "neutral", "displayName": "Ink Subdued", "canonical": "oklch(65% 0.025 240)", "tonalRamp": ["#3a4555", "#52607a", "#6a7a90", "#8b9cb0", "#a3b4c8", "#bccadc", "#d6e1ee", "#e8eef7"] },
+      "ink-3": { "role": "neutral", "displayName": "Ink Quiet", "canonical": "oklch(45% 0.02 240)", "tonalRamp": ["#252e3c", "#3a4555", "#4a5666", "#5a6878", "#7689a3", "#8b9cb0", "#a3b4c8", "#bccadc"] },
+      "accent-cyan": { "role": "primary", "displayName": "Watchtower Cyan", "canonical": "oklch(85% 0.18 200)", "tonalRamp": ["#001a1c", "#003a40", "#00606a", "#00858f", "#00b4c1", "#00d4dd", "#00f0ff", "#80f7ff"] },
+      "signal-good": { "role": "secondary", "displayName": "Phosphor Green", "canonical": "oklch(85% 0.22 155)", "tonalRamp": ["#001a10", "#003a26", "#006042", "#008558", "#00b478", "#00d48d", "#00ff9d", "#80ffce"] },
+      "signal-bad": { "role": "secondary", "displayName": "Ember Red", "canonical": "oklch(65% 0.22 15)", "tonalRamp": ["#3a0010", "#5a0a20", "#7a1530", "#a02545", "#cc3a5a", "#ed4a6a", "#ff4d6d", "#ff8fa3"] },
+      "champagne": { "role": "primary", "displayName": "Almanac Champagne", "canonical": "oklch(72% 0.13 85)", "tonalRamp": ["#3a2f12", "#5c4a1d", "#7d6628", "#9d8333", "#bd9c3e", "#d4af37", "#e1c469", "#edd99c"] },
+      "void": { "role": "neutral", "displayName": "Observatory Void", "canonical": "oklch(10% 0.02 270)", "tonalRamp": ["#02030a", "#04060f", "#050813", "#0a0f1e", "#111729", "#1a2138", "#252e4a", "#3a4566"] },
+      "stage-whisper": { "role": "tertiary", "displayName": "Whisper Cyan", "canonical": "oklch(82% 0.16 215)", "tonalRamp": ["#001a22", "#00384a", "#005a72", "#0080a0", "#00b0d0", "#00d4ff", "#5ce0ff", "#a8ecff"] },
+      "stage-builder": { "role": "tertiary", "displayName": "Builder Green", "canonical": "oklch(85% 0.22 155)", "tonalRamp": ["#001a10", "#003a26", "#006042", "#008558", "#00b478", "#00d48d", "#00ff9d", "#80ffce"] },
+      "stage-creator": { "role": "tertiary", "displayName": "Creator Yellow", "canonical": "oklch(86% 0.16 95)", "tonalRamp": ["#3a2a00", "#5a4200", "#7d5d00", "#a07a0a", "#c89915", "#e0b525", "#ffd84d", "#ffe88c"] },
+      "stage-hype": { "role": "tertiary", "displayName": "Hype Orange", "canonical": "oklch(72% 0.18 55)", "tonalRamp": ["#3a1500", "#5a2208", "#7d3315", "#a04420", "#c8552d", "#e07038", "#ff8a3d", "#ffb37a"] },
+      "stage-commodity": { "role": "tertiary", "displayName": "Commodity Slate", "canonical": "oklch(58% 0.02 230)", "tonalRamp": ["#252e3c", "#3a4555", "#4a5666", "#5a6878", "#6a7a90", "#7a8696", "#9aa8b8", "#bccadc"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Geist 700)", "purpose": "Gem-card keywords, prominent display labels, chart tooltip values. Tight -0.01em tracking is Geist's signature." },
+      "headline": { "displayName": "Headline (Fraunces italic)", "purpose": "Topbar brand mark and observatory page section headings. Variable opsz axis adjusts character to size." },
+      "title": { "displayName": "Title (Fraunces)", "purpose": "Panel titles in Observatory pages." },
+      "body": { "displayName": "Body (Geist)", "purpose": "All running text. Geist holds up at 13px where Inter would look generic." },
+      "label": { "displayName": "Label (Geist Mono)", "purpose": "Every number, code, timestamp, delta, watchlist count. Tabular alignment by default." }
+    },
+    "shadows": [
+      { "name": "glass-refraction", "value": "0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.25)", "purpose": "Every glass surface. Outer drop = ambient depth. Inset highlight + inset shadow = real glass edge." },
+      { "name": "champagne-pulse", "value": "0 0 8px #d4af37", "purpose": "Topbar nav active indicator dot. The only deliberate glow in the system, signaling product identity." },
+      { "name": "stage-dot-glow", "value": "0 0 6px currentColor", "purpose": "Small luminous markers for trend-stage indicators. Subtle because stage color is also encoded by position." },
+      { "name": "gem-flash", "value": "0 0 28px rgba(0,240,255,0.55)", "purpose": "Animation midpoint on .gem-card.flash. Earns its weight by firing rarely when real signal lands." }
+    ],
+    "motion": [
+      { "name": "ease-flash", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "The gem-flash easing. Snappy in, soft out — the way real signal hits attention." },
+      { "name": "ease-standard", "value": "ease", "purpose": "Default for hover transitions on chips, panels, cards." },
+      { "name": "duration-hover", "value": "0.15s", "purpose": "Standard hover transition duration. Fast enough to feel responsive, slow enough to register." },
+      { "name": "duration-flash", "value": "1.4s", "purpose": "Gem-flash full cycle. Three-second event total: rise, hold, fall." }
+    ],
+    "breakpoints": [
+      { "name": "radar-collapse", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Glass Panel",
+      "kind": "card",
+      "refersTo": "glass-panel",
+      "description": "Hero substrate for detail panels, modals, briefing surfaces, and the chip rail. Refracts the radial-gradient substrate.",
+      "html": "<div class=\"ds-glass\"><div class=\"ds-glass-body\">Glass refracts the substrate atmosphere.</div></div>",
+      "css": ".ds-glass { position: relative; background: rgba(255,255,255,0.04); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.25); padding: 16px; isolation: isolate; } .ds-glass::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(to bottom, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 12%, transparent 30%); pointer-events: none; z-index: 1; } .ds-glass-body { position: relative; z-index: 2; color: #d6e1ee; font-family: 'Geist', system-ui, sans-serif; font-size: 13px; line-height: 1.45; }"
+    },
+    {
+      "name": "Solid Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Mid-tier surface for data grids, panel heads, list rows. Glass refraction's lower-key sibling.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-head\">Trend velocity · 24h</div></div>",
+      "css": ".ds-panel { background: #121821; border: 1px solid rgba(120,160,200,0.10); border-radius: 6px; padding: 16px; color: #d6e1ee; font-family: 'Geist', system-ui, sans-serif; font-size: 13px; line-height: 1.45; transition: border-color 0.15s; } .ds-panel:hover { border-color: rgba(120,200,255,0.28); } .ds-panel-head { font-family: 'Fraunces', Georgia, serif; font-size: 16px; font-weight: 500; }"
+    },
+    {
+      "name": "Chip (default)",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filter / tag pill. The system's primary horizontal navigation pattern for trend categories.",
+      "html": "<button class=\"ds-chip\">AGENTS</button>",
+      "css": ".ds-chip { padding: 5px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(120,160,200,0.10); border-radius: 100px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.04em; cursor: pointer; color: #8b9cb0; display: inline-flex; align-items: center; gap: 6px; transition: color 0.15s, border-color 0.15s, background 0.15s; user-select: none; } .ds-chip:hover { color: #d6e1ee; border-color: rgba(120,200,255,0.28); } .ds-chip:focus-visible { outline: 1px solid #00f0ff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Chip (active)",
+      "kind": "chip",
+      "refersTo": "chip-active",
+      "description": "Selected chip. Watchtower Cyan tints the background at 5% to signal active state.",
+      "html": "<button class=\"ds-chip-active\">AGENTS</button>",
+      "css": ".ds-chip-active { padding: 5px 10px; background: rgba(0,240,255,0.05); border: 1px solid rgba(120,200,255,0.28); border-radius: 100px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.04em; cursor: pointer; color: #d6e1ee; display: inline-flex; align-items: center; gap: 6px; user-select: none; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "search-input",
+      "description": "Tight monospace input for the watchlist / search field. Cyan focus ring carries signal.",
+      "html": "<input class=\"ds-input-search\" type=\"text\" placeholder=\"SEARCH KEYWORDS\" />",
+      "css": ".ds-input-search { background: rgba(255,255,255,0.03); border: 1px solid rgba(244,241,234,0.10); color: #f4f1ea; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; padding: 6px 12px; border-radius: 4px; width: 240px; letter-spacing: 0.04em; outline: none; transition: outline 0.1s, border-color 0.1s; } .ds-input-search::placeholder { color: #6a6862; } .ds-input-search:focus { outline: 1px solid #00f0ff; border-color: #00f0ff; }"
+    },
+    {
+      "name": "Star Button (watchlist toggle)",
+      "kind": "button",
+      "refersTo": "star-btn",
+      "description": "Watchlist toggle on every trend row. Scales 1.18x on hover. Active state lights up in Watchtower Cyan.",
+      "html": "<button class=\"ds-star\" aria-label=\"Toggle watchlist\">★</button>",
+      "css": ".ds-star { background: transparent; border: none; color: #5a6878; font-size: 14px; cursor: pointer; padding: 2px 4px; line-height: 1; transition: color 0.15s, transform 0.15s; font-family: 'Geist Mono', ui-monospace, monospace; opacity: 0.55; } .ds-star:hover { color: #d6e1ee; transform: scale(1.18); opacity: 1; } .ds-star.on { color: #00f0ff; opacity: 1; } .ds-star.on:hover { color: #d6e1ee; } .ds-star:focus-visible { outline: 1px solid #00f0ff; outline-offset: 2px; border-radius: 2px; }"
+    },
+    {
+      "name": "Gem Card",
+      "kind": "card",
+      "refersTo": "gem-card",
+      "description": "Hidden-gem surface. Solid panel with a flash animation when fresh signal lands. The convergence variant adds a top-right CONVERGENCE badge.",
+      "html": "<div class=\"ds-gem\"><div class=\"ds-gem-title\">Open-source TTS</div><div class=\"ds-gem-meta\">47.2% w/w · 3 creators</div></div>",
+      "css": ".ds-gem { background: #121821; border: 1px solid rgba(120,160,200,0.10); border-radius: 6px; padding: 16px; backdrop-filter: blur(8px); transition: border-color 0.15s, transform 0.15s; cursor: pointer; position: relative; overflow: hidden; } .ds-gem:hover { border-color: rgba(120,200,255,0.28); transform: translateY(-2px); } .ds-gem-title { font-family: 'Fraunces', Georgia, serif; font-size: 16px; color: #d6e1ee; margin-bottom: 4px; } .ds-gem-meta { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.08em; color: #8b9cb0; }"
+    },
+    {
+      "name": "Stage Dot",
+      "kind": "custom",
+      "refersTo": "stage-dot",
+      "description": "Six-pixel luminous indicator for trend lifecycle stage. Color is paired with a position cue + label; color alone never carries meaning.",
+      "html": "<div class=\"ds-stage-row\"><span class=\"ds-stage-dot whisper\"></span><span class=\"ds-stage-label\">WHISPER</span></div>",
+      "css": ".ds-stage-row { display: inline-flex; align-items: center; gap: 8px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.08em; color: #d6e1ee; } .ds-stage-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; } .ds-stage-dot.whisper { background: #00d4ff; box-shadow: 0 0 6px #00d4ff; } .ds-stage-dot.builder { background: #00ff9d; box-shadow: 0 0 6px #00ff9d; } .ds-stage-dot.creator { background: #ffd84d; box-shadow: 0 0 6px #ffd84d; } .ds-stage-dot.hype { background: #ff8a3d; box-shadow: 0 0 6px #ff8a3d; } .ds-stage-dot.commodity { background: #7a8696; box-shadow: 0 0 6px #7a8696; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Bloomberg Observatory",
+    "overview": "Two registers in one system. Bloomberg is the default — cyan-and-phosphor neon on near-black, terminal density, Geist Mono labels, real-time signal. Observatory is the inner sanctum — champagne gold on deep void blue, Fraunces italics, the slower surfaces for demand analysis and reference reading. Both registers share the same substrate, glass material, and typographic stack. The atmosphere does the depth work. A deep substrate of four radial-gradient pools overlaid on a 32px grid sits behind every surface. Glass panels refract that atmosphere — they are never decorative. The surface is etched into the substrate, not pasted on. This system explicitly rejects: generic SaaS purple gradients, trading-platform Robinhood green energy, school-project Bootstrap defaults, and ChatGPT-clone chat bubbles.",
+    "keyCharacteristics": [
+      "Dual-register palette — Bloomberg neon and Observatory champagne share structure, differ in voice.",
+      "Atmospheric substrate — radial gradients + 32px grid + faint scanlines. Glass refracts it, never replaces it.",
+      "Refined refraction — every glass surface gets a top highlight and a bottom inset shadow.",
+      "Operator typography — Fraunces for editorial, Inter for body, Geist Mono for data, Geist for display.",
+      "Density with breath — Bloomberg-grade signal density without Bloomberg-grade clutter."
+    ],
+    "rules": [
+      { "name": "The Two-Register Rule", "body": "Bloomberg cyan and Observatory champagne are not interchangeable. The topbar is always Observatory. Pages adopt one register through the .page-observatory class, never partially.", "section": "colors" },
+      { "name": "The Signal Scarcity Rule", "body": "Watchtower Cyan covers ≤10% of any view. Its saturation is high because it is rare.", "section": "colors" },
+      { "name": "The Stage-Color-Plus Rule", "body": "Stage palette colors are always paired with a position cue and a label. Color alone never carries the trend stage.", "section": "colors" },
+      { "name": "The Fraunces-for-Identity Rule", "body": "Fraunces italics belong to the product's voice. Never use it for data labels, button text, or chip labels.", "section": "typography" },
+      { "name": "The Mono-for-Data Rule", "body": "Every number, code, timestamp, percentage, and delta uses Geist Mono. Never proportional figures.", "section": "typography" },
+      { "name": "The 13px Floor Rule", "body": "Body text never goes below 13px. Operator density does not require small type.", "section": "typography" },
+      { "name": "The No-Default-Shadow Rule", "body": "Standard drop shadows are forbidden. Depth comes from the substrate refracting through glass, or from inset borders.", "section": "elevation" },
+      { "name": "The Atmosphere-Does-The-Work Rule", "body": "Before adding a shadow, ask whether the substrate's radial gradients already provide the depth. They usually do.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use OKLCH or tinted hex for every neutral. Never #000, never #fff.",
+      "Do reserve Watchtower Cyan for actual signal. ≤10% of any visible surface.",
+      "Do pair stage color with position and label. Color alone never carries the trend stage.",
+      "Do use Fraunces italics for identity moments.",
+      "Do use Geist Mono for every number, code, timestamp, percentage, and delta.",
+      "Do specify transition properties. Never transition: all.",
+      "Do refract the substrate through glass surfaces — inset highlight + inset shadow + top gradient ::before.",
+      "Do respect prefers-reduced-motion.",
+      "Do keep body text at 13px or above.",
+      "Do use min-height: 100dvh for full-viewport sections."
+    ],
+    "donts": [
+      "Don't ship generic SaaS aesthetics — no purple/blue gradients, no big vague hero, no three identical feature cards.",
+      "Don't import trading-platform visual language — no Robinhood green, no candlestick energy.",
+      "Don't default to school-project components — no Material UI, no Bootstrap, no Roboto.",
+      "Don't use ChatGPT-clone patterns — no chat bubbles, no left sidebar of conversations.",
+      "Don't mix the two registers within one page.",
+      "Don't use transition: all.",
+      "Don't use #000, #fff, or #ffffff in hover/active states. Use var(--ink) or var(--accent).",
+      "Don't add decorative glassmorphism. Glass is for hero substrates and the chip rail only.",
+      "Don't use default drop shadows.",
+      "Don't carry stage information by color alone.",
+      "Don't go below 13px body text.",
+      "Don't animate CSS layout properties. Use transform and opacity exclusively."
+    ]
+  }
+}

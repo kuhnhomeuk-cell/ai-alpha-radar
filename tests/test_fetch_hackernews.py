@@ -115,3 +115,61 @@ def test_fetch_ai_posts_malformed_body_returns_empty(_no_sleep: None) -> None:
     )
     posts = hackernews.fetch_ai_posts(lookback_days=365, keywords=["AI"], hydrate_top_n=0)
     assert posts == []
+
+
+# ---------- v0.2.0 — AI signal filter + multi-pass ----------
+
+
+def _make_post(*, id: int, title: str, story_text: str = "", points: int = 50) -> hackernews.HNPost:
+    from datetime import datetime, timezone
+    return hackernews.HNPost(
+        id=id,
+        title=title,
+        url="https://example.com/" + str(id),
+        points=points,
+        num_comments=0,
+        created_at=datetime(2026, 5, 14, tzinfo=timezone.utc),
+        story_text=story_text or None,
+        author="someone",
+    )
+
+
+def test_is_ai_relevant_rejects_hardware_noise() -> None:
+    """RTX/M4/Apple-silicon stories must not pass the front_page AI filter."""
+    post = _make_post(
+        id=99001,
+        title="RTX 5090 and M4 MacBook Air: Can It Game?",
+        points=653,
+    )
+    assert hackernews._is_ai_relevant(post) is False
+
+
+def test_is_ai_relevant_accepts_llm_story() -> None:
+    """Stories containing LLM/Anthropic/GPT/etc. must pass the front_page filter."""
+    post = _make_post(
+        id=99002,
+        title="LLMs corrupt your documents when you delegate",
+        points=478,
+    )
+    assert hackernews._is_ai_relevant(post) is True
+
+
+@respx.mock
+def test_extra_passes_run_show_hn_and_front_page(_no_sleep: None) -> None:
+    """When extra_passes are enabled, fetch_ai_posts fires additional
+    tag-only sweeps and dedupes results into the same posts_by_id dict.
+    """
+    payload = _search_payload()
+    route = respx.get("https://hn.algolia.com/api/v1/search").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    posts = hackernews.fetch_ai_posts(
+        lookback_days=365,
+        keywords=["LLM"],
+        hydrate_top_n=0,
+        extra_passes=("show_hn", "front_page"),
+    )
+    # 1 keyword pass + 2 extra passes = 3 requests; all return same payload,
+    # dedupe collapses to the fixture size.
+    assert route.call_count == 3
+    assert len(posts) >= 30

@@ -18,12 +18,46 @@ Two spec deviations, both surfaced not silent:
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta
 from typing import Optional
 
 import pymannkendall as mk
 
 from pipeline.models import ConvergenceEvent, LifecycleStage, SourceName
+
+# v0.2.0 — top-venue acceptance pattern for arxiv:comment fields.
+# Matches "ICML2026", "Accepted at NeurIPS 2026", "ICLR 2027 oral", etc.
+# Year range 2025-2039 to skip historical mentions in survey comments.
+VENUE_PATTERN = re.compile(
+    r"\b(ICML|NeurIPS|ICLR|CVPR|EMNLP|ACL|NAACL|AAAI|SIGKDD|ICDM|ECML|COLM)\s*20(2[5-9]|3\d)\b",
+    re.IGNORECASE,
+)
+
+
+def venue_boost(comment: str) -> float:
+    """Returns 0.5 if `comment` mentions a top-tier venue + 2025-2039 year, else 0.0.
+
+    Designed to be averaged across a topic's attributed arXiv papers and
+    folded into hidden_gem_score (scaled to keep the [0,1] invariant).
+    """
+    if not comment:
+        return 0.0
+    return 0.5 if VENUE_PATTERN.search(comment) else 0.0
+
+
+def cross_source_consensus(
+    sources_confirming: list[str], total_active_sources: int
+) -> float:
+    """Fraction of active sources that contributed at least one doc to a topic.
+
+    A topic seen on 4 of 5 active sources returns 0.8 — the data behind
+    the frontend's "4/5 sources confirm" badge. Returns 0.0 when no
+    sources are active (defensive against ZeroDivision).
+    """
+    if total_active_sources <= 0:
+        return 0.0
+    return min(len(sources_confirming) / total_active_sources, 1.0)
 
 # Saturation weights — BACKEND_BUILD §6.2
 SAT_WEIGHTS = {"github": 0.35, "hn": 0.30, "arxiv": 0.20, "semantic_scholar": 0.15}
