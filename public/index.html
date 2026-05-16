@@ -1919,6 +1919,14 @@ html::after {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+
+/* The .glass multi-selector rule (~line 2848) sets `overflow: hidden` on
+   .glass, .panel, etc. — and .detail-panel has the .glass class. That rule
+   wins on cascade over the earlier `.detail-panel { overflow-y: auto }` at
+   line 1780 because both have the same single-class specificity. Bumping
+   to `.detail-panel.glass` (specificity 0,0,2,0) so the modal actually
+   scrolls when content exceeds viewport height. */
+.detail-panel.glass { overflow-y: auto; }
 .detail-panel .painpoint .source-chip:hover {
   color: var(--champagne);
   border-color: var(--champagne);
@@ -3064,7 +3072,12 @@ main {
 }
 
 .page.active > .radar-grid > .panel > .chart-host {
-  min-height: clamp(320px, 44vh, 560px);
+  /* Lowered min-height to leave room for the caption inside the panel's
+     overflow:hidden boundary. 44vh was claiming so much vertical space on
+     ~1080px viewports that the caption rendered below the panel and got
+     clipped. 30vh + 380px upper bound still gives the bubble chart room
+     to breathe; the caption sits naturally below it. */
+  min-height: clamp(240px, 30vh, 380px);
 }
 
 .bubble-fallback-svg {
@@ -4469,7 +4482,7 @@ footer .quote {
       </div>
       <div class="chart-host" id="bubbleChart"></div>
       <div class="chart-caption">
-        X = saturation · Y = TBTS · size = hidden-gem score · color = stage. Velocity-on-Y returns once the T0/T1 baseline lands (velocity_score is 0 for every trend in the current snapshot).
+        X · saturation · Y · TBTS · size · hidden-gem · color · stage
       </div>
     </div>
 
@@ -5239,6 +5252,33 @@ function renderBubbleFallback(el) {
     `;
   }).join('') : '';
 
+  // Top-N labels + deterministic jitter. The current snapshot has 24 trends
+  // sharing TBTS=17, stacking at the same plot coordinate, so the chart
+  // visually reads as 4-7 lonely bubbles. (a) Showing the top-10 by TBTS as
+  // labels surfaces what's actually in the snapshot. (b) Deterministic
+  // jitter from a keyword hash nudges stacked bubbles a few pixels apart
+  // so the operator can see there's more than one trend at that coordinate.
+  const _hashJitter = (kw) => {
+    let h = 0;
+    for (let i = 0; i < kw.length; i++) h = ((h * 31) + kw.charCodeAt(i)) | 0;
+    const jx = ((h & 0xff) / 255 - 0.5) * 12;       // -6 .. +6 px
+    const jy = (((h >> 8) & 0xff) / 255 - 0.5) * 12; // -6 .. +6 px
+    return { jx, jy };
+  };
+  const _sortedTrendsByTbts = [...TRENDS].sort((a, b) => (b.tbts || 0) - (a.tbts || 0));
+  const _topN = 5;
+  // Map kw → rank so we can stagger label Y offsets and keep them readable
+  // when many trends pile up at the same TBTS coordinate.
+  const _labeledKws = new Map(_sortedTrendsByTbts.slice(0, _topN).map((t, i) => [t.canonical_form || t.keyword, i]));
+  // Rank 0 sits flush, then alternate -28/+28/-50/+50 so 5 labels at the same
+  // Y don't collide.
+  const _labelYOffset = (rank) => {
+    if (rank === 0) return 4;
+    const side = rank % 2 === 1 ? -1 : 1; // odd ranks above, even ranks below
+    const step = Math.ceil(rank / 2) * 22;
+    return 4 + side * step;
+  };
+
   const points = stageOrder.flatMap(stage => {
     const stageActive = state.stages.has(stage);
     return TRENDS
@@ -5250,12 +5290,19 @@ function renderBubbleFallback(el) {
         const lit = stageActive && clusterActive;
         const r = Math.max(9, 8 + (t.hidden_gem || 0) * 32);
         const color = STAGE_META[stage]?.color || '#9aa7ba';
+        const { jx, jy } = _hashJitter(kw);
+        const cx = x(t.saturation) + jx;
+        const cy = y(t.tbts) + jy;
+        const rank = _labeledKws.get(kw);
+        const inTopN = rank !== undefined;
+        const showLabel = sel || (lit && inTopN);
+        const labelDy = inTopN ? _labelYOffset(rank) : 4;
         return `
           <g class="fallback-point${sel ? ' selected' : ''}${lit ? '' : ' muted'}" data-bubble-kw="${escapeAttr(kw)}" style="--pt:${color}">
-            <ellipse cx="${x(t.saturation) + r * 0.42}" cy="${y(t.tbts) + r * 0.62}" rx="${r * 0.95}" ry="${r * 0.42}" class="fallback-contact" />
-            <circle cx="${x(t.saturation)}" cy="${y(t.tbts)}" r="${r}" class="fallback-bubble" />
-            <circle cx="${x(t.saturation - 1.4)}" cy="${y(t.tbts + 1.4)}" r="${Math.max(3, r * 0.26)}" class="fallback-glint" />
-            ${sel ? `<text x="${x(t.saturation) + r + 8}" y="${y(t.tbts) + 4}" class="fallback-label">${escapeHtml(t.keyword)}</text>` : ''}
+            <ellipse cx="${cx + r * 0.42}" cy="${cy + r * 0.62}" rx="${r * 0.95}" ry="${r * 0.42}" class="fallback-contact" />
+            <circle cx="${cx}" cy="${cy}" r="${r}" class="fallback-bubble" />
+            <circle cx="${cx - 1.4}" cy="${cy + 1.4}" r="${Math.max(3, r * 0.26)}" class="fallback-glint" />
+            ${showLabel ? `<text x="${cx + r + 8}" y="${cy + labelDy}" class="fallback-label">${escapeHtml(t.keyword)}</text>` : ''}
             <title>${escapeHtml(t.keyword)} · TBTS ${t.tbts} · saturation ${Math.round(t.saturation)}%</title>
           </g>
         `;
@@ -5311,6 +5358,15 @@ function renderBubble() {
   bubbleInstance = window.echarts.init(el, null, { renderer: 'canvas' });
 
   const stageOrder = ['whisper','builder','creator','hype','commodity'];
+  // Top-N labels: 24 of the 30 current trends share TBTS=17 and stack at
+  // the same coordinate, leaving the chart looking like 6-7 lonely dots.
+  // Showing the top-N labels by TBTS pulls them out as visible callouts
+  // even when the underlying bubbles overlap. Threshold computed once,
+  // not per-bubble, for cheapness.
+  const _topNByTbts = 10;
+  const _sortedByTbts = [...TRENDS].sort((a, b) => (b.tbts || 0) - (a.tbts || 0));
+  const _labelThresholdTbts = _sortedByTbts[Math.min(_topNByTbts - 1, _sortedByTbts.length - 1)]?.tbts ?? 0;
+  const _labeledKws = new Set(_sortedByTbts.slice(0, _topNByTbts).map(t => t.canonical_form || t.keyword));
   const series = stageOrder.map(stage => {
     const stageActive = state.stages.has(stage);
     return {
@@ -5323,6 +5379,7 @@ function renderBubble() {
           const sel = kw === state.selectedKeyword;
           const clusterActive = state.activeCluster === null || t.cluster_id === state.activeCluster;
           const lit = stageActive && clusterActive;
+          const inTopN = _labeledKws.has(kw);
           return {
             name: t.keyword,
             value: [t.saturation, t.tbts, t.hidden_gem || 0, t.keyword, t.cluster_label || '—', t.velocity || 0, kw, hasConvergence(t) ? 1 : 0],
@@ -5335,11 +5392,11 @@ function renderBubble() {
               borderWidth: sel ? 2.4 : 1.1,
             },
             label: {
-              show: sel,
+              show: sel || (lit && inTopN),
               position: 'right',
               formatter: t.keyword,
-              color: '#ffffff',
-              fontSize: 11,
+              color: sel ? '#ffffff' : 'rgba(255,255,255,0.78)',
+              fontSize: sel ? 11 : 10,
               fontFamily: 'JetBrains Mono',
               distance: 10,
             }
@@ -5347,6 +5404,11 @@ function renderBubble() {
         }),
       symbolSize: v => Math.max(18, 16 + (v[2] || 0) * 38),
       emphasis: { focus: 'none', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
+      // 24 of the 30 current trends share TBTS=17 and stack at the same
+      // coordinate, so ECharts' default label collision suppression hides
+      // all but one top-N label. Disabling hideOverlap + nudging Y on
+      // collision spreads the labels so the chart reads as populated.
+      labelLayout: { hideOverlap: false, moveOverlap: 'shiftY' },
     };
   });
 
