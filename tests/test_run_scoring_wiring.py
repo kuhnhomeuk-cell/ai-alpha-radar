@@ -166,6 +166,57 @@ def test_builder_signal_uses_repo_count_plus_star_velocity(
     }
 
 
+def test_bluesky_counts_for_topics_maps_short_keywords_via_needle_overlap() -> None:
+    """The Bluesky subscriber stores posts whose text matches short
+    keywords ('llm', 'agent'). The orchestrator must convert those
+    per-keyword counts to per-topic counts via the topic's match
+    strings (canonical_form / canonical_name / aliases)."""
+    topic_a = Topic(
+        canonical_name="agentic workflows",
+        canonical_form="agentic-workflows",
+        aliases=["agent orchestration"],
+        description="Workflows driven by autonomous agents.",
+    )
+    topic_b = Topic(
+        canonical_name="diffusion language models",
+        canonical_form="diffusion-language-models",
+        aliases=["dlm"],
+        description="Diffusion applied to text generation.",
+    )
+    topic_c = Topic(
+        canonical_name="rag systems",
+        canonical_form="rag-systems",
+        aliases=[],
+        description="Retrieval-augmented generation.",
+    )
+    raw_keyword_counts = {
+        "agent": 12,
+        "diffusion": 5,
+        "rag": 7,
+        "llm": 3,  # not in any topic's needles
+    }
+    out = run._bluesky_counts_for_topics(raw_keyword_counts, [topic_a, topic_b, topic_c])
+    # 'agent' word-starts inside 'agentic-workflows', 'agentic workflows',
+    # and 'agent orchestration' → all three match the single topic.
+    assert out["agentic-workflows"] == 12
+    # 'diffusion' matches diffusion-language-models needle.
+    assert out["diffusion-language-models"] == 5
+    # 'rag' matches rag-systems.
+    assert out["rag-systems"] == 7
+    # llm has no topic with that needle, so it's not surfaced.
+    assert "llm" not in out
+
+
+def test_bluesky_counts_for_topics_skips_zero_counts() -> None:
+    topic = Topic(
+        canonical_name="agent foo",
+        canonical_form="agent-foo",
+        aliases=[],
+        description="x",
+    )
+    assert run._bluesky_counts_for_topics({"agent": 0}, [topic]) == {}
+
+
 def test_doc_timestamps_indexes_arxiv_short_id_alongside_url() -> None:
     """Production Paper.id is the arXiv URL (http://arxiv.org/abs/2605.12493v1)
     but the Claude topic extractor returns the bare short ID

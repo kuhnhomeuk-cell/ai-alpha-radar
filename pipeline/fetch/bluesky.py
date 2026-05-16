@@ -158,7 +158,8 @@ class MentionStore:
     def mention_counts_per_keyword(
         self, *, keywords: Set[str], since: datetime
     ) -> dict[str, int]:
-        """For each keyword, count posts whose text contains it (case-insensitive)."""
+        """For each keyword, count posts whose text contains it as a
+        word-start match (consistent with matches_keyword)."""
         out: dict[str, int] = {kw: 0 for kw in keywords}
         cutoff = since.isoformat()
         with sqlite3.connect(self.path) as conn:
@@ -166,10 +167,11 @@ class MentionStore:
                 "SELECT text FROM mentions WHERE created_at >= ?",
                 (cutoff,),
             ).fetchall()
+        patterns = {kw: _keyword_regex(kw) for kw in keywords}
         for (text,) in rows:
-            low = (text or "").lower()
-            for kw in keywords:
-                if kw.lower() in low:
+            t = text or ""
+            for kw, pat in patterns.items():
+                if pat.search(t):
                     out[kw] += 1
         return out
 

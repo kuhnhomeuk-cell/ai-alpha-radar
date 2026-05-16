@@ -161,6 +161,38 @@ def _topic_match_strings(topic: Topic) -> list[str]:
     return [s for s in out if len(s) >= 3]
 
 
+def _bluesky_counts_for_topics(
+    raw_keyword_counts: dict[str, int], topic_list: list[Topic]
+) -> dict[str, int]:
+    """Map per-keyword Bluesky mention counts to per-topic counts.
+
+    The Bluesky subscriber persists posts whose text matches any short
+    keyword from data/bluesky_keywords.json ("llm", "claude", "agent",
+    ...). The orchestrator's per-topic roll-up needs counts keyed by
+    canonical_form. We bridge by attributing a short-keyword's count to
+    every topic whose match strings (canonical_form / canonical_name /
+    aliases) contain that keyword as a word-start match.
+
+    Same overcount semantics as the legacy code: if 'agent' appears in
+    multiple topics' aliases, each topic gets the full keyword count.
+    """
+    out: dict[str, int] = {}
+    for topic in topic_list:
+        needles = _topic_match_strings(topic)
+        if not needles:
+            continue
+        total = 0
+        for kw, count in raw_keyword_counts.items():
+            if count <= 0:
+                continue
+            kw_pat = bluesky._keyword_regex(kw)
+            if any(kw_pat.search(n) for n in needles):
+                total += count
+        if total:
+            out[topic.canonical_form] = total
+    return out
+
+
 def _huggingface_per_topic(
     hf_models: list[HFModel], topic_list: list[Topic]
 ) -> dict[str, dict[str, int]]:
@@ -948,17 +980,27 @@ def main(
     replicate_per_topic = _replicate_per_topic(replicate_models, topic_list)
     s2_per_topic = _s2_per_topic(papers, topic_list, s2_data)
 
-    # Bluesky counts use the canonical_form as the keyword and a 7-day window.
+    # Bluesky counts: query SQLite using the SHORT keyword list the
+    # subscriber filters on (data/bluesky_keywords.json), then map each
+    # short keyword's count to topics by needle overlap. Querying with
+    # full canonical_form strings used to return 0 across the board
+    # because the stored post text never contains the multi-word form.
     bsky_path = bluesky_db_path if bluesky_db_path is not None else bluesky.DEFAULT_DB_PATH
+    short_keywords = set(bluesky._load_json_list(bluesky.DEFAULT_KEYWORDS_PATH))
     try:
-        bluesky_counts = bluesky.read_mention_counts(
-            bsky_path,
-            keywords={t.canonical_form for t in topic_list},
-            since=today_dt - timedelta(days=7),
+        bluesky_keyword_counts = (
+            bluesky.read_mention_counts(
+                bsky_path,
+                keywords=short_keywords,
+                since=today_dt - timedelta(days=7),
+            )
+            if short_keywords
+            else {}
         )
     except Exception as e:
         log("fetch_failed", level="warning", source="bluesky", error=str(e))
-        bluesky_counts = {}
+        bluesky_keyword_counts = {}
+    bluesky_counts = _bluesky_counts_for_topics(bluesky_keyword_counts, topic_list)
 
     # v0.2.0 — active sources for cross-source consensus: only sources that
     # fetched at least one doc this run get to vote. Drops to single-digit
@@ -1327,7 +1369,14 @@ def main(
                     "fetched": len(replicate_models),
                     "ok": fetch_health["replicate"],
                 },
-                "bluesky": {"fetched": sum(bluesky_counts.values())},
+                "bluesky": {
+                    # Total stored mentions in the 7d window (raw, not
+                    # topic-attributed) is the most honest "fetched" value.
+                    # bluesky_counts (per-topic) overcounts when keywords
+                    # appear in multiple topics' aliases.
+                    "fetched": sum(bluesky_keyword_counts.values()),
+                    "topic_attributed": sum(bluesky_counts.values()),
+                },
                 "newsletters": {"fetched": len(newsletter_signals or [])},
             },
             "trends_processed": len(trends),
