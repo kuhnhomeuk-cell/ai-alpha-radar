@@ -1,0 +1,40 @@
+# Vercel only needs the static dashboard under public/. Everything else is
+# backend pipeline / dev tooling that should not ship to the CDN.
+
+# Python / pipeline
+pyproject.toml
+poetry.lock
+pipeline/
+tests/
+scripts/
+data/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+
+# Backend infra
+worker/
+.github/
+
+# Project docs (already on GitHub)
+BACKEND_BUILD.md
+PLAN.md
+PRODUCT.md
+DESIGN.md
+AGENTS.md
+CLAUDE.md
+README.md
+
+# Memory + session governance
+memory/
+
+# Experimental sandboxes
+redesign/
+mockups/
+screenshots/
+
+# Misc
+.env.local
+.env.example
+.claude/
+.impeccable/
