@@ -26,8 +26,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sqlite3
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable, Optional, Set
 
@@ -96,13 +98,38 @@ def parse_post_event(event: dict[str, Any]) -> Optional[BlueskyMention]:
     return BlueskyMention(handle=handle, text=text, created_at=created_at)
 
 
+@lru_cache(maxsize=256)
+def _keyword_regex(kw: str) -> re.Pattern[str]:
+    # Word-START boundary only — English plurals and compounds still match
+    # ('llm' → 'llms', 'llmops'). The closing boundary is intentionally
+    # omitted: requiring `\b{kw}\b` would drop the common plural cases the
+    # existing keyword list ('llm', 'agent') depends on. Foreign-language
+    # collisions (Portuguese 'agente', "campmcpground") are blocked by
+    # the new word-start boundary AND further by the lang=en filter
+    # applied at subscribe time.
+    return re.compile(r"\b" + re.escape(kw.lower()), re.IGNORECASE)
+
+
 def matches_keyword(
     mention: Optional[BlueskyMention], *, keywords: Set[str]
 ) -> bool:
     if mention is None:
         return False
-    low = mention.text.lower()
-    return any(kw.lower() in low for kw in keywords)
+    text = mention.text
+    return any(_keyword_regex(kw).search(text) for kw in keywords)
+
+
+def event_is_english(event: dict[str, Any]) -> bool:
+    """Permit the post through if its record.langs is unset OR includes
+    an English variant. Jetstream events whose langs is explicitly
+    non-English (`["ja"]`, `["sk"]`, etc.) are filtered out — those drove
+    the multilingual noise in the production cache.
+    """
+    record = (event.get("commit") or {}).get("record") or {}
+    langs = record.get("langs")
+    if not langs:
+        return True
+    return any(isinstance(l, str) and l.lower().startswith("en") for l in langs)
 
 
 class MentionStore:
@@ -194,6 +221,12 @@ def _subscribe(
                 try:
                     event = json.loads(raw)
                 except json.JSONDecodeError:
+                    continue
+                # Drop non-English events at ingestion. The legacy substring
+                # matcher captured thousands of multilingual posts (JP
+                # baseball, k-drama, Slovak news) where short keywords
+                # like 'mcp' or 'rag' collided with unrelated foreign words.
+                if not event_is_english(event):
                     continue
                 mention = parse_post_event(event)
                 if mention is None:

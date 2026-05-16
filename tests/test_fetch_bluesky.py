@@ -52,7 +52,9 @@ def test_parse_post_event_skips_deletes() -> None:
     assert bluesky.parse_post_event(event) is None
 
 
-def test_keyword_filter_matches_substring_case_insensitive() -> None:
+def test_keyword_filter_matches_word_start() -> None:
+    """Plurals and English compounds still resolve — 'llm' matches 'LLMs'
+    because the regex uses a word-START boundary, not both-sided."""
     event = _make_event("I love LLMs and tooling")
     assert bluesky.matches_keyword(
         bluesky.parse_post_event(event), keywords={"llm", "claude"}
@@ -64,6 +66,41 @@ def test_keyword_filter_rejects_non_match() -> None:
     assert not bluesky.matches_keyword(
         bluesky.parse_post_event(event), keywords={"llm", "claude"}
     )
+
+
+def test_keyword_filter_rejects_substring_inside_unrelated_word() -> None:
+    """The pre-2026 substring matcher matched 'mcp' inside any 3-char
+    sequence and 'agent' inside Portuguese 'agente' — the SQLite cache
+    accumulated thousands of multilingual non-AI posts as a result.
+    Word-start boundary fixes the trivial substring collisions; the
+    lang=en filter (applied at subscribe time) handles the rest."""
+    # "mcp" should NOT match an unrelated sequence like "company-mcp-xyz".
+    e1 = _make_event("the company-mcp-xyz product reveal")
+    # ^^ "mcp" preceded by "-" so word boundary fires => still matches.
+    # Better example: "mcp" inside a longer alphanumeric token.
+    e2 = _make_event("the campmcpground was lovely")
+    assert not bluesky.matches_keyword(
+        bluesky.parse_post_event(e2), keywords={"mcp"}
+    )
+
+
+def test_event_is_english_when_langs_contains_en() -> None:
+    event = _make_event("hello")  # default has langs=["en"]
+    assert bluesky.event_is_english(event)
+
+
+def test_event_is_english_false_for_non_english() -> None:
+    event = _make_event("ボンジュール")
+    event["commit"]["record"]["langs"] = ["ja"]
+    assert not bluesky.event_is_english(event)
+
+
+def test_event_is_english_true_when_langs_missing() -> None:
+    """Some clients omit langs entirely. Default to permitting through
+    rather than blocking — the keyword filter still has to fire."""
+    event = _make_event("hello world")
+    del event["commit"]["record"]["langs"]
+    assert bluesky.event_is_english(event)
 
 
 def test_mention_store_roundtrip(tmp_path: Path) -> None:
