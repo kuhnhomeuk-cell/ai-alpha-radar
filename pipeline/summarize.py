@@ -177,8 +177,15 @@ def _system_block(niche: str) -> list[dict[str, Any]]:
     ]
 
 
-def _extract_json(text: str) -> dict[str, Any]:
-    """Parse JSON from a Claude response. Strips ```json fences if present."""
+def _extract_json(text: str) -> Any:
+    """Parse JSON from a Claude response. Strips ```json fences if present.
+
+    Returns whatever `json.loads` returns — a dict for the card/briefing
+    prompts in this module, a list for demand-cluster prompts in
+    pipeline.demand. Callers that need a specific shape (e.g. the per-card
+    batch parser) must check `isinstance(...)` themselves and skip mismatched
+    entries instead of crashing on `["hook"]`-style access.
+    """
     text = text.strip()
     match = _MARKDOWN_JSON_FENCE.match(text)
     if match:
@@ -298,6 +305,8 @@ def _submit_and_collect_batch(
         time.sleep(BATCH_POLL_INTERVAL_SECONDS)
         batch = batches.retrieve(batch.id, **extra_kwargs)
 
+    import sys
+
     out: dict[str, dict[str, Any]] = {}
     for entry in batches.results(batch.id, **extra_kwargs):
         result = getattr(entry, "result", None)
@@ -305,7 +314,25 @@ def _submit_and_collect_batch(
             continue
         message = result.message
         text = message.content[0].text
-        out[entry.custom_id] = _extract_json(text)
+        try:
+            parsed = _extract_json(text)
+        except ClaudeParseError as e:
+            print(
+                f"summarize: dropping {entry.custom_id} — {e}",
+                file=sys.stderr,
+            )
+            continue
+        if not isinstance(parsed, dict):
+            # Card prompts (A/B/C/D) all specify a `{...}` schema. Haiku
+            # occasionally drops to a top-level JSON array; downstream code
+            # accesses parsed["hook"] etc., so skip non-dict entries.
+            print(
+                f"summarize: dropping {entry.custom_id} — expected dict, "
+                f"got {type(parsed).__name__}: {text[:80]!r}",
+                file=sys.stderr,
+            )
+            continue
+        out[entry.custom_id] = parsed
     return out
 
 

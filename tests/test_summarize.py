@@ -398,6 +398,42 @@ def test_enrich_cards_batch_empty_list_returns_empty_dict() -> None:
     assert summarize.enrich_cards_batch([], client=fake) == {}
 
 
+def test_enrich_cards_batch_skips_non_dict_json_responses() -> None:
+    """Haiku sometimes drops to a top-level JSON array under structured-output drift.
+    The batch parser must skip that entry rather than crash on b["hook"]."""
+    cards = [_make_card(keyword="alpha")]
+    fake = FakeBatchClient(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": "S", "confidence": "high"}
+            ),
+            # Prompt B returns an *array* instead of a dict — the drift case.
+            "Generate three YouTube Shorts angles": json.dumps(
+                [{"hook": "H", "contrarian": "C", "tutorial": "T"}]
+            ),
+            "Estimate:": json.dumps(
+                {
+                    "breakout_likelihood": "medium",
+                    "peak_estimate_days": 30,
+                    "risk_flag": "none",
+                    "rationale": "r",
+                }
+            ),
+            "Explain this trend using one analogy": json.dumps({"eli_creator": "E"}),
+        }
+    )
+    outputs = summarize.enrich_cards_batch(cards, client=fake)
+    # The malformed B drops the card from the result, but no crash.
+    assert outputs == {}
+
+
+def test_extract_json_returns_list_for_list_responses() -> None:
+    """_extract_json stays loose so pipeline.demand can parse list responses.
+    Per-caller shape checks (see _submit_and_collect_batch) gate dict-only
+    contracts at the boundary where the access pattern is dict-shaped."""
+    assert summarize._extract_json("[1, 2, 3]") == [1, 2, 3]
+
+
 def test_enrich_cards_batch_supports_beta_batches_resource() -> None:
     fake = FakeBetaBatchClient(
         {
