@@ -646,10 +646,21 @@ def main(
             # v0.2.0 — enable points-floored keyword sweep + 3 tag-only passes
             # (Show HN / front_page / Ask HN). Tests that pin call counts call
             # fetch_ai_posts with explicit keyword/extra_passes args.
+            #
+            # hydrate_top_n=30 (up from default 10): the demand-cluster wedge
+            # in pipeline.demand needs enough niche-relevant question-shaped
+            # comments to clear HDBSCAN's min_cluster_size=3 floor. On the
+            # 2026-05-16 live probe, hydrate_top_n=10 yielded only 4-6
+            # qualifying comments and HDBSCAN produced 0 clusters, forcing
+            # the legacy per-trend Sonnet fallback to carry the wedge.
+            # Bumping to 30 costs ~20s of extra HN hydration sleep but
+            # unblocks the primary clustering path. Per-hydrate sleep is
+            # already enforced in hackernews._fetch_item.
             posts = hackernews.fetch_ai_posts(
                 HN_LOOKBACK_DAYS,
                 min_points=hackernews.HN_MIN_POINTS_KEYWORD,
                 extra_passes=hackernews.EXTRA_PASS_NAMES,
+                hydrate_top_n=30,
             )
         except Exception as e:
             log("fetch_failed", level="warning", source="hackernews", error=str(e))
