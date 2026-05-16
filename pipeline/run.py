@@ -1657,8 +1657,15 @@ def main(
                     # appear in multiple topics' aliases.
                     "fetched": sum(bluesky_keyword_counts.values()),
                     "topic_attributed": sum(bluesky_counts.values()),
+                    # `ok` restores the field the dashboard source-health
+                    # strip reads to decide ✓/✗ rendering. Healthy = we
+                    # attributed at least one mention to a topic.
+                    "ok": sum(bluesky_counts.values()) > 0,
                 },
-                "newsletters": {"fetched": len(newsletter_signals or [])},
+                "newsletters": {
+                    "fetched": len(newsletter_signals or []),
+                    "ok": bool(newsletter_signals),
+                },
                 "digg": {
                     "fetched": len(digg_recent_corpus),
                     "ok": fetch_health["digg"],
