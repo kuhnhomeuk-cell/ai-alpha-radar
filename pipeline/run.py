@@ -1061,6 +1061,22 @@ def main(
     # Load history early — cluster_identity needs yesterday's centroids
     # before the cluster step runs.
     history = _load_history(public_dir, today_d, VELOCITY_LOOKBACK_DAYS)
+    # Trend statistics (velocity, burst, novelty, lead-lag, change-point)
+    # are mathematically degenerate on too few snapshots. Surface the
+    # shallow-history state explicitly so the operator can read "stats are
+    # noisy" off the daily log instead of inferring it from sparse outputs.
+    if len(history) < 7:
+        log(
+            "history_too_shallow",
+            level="warning",
+            history_days_loaded=len(history),
+            velocity_lookback_days=VELOCITY_LOOKBACK_DAYS,
+            note=(
+                "velocity / burst / Mann-Kendall trend tests need ≥7 daily "
+                "snapshots to produce meaningful signals; backfill or wait "
+                "for the rolling window to fill"
+            ),
+        )
 
     # ---- 6. Cluster topics into themes + stabilize IDs against yesterday ----
     cluster_assignments, raw_centroids = cluster_mod.cluster_topics_with_centroids(
