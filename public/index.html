@@ -1247,13 +1247,26 @@ html::after {
   letter-spacing: 0.05em;
   margin-top: 0;
   display: flex; align-items: center; gap: 6px;
-  opacity: 0.78;
+  opacity: 0.82;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-wrap: wrap;
+  row-gap: 3px;
 }
-.lb-row .stage-mini .stage-dot { box-shadow: none; }
+.lb-row .stage-mini .stage-dot { box-shadow: none; flex-shrink: 0; }
+.lb-row .stage-mini .stage-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
 .lb-row .stage-mini .lb-volume {
-  margin-left: 8px;
+  margin-left: 0;
   padding-left: 8px;
   color: var(--ink-3);
+  border-left: 1px solid var(--line);
+  white-space: nowrap;
 }
 .lb-row .tbts {
   font-family: var(--sans);
@@ -3657,7 +3670,7 @@ main {
 }
 
 .lb-row {
-  padding: 10px 12px;
+  padding: 14px 18px;
 }
 
 .lb-row:hover,
@@ -3680,7 +3693,7 @@ main {
 }
 
 .lb-row .stage-mini {
-  color: var(--ink-2) !important;
+  color: var(--ink-3);
 }
 
 :root[data-theme="light"] .cons-badge.medium,
@@ -6350,7 +6363,7 @@ function renderLeaderboard() {
         <div class="lb-main">
           <div class="name">${escapeHtml(t.keyword)}</div>
           <div class="stage-mini" style="color:${stageColor}">
-            <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
+            <span class="stage-label"><span class="stage-dot ${t.stage}"></span>${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%</span>
             ${conv ? `<span class="conv-badge" data-conv="${escapeAttr(kw)}" title="View convergence timeline">⚡ CONV</span>` : ''}
             <span class="lb-volume" title="Mentions in last 24 hours across arXiv + GitHub + HN">vol ${volume}${deltaPct !== null ? ` <span class="lb-delta ${deltaCls}" title="24-hour growth rate">${deltaPct > 0 ? '+' : ''}${deltaPct}%</span>` : ''}</span>
           </div>
