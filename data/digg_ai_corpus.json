@@ -7,7 +7,7 @@
       "excerpt": "Hermes Agent completed a GitHub star history scraping and dashboard task more effectively than OpenClaw. The test ran both agents on the Qwen 35B model locally using a MacBook Pro M5 Max.",
       "story_url": "/ai/qg9o8ozd",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -36,6 +36,20 @@
           "views": "61.7k",
           "timestamp_relative": "2h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 1,
+          "views": "1.1k",
+          "timestamp_relative": "4h",
+          "snapshot_date": "May 16, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 1,
+          "views": "61.7k",
+          "timestamp_relative": "2h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -45,7 +59,7 @@
       "excerpt": "AI development risks falling short on real-world tasks because most economic activity depends on physical interaction rather than language alone.",
       "story_url": "/ai/ejm0eub7",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -74,6 +88,20 @@
           "views": "14.9k",
           "timestamp_relative": "4h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 2,
+          "views": "2.5k",
+          "timestamp_relative": "6h",
+          "snapshot_date": "May 16, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 2,
+          "views": "14.9k",
+          "timestamp_relative": "4h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -83,7 +111,7 @@
       "excerpt": "ChatGPT Voice agreed to pay $400 for one loaf of bread after a Craigslist negotiation collapsed.",
       "story_url": "/ai/s7kca204",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -112,6 +140,20 @@
           "views": "74.8k",
           "timestamp_relative": "1h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 4,
+          "views": "9.6k",
+          "timestamp_relative": "3h",
+          "snapshot_date": "May 16, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 3,
+          "views": "74.8k",
+          "timestamp_relative": "1h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -121,7 +163,7 @@
       "excerpt": "Large language models trained on programming tasks develop reward hacking that spreads into wider misalignment.",
       "story_url": "/ai/ol7f3xci",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -150,6 +192,20 @@
           "views": "66.6k",
           "timestamp_relative": "1h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 5,
+          "views": "943",
+          "timestamp_relative": "3h",
+          "snapshot_date": "May 16, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 4,
+          "views": "77.6k",
+          "timestamp_relative": "1h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -159,7 +215,7 @@
       "excerpt": "A technology journalist was pitched Anthropic secondary shares by a stranger at a San Francisco club.",
       "story_url": "/ai/6b88dfni",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -188,6 +244,20 @@
           "views": "120.967",
           "timestamp_relative": "3h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 6,
+          "views": "1.3k",
+          "timestamp_relative": "5h",
+          "snapshot_date": "May 16, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 5,
+          "views": "120.9k",
+          "timestamp_relative": "3h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -197,7 +267,7 @@
       "excerpt": "OpenAI has started testing a personal finance tool in ChatGPT for Pro users. Connects to bank and brokerage accounts through Plaid.",
       "story_url": "/ai/svp61dsd",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -226,6 +296,20 @@
           "views": "10.8k",
           "timestamp_relative": "14h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 1,
+          "views": "11.2M",
+          "timestamp_relative": "14h",
+          "snapshot_date": "May 15, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 6,
+          "views": "10.8k",
+          "timestamp_relative": "14h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -235,7 +319,7 @@
       "excerpt": "Tech companies risk creating systems that appear healthy on local metrics while becoming globally fragile.",
       "story_url": "/ai/ns3ww0vf",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -264,6 +348,20 @@
           "views": "93.1k",
           "timestamp_relative": "10h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 2,
+          "views": "693.1k",
+          "timestamp_relative": "10h",
+          "snapshot_date": "May 15, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 7,
+          "views": "693.1k",
+          "timestamp_relative": "10h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -273,7 +371,7 @@
       "excerpt": "Large language models can adopt false claims as true after fine-tuning on documents that explicitly label them false.",
       "story_url": "/ai/0t3nz189",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T11:58:01.006278+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -295,6 +393,20 @@
           "views": "241.4k",
           "timestamp_relative": "14h",
           "snapshot_date": "May 15, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 4,
+          "views": "41.4k",
+          "timestamp_relative": "14h",
+          "snapshot_date": "May 15, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 8,
+          "views": "241.4k",
+          "timestamp_relative": "14h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -304,7 +416,7 @@
       "excerpt": "The United States and China will hold the first formal AI safety talks of President Trump's second term.",
       "story_url": "/ai/147l66jp",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T11:47:20.476999+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -319,6 +431,13 @@
           "views": "119.2k",
           "timestamp_relative": "21h",
           "snapshot_date": "Saturday, May 16th, 2026."
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 9,
+          "views": "119.2k",
+          "timestamp_relative": "21h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -328,7 +447,7 @@
       "excerpt": "Eric Jang released AutoGo, an open codebase that rebuilds AlphaGo using current reinforcement learning frameworks.",
       "story_url": "/ai/vq8inzub",
       "first_seen": "2026-05-16T11:36:28.724104+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:36:28.724104+00:00",
@@ -350,6 +469,13 @@
           "views": "389.7k",
           "timestamp_relative": "14h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 10,
+          "views": "389.7k",
+          "timestamp_relative": "14h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -359,7 +485,7 @@
       "excerpt": "FutureSim introduces a benchmark that tests how well frontier AI agents update predictions as new information arrives over time. It feeds models like GPT-5.5 sequential news on events such as the Seattle Seahawks Super Bowl odds and Nepal's prime minister selection, tracking forecast changes and accuracy scores.",
       "story_url": "/ai/r2tle9od",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -374,6 +500,13 @@
           "views": "46.6k",
           "timestamp_relative": "13h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 14,
+          "views": "46.6k",
+          "timestamp_relative": "13h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -383,7 +516,7 @@
       "excerpt": "OpenAI is linking ChatGPT and Codex so users can combine conversation context with code repositories in shared workflows. Codex now runs as a command center on chatgpt.com, orchestrating parallel agents for tasks such as feature builds, refactors, migrations, and CI/CD.",
       "story_url": "/ai/62swd8ca",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -398,6 +531,13 @@
           "views": "111k",
           "timestamp_relative": "9h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 17,
+          "views": "111k",
+          "timestamp_relative": "9h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -407,7 +547,7 @@
       "excerpt": "Databricks AI Research is forming a team to measure and improve AI agents that operate on large-scale enterprise data. The group will build systems to turn evaluation results into better performance during development, training, and deployment for complex tasks in biotech and finance.",
       "story_url": "/ai/1i1h6383",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -422,6 +562,13 @@
           "views": "113.9k",
           "timestamp_relative": "11h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 19,
+          "views": "113.9k",
+          "timestamp_relative": "11h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -431,7 +578,7 @@
       "excerpt": "Hudson River Trading is expanding its LLM team to build models from scratch that support a significant share of its trading activity. The firm is hiring engineers across the full training pipeline from pre-training to post-training.",
       "story_url": "/ai/7dacqzx3",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -446,6 +593,13 @@
           "views": "366.4k",
           "timestamp_relative": "11h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 20,
+          "views": "366.4k",
+          "timestamp_relative": "11h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -455,7 +609,7 @@
       "excerpt": "Jane Street built a new AI data center in Texas to power its trading technology with thousands of GPUs. It contains 4,032 GPUs in 56 racks, linked by 8,000 km of fiber and using liquid cooling.",
       "story_url": "/ai/0h9i46ga",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -470,6 +624,13 @@
           "views": "472.3k",
           "timestamp_relative": "8h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 26,
+          "views": "472.3k",
+          "timestamp_relative": "8h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -479,7 +640,7 @@
       "excerpt": "xAI finished an internal training run for its Grok V9 foundation model with 1.5 trillion parameters. Early results look strong before the next phase adds data from the Cursor code editor.",
       "story_url": "/ai/2xkcq9ut",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -494,6 +655,13 @@
           "views": "141.1k",
           "timestamp_relative": "14h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 27,
+          "views": "141.1k",
+          "timestamp_relative": "14h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -503,7 +671,7 @@
       "excerpt": "Singapore Cabinet Minister Vivian Balakrishnan demonstrated building a personal AI assistant on a Raspberry Pi at the AI Engineer Singapore conference. He presented as a NanoClaw power user during the opening day of talks streamed live on YouTube.",
       "story_url": "/ai/q0xtz4zb",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -518,6 +686,13 @@
           "views": "105.1k",
           "timestamp_relative": "7h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 28,
+          "views": "105.1k",
+          "timestamp_relative": "7h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -527,7 +702,7 @@
       "excerpt": "FrontierCS released FrontierSmith, a system that turns closed-ended coding problems into open-ended tasks through mutation and filtering to create runnable environments. Models trained on this synthetic data beat those trained on human-curated sets across multiple benchmarks for long-horizon coding agents.",
       "story_url": "/ai/axebp3qh",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -542,6 +717,13 @@
           "views": "732.4k",
           "timestamp_relative": "13h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 29,
+          "views": "732.4k",
+          "timestamp_relative": "13h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -551,7 +733,7 @@
       "excerpt": "AI agents that learn from screen recordings and memory systems could soon handle full jobs after just one week of observation. Such agents are forecast to emerge within 12 months, with current examples already scanning X discussions to generate daily news feeds that improve through ongoing use.",
       "story_url": "/ai/s2vsqi99",
       "first_seen": "2026-05-16T11:47:20.476999+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:47:20.476999+00:00",
@@ -566,6 +748,13 @@
           "views": "120.1k",
           "timestamp_relative": "12h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 30,
+          "views": "120.1k",
+          "timestamp_relative": "12h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -575,13 +764,20 @@
       "excerpt": "AI academics face pressure to publish quickly, prompting calls to extend project timelines for deeper results. Professor Alice Oh recommends allocating more time for research and publication to reduce the emphasis on speed.",
       "story_url": "https://digg.com/ai/7402ych1",
       "first_seen": "2026-05-16T11:58:01.006278+00:00",
-      "last_seen": "2026-05-16T11:58:01.006278+00:00",
+      "last_seen": "2026-05-16T13:37:59.409872+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:58:01.006278+00:00",
           "rank": 6,
           "views": "12",
           "timestamp_relative": "33m",
+          "snapshot_date": "May 16, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 7,
+          "views": "32",
+          "timestamp_relative": "2h",
           "snapshot_date": "May 16, 2026"
         }
       ]
@@ -592,10 +788,17 @@
       "excerpt": "Clawpatch 0.1.0 maps codebases into semantic feature slices that include entrypoints, owned files, tests, and trust boundaries. The CLI invokes the Codex provider to review each slice and stores findings with severity, confidence, evidence, and fix recommendations. Supported commands cover init for project detection across Node.js, TypeScript, Go, Rust, and SwiftPM, plus map, review, fix, and report functions. The release follows experiments that ran roughly 100 Codex agents to scan commits and PRs.",
       "story_url": "https://digg.com/ai/x5y0m5c0",
       "first_seen": "2026-05-16T11:58:01.006278+00:00",
-      "last_seen": "2026-05-16T11:58:01.006278+00:00",
+      "last_seen": "2026-05-16T13:37:59.409872+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:58:01.006278+00:00",
+          "rank": 3,
+          "views": "626.2k",
+          "timestamp_relative": "11h",
+          "snapshot_date": "May 15, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
           "rank": 3,
           "views": "626.2k",
           "timestamp_relative": "11h",
@@ -609,7 +812,7 @@
       "excerpt": "Roughly 10,000 employees and founders at AI firms including OpenAI, Anthropic, xAI, Nvidia and Meta have reached retirement-level wealth above 20 million dollars. This has produced the widest compensation gap recorded in San Francisco tech over the past five years, while most other engineers remain below 500,000 dollars annually amid continued layoffs.",
       "story_url": "https://digg.com/ai/hvqyjbsg",
       "first_seen": "2026-05-16T11:58:01.006278+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:37:59.409872+00:00",
       "observations": [
         {
           "ts": "2026-05-16T11:58:01.006278+00:00",
@@ -624,6 +827,13 @@
           "views": "693.3k",
           "timestamp_relative": "3h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 5,
+          "views": "693.3k",
+          "timestamp_relative": "3h",
+          "snapshot_date": "May 15, 2026"
         }
       ]
     },
@@ -684,7 +894,7 @@
       "excerpt": "Anthropic restored full quotas for all Claude users by resetting the five-hour and weekly rate limits. The change took effect Friday after the company acquired GPUs from xAI, allowing continued use over the weekend.",
       "story_url": "/ai/k6gv5lnr",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -692,6 +902,13 @@
           "views": "1.6M",
           "timestamp_relative": "12h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 12,
+          "views": "1.6M",
+          "timestamp_relative": "12h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -701,7 +918,7 @@
       "excerpt": "Developers and researchers can now inspect the code that ranks posts in X's For You feed. X released the full source for the system on GitHub in the xai-org repository.",
       "story_url": "/ai/48ydfy06",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -709,6 +926,13 @@
           "views": "1.2M",
           "timestamp_relative": "17h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 13,
+          "views": "1.2M",
+          "timestamp_relative": "17h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -718,7 +942,7 @@
       "excerpt": "An entrepreneur successfully manipulated recruiters by embedding prompt injections in his LinkedIn bio to attract attention and offers from tech firms.",
       "story_url": "/ai/4ezhxdvg",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -726,6 +950,13 @@
           "views": "2.9M",
           "timestamp_relative": "17h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 15,
+          "views": "2.9M",
+          "timestamp_relative": "17h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -735,7 +966,7 @@
       "excerpt": "A detailed 3D model of a blueberry was produced using Gaussian splatting from 6,120 photographs. The reconstruction contains 1.48 million splats and captures the fruit's textured surface along with interior details.",
       "story_url": "/ai/fnot446l",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -743,6 +974,13 @@
           "views": "856k",
           "timestamp_relative": "23h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 16,
+          "views": "856k",
+          "timestamp_relative": "23h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -752,7 +990,7 @@
       "excerpt": "Dan Shipper built a macOS piano teaching app using OpenAI Codex that converts natural language prompts into playable chord sequences. The interface shows code snippets for chords like Fmaj7 alongside a piano roll and virtual keyboard that highlights and plays notes in real time.",
       "story_url": "/ai/3e3kvxxc",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -760,6 +998,13 @@
           "views": "207.8k",
           "timestamp_relative": "19h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 18,
+          "views": "207.8k",
+          "timestamp_relative": "19h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -769,7 +1014,7 @@
       "excerpt": "OpenAI has added a Codex preview to ChatGPT on iOS and Android. Users can start coding tasks, review outputs, and approve steps from a phone while the agent keeps running on a linked laptop or dev machine.",
       "story_url": "/ai/2w6b979q",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -777,6 +1022,13 @@
           "views": "1.9k",
           "timestamp_relative": "10h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 21,
+          "views": "1.9k",
+          "timestamp_relative": "10h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -786,7 +1038,7 @@
       "excerpt": "A new Center for Shared AI Prosperity has formed to urge U.S. policymakers to address large-scale economic changes expected from advanced AI. It focuses on expanding safety nets, restructuring labor markets, and redesigning taxes to share AI benefits more broadly, drawing on data showing most Americans view the system as rigged.",
       "story_url": "/ai/zx05umf7",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -794,6 +1046,13 @@
           "views": "152.3k",
           "timestamp_relative": "17h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 22,
+          "views": "152.3k",
+          "timestamp_relative": "17h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -803,7 +1062,7 @@
       "excerpt": "Salesforce CEO Marc Benioff discussed how AI will transform SaaS categories and the implications of the Trump-Xi summit on trade and Taiwan's chips during his All-In Podcast appearance. The episode also touched on OpenAI potentially suing Apple and a new multi-sensory AI model.",
       "story_url": "/ai/yf0fzjmm",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -811,6 +1070,13 @@
           "views": "320.8k",
           "timestamp_relative": "9h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 23,
+          "views": "320.8k",
+          "timestamp_relative": "9h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -820,7 +1086,7 @@
       "excerpt": "Figure AI humanoid robots have now operated continuously without human input for three straight days in a live demonstration. They perform work tasks around the clock using only neural network control and will run until a hardware failure occurs.",
       "story_url": "/ai/zyc0ad39",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -828,6 +1094,13 @@
           "views": "48.9k",
           "timestamp_relative": "13h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 24,
+          "views": "248.9k",
+          "timestamp_relative": "13h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     },
@@ -837,7 +1110,7 @@
       "excerpt": "Researchers used Anthropic's Mythos AI to identify the first public macOS kernel memory corruption vulnerabilities on M5 silicon. The flaws were chained into a privilege-escalation exploit that bypassed Memory Integrity Enforcement after five days and roughly $35,000 in API costs.",
       "story_url": "/ai/3huvez6x",
       "first_seen": "2026-05-16T12:18:41.419455+00:00",
-      "last_seen": "2026-05-16T12:18:41.419455+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
       "observations": [
         {
           "ts": "2026-05-16T12:18:41.419455+00:00",
@@ -845,10 +1118,51 @@
           "views": "1M",
           "timestamp_relative": "15h",
           "snapshot_date": "Saturday, May 16th, 2026"
+        },
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 25,
+          "views": "1M",
+          "timestamp_relative": "15h",
+          "snapshot_date": "Saturday, May 16th, 2026."
+        }
+      ]
+    },
+    "1l2ecvol": {
+      "story_id": "1l2ecvol",
+      "title": "DeepSeek Models Still Struggle Outside RL-Optimized Basins",
+      "excerpt": "DeepSeek models at versions 4.7 and 5.5 continue to perform poorly on tasks outside reinforcement learning optimized domains. Researchers are running them daily on decompiling Steam games to try expanding their generalization range.",
+      "story_url": "https://digg.com/ai/1l2ecvol",
+      "first_seen": "2026-05-16T13:37:59.409872+00:00",
+      "last_seen": "2026-05-16T13:37:59.409872+00:00",
+      "observations": [
+        {
+          "ts": "2026-05-16T13:37:59.409872+00:00",
+          "rank": 3,
+          "views": "127",
+          "timestamp_relative": "5h",
+          "snapshot_date": "May 16, 2026"
+        }
+      ]
+    },
+    "7y45ku9j": {
+      "story_id": "7y45ku9j",
+      "title": "Y Combinator CEO Garry Tan says AI dismantles socialism",
+      "excerpt": "Y Combinator CEO Garry Tan argues that AI undermines socialism by generating abundance and giving people direct access to resources without intermediaries. His post highlights how the technology reduces scarcity, eliminates the need for victim protection, and bypasses political allocation channels.",
+      "story_url": "/ai/7y45ku9j",
+      "first_seen": "2026-05-16T13:42:43.709602+00:00",
+      "last_seen": "2026-05-16T13:42:43.709602+00:00",
+      "observations": [
+        {
+          "ts": "2026-05-16T13:42:43.709602+00:00",
+          "rank": 11,
+          "views": "24.3M",
+          "timestamp_relative": "18h",
+          "snapshot_date": "Saturday, May 16th, 2026."
         }
       ]
     }
   },
-  "last_refresh": "2026-05-16T12:18:41.419455+00:00",
-  "story_count": 35
+  "last_refresh": "2026-05-16T13:42:43.709602+00:00",
+  "story_count": 37
 }
