@@ -982,15 +982,24 @@ html::after {
 .leaderboard::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 3px; }
 .lb-row {
   display: grid;
-  grid-template-columns: 28px 1fr 48px 56px 38px 22px;
+  grid-template-columns: 28px minmax(0, 1fr) 48px 40px 38px 22px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   align-items: center;
   cursor: pointer;
   gap: 8px;
+  min-height: 60px;
   transition: background 0.1s;
 }
-.lb-spark { display: inline-flex; opacity: 0.85; }
+.lb-main { min-width: 0; }
+.lb-consensus {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.lb-spark { display: inline-flex; opacity: 0.85; width: 48px; height: 14px; justify-content: center; }
 .lb-spark svg { display: block; }
 .lb-volume {
   margin-left: 10px;
@@ -3230,6 +3239,17 @@ main {
 }
 :root[data-theme="light"] .quad-divider {
   stroke: rgba(0, 0, 0, 0.18);
+}
+
+.quad-label-bg {
+  fill: rgba(0, 0, 0, 0.45);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+  pointer-events: none;
+}
+:root[data-theme="light"] .quad-label-bg {
+  fill: rgba(255, 255, 255, 0.7);
+  stroke: rgba(0, 0, 0, 0.08);
 }
 
 .bubble-fallback-svg {
@@ -5472,10 +5492,22 @@ function renderBubbleFallback(el) {
   const quadrantMarkup = QUADRANTS.map(q => `
     <rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" class="quad-zone" fill="${q.fill}" />
   `).join('');
-  const quadrantLabels = QUADRANTS.map(q => `
-    <text x="${q.tx}" y="${q.ty}" class="quad-label" text-anchor="${q.anchor}">${q.label}</text>
-    <text x="${q.tx}" y="${q.ty + 14}" class="quad-sublabel" text-anchor="${q.anchor}">${q.tag}</text>
-  `).join('');
+  // Quadrant labels wrap a translucent dark pill so they stay legible even
+  // when bubbles cluster in the same corner (e.g. PRE-BREAKOUT bottom-right).
+  // Width is hardcoded to the widest pair across all four quadrants.
+  const QLABEL_W = 168;
+  const QLABEL_H = 38;
+  const quadrantLabels = QUADRANTS.map(q => {
+    const rectX = q.anchor === 'end' ? (q.tx + 4 - QLABEL_W) : (q.tx - 4);
+    const rectY = q.ty - 14;
+    return `
+      <g class="quad-label-group">
+        <rect x="${rectX}" y="${rectY}" width="${QLABEL_W}" height="${QLABEL_H}" rx="6" class="quad-label-bg" />
+        <text x="${q.tx}" y="${q.ty}" class="quad-label" text-anchor="${q.anchor}">${q.label}</text>
+        <text x="${q.tx}" y="${q.ty + 14}" class="quad-sublabel" text-anchor="${q.anchor}">${q.tag}</text>
+      </g>
+    `;
+  }).join('');
   const dividerLines = `
     <line x1="${xDivider}" y1="${pad.top}" x2="${xDivider}" y2="${pad.top + plotH}" class="quad-divider"/>
     <line x1="${pad.left}" y1="${yDivider}" x2="${pad.left + plotW}" y2="${yDivider}" class="quad-divider"/>
@@ -5543,8 +5575,17 @@ function renderBubbleFallback(el) {
         const color = STAGE_META[stage]?.color || '#9aa7ba';
         const { jx, jy } = _hashJitter(kw);
         // Clamp jittered position inside the plot so bubbles don't escape.
-        const cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, x(t.saturation) + jx));
+        let cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, x(t.saturation) + jx));
         const cy = Math.max(pad.top + r,  Math.min(pad.top + plotH - r, y(t.velocity || 0) + jy));
+        // Divider nudge: a bubble straddling the X-divider belongs to no
+        // quadrant. Push it 4px to the side picked deterministically by the
+        // kw hash sign so it stably owns one quadrant across renders.
+        if (Math.abs(cx - xDivider) < 4) {
+          let h = 0;
+          for (let i = 0; i < kw.length; i++) h = ((h * 31) + kw.charCodeAt(i)) | 0;
+          const dir = (h & 1) ? 1 : -1;
+          cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, xDivider + dir * 4));
+        }
         const rank = _labeledKws.get(kw);
         const inTopN = rank !== undefined;
         const spaceAbove = cy - pad.top;
@@ -5637,10 +5678,10 @@ function renderBubbleFallback(el) {
       ${quadrantMarkup}
       ${yTicks}
       ${dividerLines}
-      ${quadrantLabels}
       ${xTicks}
       ${regionMarkup}
       ${points}
+      ${quadrantLabels}
       <text x="${pad.left + plotW / 2}" y="${height - 2}" class="fallback-axis-title" text-anchor="middle">← MAINSTREAM   ·   HEADROOM   ·   NICHE →</text>
       <text x="12" y="${pad.top + plotH / 2}" class="fallback-axis rotate">VELOCITY</text>
     </svg>
@@ -5860,29 +5901,32 @@ function renderLeaderboard() {
     const sel = kw === state.selectedKeyword;
     const conv = hasConvergence(t);
     const stageColor = STAGE_META[t.stage]?.color || '#8b9cb0';
+    // Always emit the spark slot (empty placeholder if no sparkline data) so
+    // every row has the same 6 grid children and the right-rail columns line up.
     const spark = (t.sparkline || []).length
       ? `<span class="lb-spark">${sparklineSVG(t.sparkline, 48, 14, stageColor)}</span>`
-      : '';
+      : `<span class="lb-spark" aria-hidden="true"></span>`;
     const volume = totalMentions7d(t);
     const deltaPct = weekDeltaPct(t.sparkline);
     const deltaCls = deltaPct > 0 ? 'up' : (deltaPct < 0 ? 'down' : '');
     const mixBar = channelMixBar(t.sources, 80);
+    const consensus = renderConsensusBadge(t);
     return `
       <div class="lb-row${sel ? ' selected' : ''}" data-kw="${escapeAttr(kw)}">
         <div class="rank">${String(i + 1).padStart(2, '0')}</div>
-        <div>
+        <div class="lb-main">
           <div class="name">${escapeHtml(t.keyword)}</div>
           <div class="stage-mini" style="color:${stageColor}">
             <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage} · sat ${Math.round(t.saturation)}%
-            ${renderConsensusBadge(t)}
             ${conv ? `<span class="conv-badge" data-conv="${escapeAttr(kw)}" title="View convergence timeline">⚡ CONV</span>` : ''}
-            <span class="lb-volume" title="total mentions across arxiv + GH + HN today">vol ${volume}${deltaPct !== null ? ` <span class="lb-delta ${deltaCls}">${deltaPct > 0 ? '+' : ''}${deltaPct}%</span>` : ''}</span>
+            <span class="lb-volume" title="Mentions in last 24 hours across arXiv + GitHub + HN">vol ${volume}${deltaPct !== null ? ` <span class="lb-delta ${deltaCls}" title="24-hour growth rate">${deltaPct > 0 ? '+' : ''}${deltaPct}%</span>` : ''}</span>
           </div>
+          ${consensus ? `<div class="lb-consensus">${consensus}</div>` : ''}
           ${mixBar ? `<div class="lb-mix">${mixBar}</div>` : ''}
         </div>
         ${spark}
-        <div class="tbts">${t.tbts}</div>
-        <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}">${velArrow(t.velocity)}</div>
+        <div class="tbts" title="Trend-Before-Trend Score">${t.tbts}</div>
+        <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}" title="Velocity (× growth vs baseline)">${velArrow(t.velocity)}</div>
         <button class="star-btn${inWatch(kw) ? ' on' : ''}" data-kw="${escapeAttr(kw)}" aria-label="Toggle watchlist" title="Toggle watchlist">★</button>
       </div>
     `;
