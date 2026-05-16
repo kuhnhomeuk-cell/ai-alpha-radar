@@ -31,6 +31,7 @@ import httpx
 from pydantic import BaseModel
 
 from pipeline.fetch._retry import with_retry
+from pipeline.log import log
 
 NEWSLETTERS_CONFIG_PATH = (
     Path(__file__).resolve().parent.parent.parent / "data" / "newsletters.json"
@@ -172,7 +173,18 @@ def fetch_newsletter_signals(
         name = feed.get("name", url)
         try:
             fetched[name] = _fetch_one(url)
-        except Exception:
+        except Exception as e:
+            # Surface which feed failed and why — silent skip previously
+            # masked auth / redirect / parse errors so newsletter_signals
+            # appeared empty without explanation.
+            log(
+                "newsletter_feed_failed",
+                level="warning",
+                name=name,
+                url=url,
+                error_type=type(e).__name__,
+                error=str(e)[:200],
+            )
             continue
         time.sleep(NL_REQUEST_INTERVAL_SECONDS)
     return aggregate_from_xml(fetched, today=today, lookback_days=lookback_days)

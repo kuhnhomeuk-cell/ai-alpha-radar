@@ -57,6 +57,27 @@ def test_aggregate_drops_old_entries() -> None:
     assert signals == []
 
 
+def test_fetch_newsletter_signals_logs_feed_failures(
+    monkeypatch, capsys
+) -> None:
+    """Per-feed exceptions should emit a newsletter_feed_failed log line
+    rather than being swallowed — previously the silent skip hid auth /
+    redirect / parse errors from the GH Actions log."""
+
+    def _boom(url: str) -> str:
+        raise RuntimeError("simulated feed outage")
+
+    monkeypatch.setattr(newsletters, "_fetch_one", _boom)
+    monkeypatch.setattr(newsletters.time, "sleep", lambda _s: None)
+    feeds = [{"name": "Newsletter A", "feed_url": "https://example.com/a.xml"}]
+    out = newsletters.fetch_newsletter_signals(feeds=feeds)
+    assert out == []
+    err = capsys.readouterr().err
+    assert "newsletter_feed_failed" in err
+    assert "Newsletter A" in err
+    assert "simulated feed outage" in err
+
+
 def test_signal_carries_first_and_last_seen() -> None:
     xml_a = (FIXTURES / "newsletter_a.xml").read_text(encoding="utf-8")
     xml_b = (FIXTURES / "newsletter_b.xml").read_text(encoding="utf-8")
