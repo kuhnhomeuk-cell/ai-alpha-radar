@@ -44,6 +44,12 @@ DEFAULT_KEYWORDS_PATH = (
 )
 DEFAULT_ENDPOINT = "wss://jetstream2.us-east.bsky.network/subscribe"
 
+# AT Protocol clients can supply arbitrary createdAt values — one row in
+# the production cache was dated 2013-09-06, ~10 years before Bluesky's
+# public launch. Clamp anything earlier than this floor so the 7d window
+# query in mention_counts_per_keyword stays meaningful.
+BLUESKY_LAUNCH_FLOOR = datetime(2023, 1, 1, tzinfo=timezone.utc)
+
 _CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS mentions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,7 +86,13 @@ def parse_post_event(event: dict[str, Any]) -> Optional[BlueskyMention]:
         created_at = datetime.fromisoformat(created_at_iso.replace("Z", "+00:00"))
     except ValueError:
         created_at = datetime.now(tz=timezone.utc)
-    handle = event.get("_handle")  # production subscriber must hydrate this from didcache
+    if created_at < BLUESKY_LAUNCH_FLOOR:
+        created_at = datetime.now(tz=timezone.utc)
+    # Prefer the human-readable handle when a hydrated subscriber supplies
+    # one, but never store an empty string — fall back to the top-level
+    # `did` field (always present on Jetstream events). The did keeps rows
+    # de-anonymized until a PLC-directory hydration pass is wired.
+    handle = event.get("_handle") or event.get("did")
     return BlueskyMention(handle=handle, text=text, created_at=created_at)
 
 
