@@ -43,7 +43,6 @@ from pipeline.summarize import (
     HAIKU_INPUT_DOLLARS_PER_MILLION_TOKENS,
     HAIKU_MODEL,
     HAIKU_OUTPUT_DOLLARS_PER_MILLION_TOKENS,
-    MAX_OUTPUT_TOKENS_BRIEFING,
     SONNET_MODEL,
     _build_request_params,
     _extract_json,
@@ -56,6 +55,15 @@ DEFAULT_NICHE = "AI tools for solo creators"
 MIN_COMMENTS_FOR_CLAUDE = 3
 MAX_COMMENTS_PER_CALL = 20
 DEFAULT_DEDUPE_THRESHOLD = 0.85
+
+# Demand cluster outputs are bigger than the daily briefing — up to 3
+# question_shape entries each with 2-3 verbatim quotes, a creator brief,
+# plus the scalar fields. 600 tokens (the briefing budget) truncates the
+# JSON mid-string on a typical legacy call. 1200 fits a full 3-cluster
+# response with headroom; the new comment-clustering path emits ONE
+# cluster per call so 800 would suffice but we use the same constant for
+# both for cache-key parity.
+MAX_OUTPUT_TOKENS_DEMAND = 1200
 
 # Niche-relevance vocabulary for "AI tools for solo creators". Inline here
 # because Agent A is building the shared niche filter in parallel and we
@@ -160,13 +168,37 @@ def is_question_shaped(text: str) -> bool:
 # ---------- New architecture: niche filter (inline) ----------
 
 
-_WORD_RE = re.compile(r"[a-z0-9][a-z0-9\-]*")
+_WORD_RE = re.compile(r"[a-z0-9][a-z0-9\-']*")
+
+
+def _split_niche_vocab(
+    niche_keywords: frozenset[str],
+) -> tuple[frozenset[str], tuple[str, ...]]:
+    """Split the vocab into (single-token set, multi-word phrase tuple).
+
+    Single tokens get word-boundary matching (so "ai" doesn't match
+    "accident" or "fail"). Multi-word phrases keep substring matching —
+    those are specific enough that substring is fine.
+    """
+    singles: set[str] = set()
+    phrases: list[str] = []
+    for kw in niche_keywords:
+        if " " in kw or "-" in kw:
+            phrases.append(kw)
+        else:
+            singles.add(kw)
+    return frozenset(singles), tuple(phrases)
 
 
 def is_niche_relevant(
     text: str, *, niche_keywords: frozenset[str] = NICHE_KEYWORDS_AI_TOOLS_FOR_SOLO_CREATORS
 ) -> bool:
-    """Cheap substring/keyword test against the niche vocabulary.
+    """Word-boundary aware niche test.
+
+    Live-HN inspection on 2026-05-16 caught a false-positive on substring
+    "ai" inside words like "accident" and "fail" — short tokens MUST be
+    matched on word boundaries, not substring. Multi-word phrases (e.g.
+    "stable diffusion") keep substring matching: they're specific enough.
 
     Inlined (not pulled from a shared filter module) because Agent A is
     building that shared filter in a parallel worktree — we can't import
@@ -175,9 +207,11 @@ def is_niche_relevant(
     if not text:
         return False
     haystack = text.lower()
-    # Multi-word terms (with spaces or hyphens) need substring matches; the
-    # single-token ones can match either way.
-    return any(kw in haystack for kw in niche_keywords)
+    singles, phrases = _split_niche_vocab(niche_keywords)
+    if any(p in haystack for p in phrases):
+        return True
+    tokens = set(_WORD_RE.findall(haystack))
+    return bool(tokens & singles)
 
 
 # ---------- Comment gathering ----------
@@ -205,9 +239,11 @@ def gather_question_comments(
     freshness. Returns a flat list of (comment, parent_post) tuples.
 
     A comment is kept iff:
-      - it's not None, has author + text, and ≥ MIN_COMMENT_CHARS
+      - has text and ≥ MIN_COMMENT_CHARS
       - `is_question_shaped(comment.text)` is True
-      - either the comment or its parent post title hits a niche keyword
+      - the comment text itself hits a niche keyword (parent-post niche
+        relevance alone isn't enough — that pulled too many sarcastic /
+        off-niche asides through in live HN inspection on 2026-05-16)
       - `comment.created_at` is within `max_age_days` of `now`
     """
     if now is None:
@@ -218,20 +254,17 @@ def gather_question_comments(
     for post in posts:
         if not post.comments:
             continue
-        title_relevant = is_niche_relevant(
-            f"{post.title} {post.story_text or ''}",
-            niche_keywords=niche_keywords,
-        )
         for c in post.comments:
             text = (c.text or "").strip()
             if len(text) < MIN_COMMENT_CHARS:
                 continue
             if not is_question_shaped(text):
                 continue
-            # niche: comment OR parent title must qualify
-            if not (
-                title_relevant or is_niche_relevant(text, niche_keywords=niche_keywords)
-            ):
+            # Niche: the comment ITSELF must hit a niche keyword. A
+            # niche-relevant parent post (e.g. "Claude for Small Business")
+            # doesn't automatically qualify every reply under it — most
+            # replies are off-niche asides.
+            if not is_niche_relevant(text, niche_keywords=niche_keywords):
                 continue
             # freshness
             try:
@@ -406,7 +439,7 @@ def summarize_cluster_sync(
     )
     response = client.messages.create(
         model=model,
-        max_tokens=MAX_OUTPUT_TOKENS_BRIEFING,
+        max_tokens=MAX_OUTPUT_TOKENS_DEMAND,
         system=_system_block(niche),
         messages=[{"role": "user", "content": prompt}],
     )
@@ -447,7 +480,7 @@ def summarize_clusters_batch(
                     niche=niche,
                     prompt=prompt,
                     model=model,
-                    max_tokens=MAX_OUTPUT_TOKENS_BRIEFING,
+                    max_tokens=MAX_OUTPUT_TOKENS_DEMAND,
                 ),
             }
         )
@@ -474,7 +507,7 @@ def estimate_demand_batch_cost_cents(num_clusters: int) -> float:
 
     Uses Haiku pricing (the default model) and the 50% Batch API discount.
     Input budget: ~800 tokens per cluster (prompt + comment block).
-    Output budget: MAX_OUTPUT_TOKENS_BRIEFING.
+    Output budget: MAX_OUTPUT_TOKENS_DEMAND.
 
     Tuned to surface the cap-trip risk in run.py before the batch fires —
     the orchestrator must add this to the existing Claude estimate.
@@ -482,7 +515,7 @@ def estimate_demand_batch_cost_cents(num_clusters: int) -> float:
     if num_clusters <= 0:
         return 0.0
     input_tokens_per_req = 800
-    output_tokens_per_req = MAX_OUTPUT_TOKENS_BRIEFING
+    output_tokens_per_req = MAX_OUTPUT_TOKENS_DEMAND
     total_input = num_clusters * input_tokens_per_req
     total_output = num_clusters * output_tokens_per_req
     dollars = (
@@ -506,6 +539,8 @@ def mine_demand_clusters_from_comments(
     sync_probe: bool = True,
     batch_model: str = HAIKU_MODEL,
     probe_model: str = SONNET_MODEL,
+    fallback_trend_keywords: Optional[list[str]] = None,
+    min_clusters_for_skip_fallback: int = 4,
 ) -> list[DemandCluster]:
     """The wedge — end-to-end demand clustering from raw HN posts.
 
@@ -514,10 +549,15 @@ def mine_demand_clusters_from_comments(
       2. cluster_comments_hdbscan(...) — MiniLM + HDBSCAN min_cluster_size=3
       3. if sync_probe: summarize_cluster_sync(...) on cluster[0] — the §5 probe
       4. summarize_clusters_batch(...) — Batch API across remaining clusters
-      5. dedupe by cosine similarity > 0.85 on question_shape
-      6. sort by askers_estimate desc, cap at max_clusters
+      5. if total clusters < min_clusters_for_skip_fallback AND
+         fallback_trend_keywords is non-empty: run the legacy per-trend
+         path on those keywords to backfill. This catches the sparse-data
+         days where HN hydration depth (top_n=10 by default) doesn't
+         yield enough material to cluster — the wedge still ships.
+      6. dedupe by cosine similarity > 0.85 on question_shape
+      7. sort by askers_estimate desc, cap at max_clusters
 
-    Returns [] when there's nothing to cluster — keeps the snapshot valid.
+    Returns [] when both paths are empty — keeps the snapshot valid.
     """
     if client is None:
         client = anthropic.Anthropic()
@@ -525,34 +565,51 @@ def mine_demand_clusters_from_comments(
     gathered = gather_question_comments(
         posts, niche_keywords=niche_keywords, max_age_days=max_age_days
     )
-    if len(gathered) < HDBSCAN_MIN_CLUSTER_SIZE_COMMENTS:
-        return []
-
-    clusters = cluster_comments_hdbscan(gathered)
-    if not clusters:
-        return []
-
-    # Cap clusters before Claude. HDBSCAN can return >12 on a noisy day; we
-    # prioritize by cluster size (biggest demand surfaces first).
-    clusters.sort(key=lambda c: len(c.comments), reverse=True)
-    clusters = clusters[: max_clusters * 2]  # over-fetch to survive parse drops
-
-    probed: Optional[DemandCluster] = None
-    remaining = clusters
-    if sync_probe and clusters:
-        probed = summarize_cluster_sync(
-            clusters[0], client=client, niche=niche, model=probe_model
-        )
-        remaining = clusters[1:]
-
-    batched = summarize_clusters_batch(
-        remaining, client=client, niche=niche, model=batch_model
-    )
+    clusters: list[CommentCluster] = []
+    if len(gathered) >= HDBSCAN_MIN_CLUSTER_SIZE_COMMENTS:
+        clusters = cluster_comments_hdbscan(gathered)
+        # HDBSCAN can return >12 on a noisy day; we prioritize by cluster
+        # size (biggest demand surfaces first), over-fetch x2 to survive
+        # per-cluster parse drops.
+        clusters.sort(key=lambda c: len(c.comments), reverse=True)
+        clusters = clusters[: max_clusters * 2]
 
     out: list[DemandCluster] = []
-    if probed is not None:
-        out.append(probed)
-    out.extend(batched)
+    if clusters:
+        probed: Optional[DemandCluster] = None
+        remaining = clusters
+        if sync_probe:
+            probed = summarize_cluster_sync(
+                clusters[0], client=client, niche=niche, model=probe_model
+            )
+            remaining = clusters[1:]
+
+        batched = summarize_clusters_batch(
+            remaining, client=client, niche=niche, model=batch_model
+        )
+
+        if probed is not None:
+            out.append(probed)
+        out.extend(batched)
+
+    # Sparse-day fallback: HN hydrates ~10 posts/day by default, which
+    # often yields fewer than min_clusters_for_skip_fallback HDBSCAN
+    # clusters. Backfill via the per-trend legacy path on the operator's
+    # top trends — recall-over-precision when the wedge is otherwise empty.
+    if (
+        len(out) < min_clusters_for_skip_fallback
+        and fallback_trend_keywords
+    ):
+        legacy = mine_demand_clusters_for_trends(
+            fallback_trend_keywords,
+            posts,
+            client=client,
+            niche=niche,
+            max_clusters=max_clusters,
+        )
+        # Don't replace — extend. The HDBSCAN clusters (where they exist)
+        # are higher precision, the legacy ones are recall fill.
+        out.extend(legacy)
 
     out = dedupe_clusters(out)
     out.sort(key=lambda c: c.askers_estimate, reverse=True)
@@ -627,7 +684,7 @@ def mine_demand_cluster(
     )
     response = client.messages.create(
         model=SONNET_MODEL,
-        max_tokens=MAX_OUTPUT_TOKENS_BRIEFING,
+        max_tokens=MAX_OUTPUT_TOKENS_DEMAND,
         system=_system_block(niche),
         messages=[{"role": "user", "content": prompt}],
     )

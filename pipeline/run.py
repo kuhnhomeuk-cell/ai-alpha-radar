@@ -1100,8 +1100,16 @@ def main(
         # bad probe still allows the batch to run and may rescue the day.
         demand_started = time.time()
         try:
+            # Pass the top 10 trend keywords as fallback. On sparse-data days
+            # (typical HN with hydrate_top_n=10) HDBSCAN may yield only 1-2
+            # clusters; the legacy per-trend Sonnet path backfills toward
+            # the 6-12 target so the wedge always ships something.
             demand_clusters = demand_mod.mine_demand_clusters_from_comments(
-                posts, niche=niche, max_clusters=12, sync_probe=True
+                posts,
+                niche=niche,
+                max_clusters=12,
+                sync_probe=True,
+                fallback_trend_keywords=[t.keyword for t in trends[:10]],
             )
             log(
                 "demand_clusters_mined",
