@@ -719,6 +719,107 @@ def dedupe_clusters(
     return [clusters[i] for i in kept]
 
 
+# ---------- Ultimate fallback: synthesize demand from trends list ----------
+
+
+SYNTHESIZE_PROMPT_TEMPLATE = (
+    "You are a content-strategy analyst for a YouTube Shorts creator dashboard.\n"
+    "Niche: \"{niche}\".\n\n"
+    "Today's tracked trends (each line: keyword | summary | hook):\n"
+    "{trends_block}\n\n"
+    "Generate 6 distinct UNANSWERED creator questions ('demand clusters') that "
+    "are emerging from these trends and would resonate with the niche audience.\n"
+    "Each must be a question a solo creator's audience would ask but that no "
+    "creator has definitively answered yet.\n\n"
+    "Return ONLY a JSON array of 6 objects, each with these fields:\n"
+    "- question_shape (canonical question form, <=18 words)\n"
+    "- askers_estimate (integer 5-30, your honest read of audience demand)\n"
+    "- weekly_growth_pct (integer estimate of weekly question-volume growth)\n"
+    "- open_window_days (integer 7-45, how long until this question is saturated)\n"
+    "- creator_brief (2 sentences of how a creator should answer this, niche-tailored)\n"
+    "- related_trends (1-3 of the keywords above that this question connects to)\n\n"
+    "No prose. No markdown. Just the JSON array."
+)
+
+
+def synthesize_demand_from_trends(
+    trends: list[Any],  # list[Trend] but avoiding circular import
+    *,
+    client: Optional[anthropic.Anthropic] = None,
+    niche: str = DEFAULT_NICHE,
+    max_clusters: int = 6,
+    model: str = SONNET_MODEL,
+) -> list[DemandCluster]:
+    """One-shot Sonnet call: generate demand clusters directly from the trend
+    list, with zero HN dependency.
+
+    This is the ultimate fallback for the wedge — when HDBSCAN gathering
+    yields too few niche-relevant question comments AND the per-keyword
+    legacy path finds zero matching HN posts (typical for abstract topic
+    terms like 'speculative decoding' that don't literally appear in HN
+    titles), we still ship 6 plausible creator questions.
+
+    Distinct from the HN-driven paths: the wedge here is generated, not
+    mined. Sources list reflects that ('inferred').
+    """
+    if not trends:
+        return []
+    if client is None:
+        client = anthropic.Anthropic()
+
+    trends_block_lines: list[str] = []
+    for t in trends[:15]:
+        summary = (getattr(t, "summary", "") or "")[:120]
+        angles = getattr(t, "angles", None)
+        hook = (getattr(angles, "hook", "") if angles else "") or ""
+        hook = hook[:80]
+        kw = getattr(t, "keyword", "") or ""
+        trends_block_lines.append(f"- {kw} | {summary} | {hook}")
+    trends_block = "\n".join(trends_block_lines)
+    prompt = SYNTHESIZE_PROMPT_TEMPLATE.format(niche=niche, trends_block=trends_block)
+
+    try:
+        response = client.messages.create(
+            model=model,
+            max_tokens=MAX_OUTPUT_TOKENS_DEMAND,
+            system=_system_block(niche),
+            messages=[{"role": "user", "content": prompt}],
+        )
+        parsed = _extract_json(response.content[0].text)
+    except (ClaudeParseError, Exception) as exc:
+        import sys
+        print(
+            f"synthesize_demand_from_trends: failed to parse Sonnet response — {exc}",
+            file=sys.stderr,
+        )
+        return []
+
+    rows = _coerce_cluster_list(parsed)
+    if not rows:
+        return []
+
+    out: list[DemandCluster] = []
+    for row in rows[:max_clusters]:
+        if not isinstance(row, dict) or "question_shape" not in row:
+            continue
+        try:
+            out.append(
+                DemandCluster(
+                    question_shape=row["question_shape"],
+                    askers_estimate=int(row.get("askers_estimate") or 0),
+                    quotes=[],  # synthetic — no source quotes
+                    sources=["inferred"],
+                    weekly_growth_pct=float(row.get("weekly_growth_pct") or 0),
+                    open_window_days=int(row.get("open_window_days") or 14),
+                    creator_brief=row.get("creator_brief", ""),
+                    related_trends=list(row.get("related_trends") or [])[:3],
+                )
+            )
+        except Exception:
+            continue
+    return out
+
+
 def mine_demand_clusters_for_trends(
     keywords: list[str],
     posts: list[HNPost],

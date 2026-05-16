@@ -1586,6 +1586,24 @@ def main(
                 count=len(demand_clusters),
                 elapsed_seconds=round(time.time() - demand_started, 2),
             )
+            # ULTIMATE FALLBACK: when HDBSCAN gather + per-keyword path both
+            # yield zero (typical when abstract topic terms like "speculative
+            # decoding" don't literally appear in HN post titles), synthesize
+            # 6 demand clusters from the trend list itself via one Sonnet
+            # call. Costs ~5¢ but guarantees the wedge ships content. Tagged
+            # sources=["inferred"] so the operator can see these are
+            # generated, not mined.
+            if not demand_clusters and trends:
+                synth_started = time.time()
+                demand_clusters = demand_mod.synthesize_demand_from_trends(
+                    trends, niche=niche, max_clusters=6,
+                )
+                log(
+                    "demand_clusters_synthesized",
+                    level="info",
+                    count=len(demand_clusters),
+                    elapsed_seconds=round(time.time() - synth_started, 2),
+                )
         except Exception as e:  # pragma: no cover — defensive net
             log(
                 "demand_mining_failed",
