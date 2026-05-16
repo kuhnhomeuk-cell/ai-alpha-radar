@@ -76,7 +76,11 @@ TOP_N_TRENDS = 30
 DEFAULT_NICHE = "AI tools for solo creators"
 
 ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL"]
-ARXIV_LOOKBACK_DAYS = 2
+# Widened from 2 → 14 days so the Semantic Scholar enrichment has indexed-
+# enough papers to return non-empty results (S2 indexes papers with a ~1-2
+# week lag). The downstream arxiv_30d count still uses a 30-day window for
+# the trend roll-up; this only changes what we hand to topic extraction.
+ARXIV_LOOKBACK_DAYS = 14
 HN_LOOKBACK_DAYS = 7
 
 PLACEHOLDER_SUMMARY = "(awaiting Claude enrichment)"
