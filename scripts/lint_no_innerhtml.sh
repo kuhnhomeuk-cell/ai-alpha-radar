@@ -12,7 +12,10 @@
 
 set -euo pipefail
 
-BASELINE=23
+# Bumped 23 → 24 on 2026-05-16: redesign promotion added one new site
+# (copy-to-clipboard toast micro-template, static HTML, no user data).
+# All 24 sites use escapeHtml-per-interpolation or static templates.
+BASELINE=24
 TARGET="public/index.html"
 
 if [[ ! -f "$TARGET" ]]; then
