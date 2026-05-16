@@ -109,9 +109,21 @@ def _get(url: str, token: str) -> dict[str, Any]:
 def fetch_trending(
     *, max_pages: int = 3
 ) -> list[ReplicateModel]:  # pragma: no cover — live API
-    """Walk Replicate's paginated model list. Returns [] if no token."""
+    """Walk Replicate's paginated model list. Returns [] if no token.
+
+    Failure surfacing: a missing REPLICATE_API_KEY is the dominant
+    production cause of "0 models" — log it to stderr so the run output
+    explains the empty source. HTTP errors mid-pagination also log but
+    still return whatever pages succeeded.
+    """
+    import sys
+
     token = os.environ.get("REPLICATE_API_KEY", "").strip()
     if not token:
+        print(
+            "replicate: REPLICATE_API_KEY missing — skipping model fetch",
+            file=sys.stderr,
+        )
         return []
     url: Optional[str] = REPLICATE_API_URL
     out: list[ReplicateModel] = []
@@ -119,10 +131,33 @@ def fetch_trending(
     while url and pages < max_pages:
         try:
             payload = _get(url, token)
-        except Exception:
+        except Exception as e:
+            print(
+                f"replicate: {type(e).__name__} on page {pages}; "
+                f"returning partial result ({len(out)} models so far)",
+                file=sys.stderr,
+            )
             break
         out.extend(parse_response(payload))
         url = payload.get("next")
         pages += 1
         time.sleep(REPLICATE_REQUEST_INTERVAL_SECONDS)
     return out
+
+
+if __name__ == "__main__":
+    import sys
+
+    from dotenv import load_dotenv
+
+    load_dotenv(".env.local", override=True)
+    token_set = bool(os.environ.get("REPLICATE_API_KEY", "").strip())
+    print(f"auth: {'REPLICATE_API_KEY set' if token_set else 'UNAUTHENTICATED (skip)'}")
+    models = fetch_trending(max_pages=2)
+    print(f"fetched {len(models)} public models across ≤2 pages")
+    # Sort descending by run_count and show the head — that's the signal.
+    top = sorted(models, key=lambda m: m.run_count, reverse=True)[:5]
+    for m in top:
+        print(f"  - [{m.run_count:>12,} runs] {m.owner}/{m.name}")
+    if token_set and not models:
+        sys.exit(1)
