@@ -50,7 +50,9 @@ class FakeAnthropic:
         for key, payload in self._responses.items():
             if key in prompt_text:
                 return SimpleNamespace(content=[SimpleNamespace(text=payload)])
-        raise AssertionError(f"FakeAnthropic: no canned response matches prompt: {prompt_text[:80]}")
+        raise AssertionError(
+            f"FakeAnthropic: no canned response matches prompt: {prompt_text[:80]}"
+        )
 
 
 def test_prompt_a_contains_keyword_and_signal_counts() -> None:
@@ -132,7 +134,9 @@ def test_enrich_card_strips_markdown_json_fences() -> None:
     card = _make_card()
     fake = FakeAnthropic(
         {
-            "Write a single-sentence summary": '```json\n{"summary": "x", "confidence": "low"}\n```',
+            "Write a single-sentence summary": (
+                '```json\n{"summary": "x", "confidence": "low"}\n```'
+            ),
             "Generate three YouTube Shorts angles": json.dumps(
                 {"hook": "h", "contrarian": "c", "tutorial": "t"}
             ),
@@ -327,6 +331,57 @@ def test_enrich_card_raises_when_response_unparseable() -> None:
     fake = FakeAnthropic(
         {
             "Write a single-sentence summary": "this is not json at all",
+            "Generate three YouTube Shorts angles": '{"hook":"h","contrarian":"c","tutorial":"t"}',
+            "Estimate:": (
+                '{"breakout_likelihood":"low","peak_estimate_days":null,'
+                '"risk_flag":"none","rationale":"r"}'
+            ),
+            "Explain this trend using one analogy": '{"eli_creator":"e"}',
+        }
+    )
+    with pytest.raises(summarize.ClaudeParseError):
+        summarize.enrich_card(card, client=fake)
+
+
+def test_enrich_card_raises_domain_error_for_missing_required_field() -> None:
+    card = _make_card()
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": '{"summary": "x", "confidence": "high"}',
+            "Generate three YouTube Shorts angles": '{"hook":"h","contrarian":"c","tutorial":"t"}',
+            "Estimate:": '{"breakout_likelihood":"low","risk_flag":"none","rationale":"r"}',
+            "Explain this trend using one analogy": '{"eli_creator":"e"}',
+        }
+    )
+    with pytest.raises(summarize.ClaudeParseError):
+        summarize.enrich_card(card, client=fake)
+
+
+def test_enrich_card_raises_domain_error_for_wrong_enum() -> None:
+    card = _make_card()
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": '{"summary": "x", "confidence": "certain"}',
+            "Generate three YouTube Shorts angles": '{"hook":"h","contrarian":"c","tutorial":"t"}',
+            "Estimate:": (
+                '{"breakout_likelihood":"low","peak_estimate_days":null,'
+                '"risk_flag":"none","rationale":"r"}'
+            ),
+            "Explain this trend using one analogy": '{"eli_creator":"e"}',
+        }
+    )
+    with pytest.raises(summarize.ClaudeParseError):
+        summarize.enrich_card(card, client=fake)
+
+
+def test_enrich_card_enforces_prompt_word_limits_without_exact_wording() -> None:
+    card = _make_card()
+    overlong_summary = " ".join(["word"] * 19)
+    fake = FakeAnthropic(
+        {
+            "Write a single-sentence summary": json.dumps(
+                {"summary": overlong_summary, "confidence": "high"}
+            ),
             "Generate three YouTube Shorts angles": '{"hook":"h","contrarian":"c","tutorial":"t"}',
             "Estimate:": (
                 '{"breakout_likelihood":"low","peak_estimate_days":null,'

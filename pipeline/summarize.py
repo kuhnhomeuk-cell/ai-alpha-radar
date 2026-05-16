@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from typing import Any, Iterable, Literal, Optional
 
 import anthropic
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from pipeline.models import CreatorAngles, DailyBriefing, LifecycleStage, RiskFlag
 
@@ -79,6 +79,63 @@ class CardOutput(BaseModel):
     risk: RiskFlag
 
 
+def _require_keys(payload: dict[str, Any], *, label: str, keys: tuple[str, ...]) -> None:
+    missing = [key for key in keys if key not in payload]
+    if missing:
+        raise ClaudeParseError(f"Claude {label} response missing required keys: {missing}")
+
+
+def _enforce_word_limit(value: str, *, label: str, max_words: int) -> None:
+    if len(value.split()) > max_words:
+        raise ClaudeParseError(
+            f"Claude {label} response exceeded {max_words} words"
+        )
+
+
+def _validate_card_output(output: CardOutput) -> CardOutput:
+    _enforce_word_limit(output.summary, label="summary", max_words=18)
+    _enforce_word_limit(output.angles.hook, label="hook", max_words=12)
+    _enforce_word_limit(output.angles.contrarian, label="contrarian", max_words=12)
+    _enforce_word_limit(output.angles.tutorial, label="tutorial", max_words=12)
+    _enforce_word_limit(output.angles.eli_creator, label="eli_creator", max_words=40)
+    _enforce_word_limit(output.risk.rationale, label="risk rationale", max_words=25)
+    return output
+
+
+def _card_output_from_parts(
+    a: dict[str, Any], b: dict[str, Any], c: dict[str, Any], d: dict[str, Any]
+) -> CardOutput:
+    _require_keys(a, label="summary", keys=("summary", "confidence"))
+    _require_keys(b, label="angles", keys=("hook", "contrarian", "tutorial"))
+    _require_keys(
+        c,
+        label="risk",
+        keys=("breakout_likelihood", "peak_estimate_days", "risk_flag", "rationale"),
+    )
+    _require_keys(d, label="ELI creator", keys=("eli_creator",))
+    try:
+        return _validate_card_output(
+            CardOutput(
+                summary=a["summary"],
+                summary_confidence=a["confidence"],
+                angles=CreatorAngles(
+                    hook=b["hook"],
+                    contrarian=b["contrarian"],
+                    tutorial=b["tutorial"],
+                    eli_creator=d["eli_creator"],
+                ),
+                risk=RiskFlag(
+                    breakout_likelihood=c["breakout_likelihood"],
+                    peak_estimate_days=c["peak_estimate_days"],
+                    risk_flag=c["risk_flag"],
+                    rationale=c["rationale"],
+                ),
+            )
+        )
+    except ValidationError as e:
+        raise ClaudeParseError("Claude response failed card output validation") from e
+
+
 # ---------- Prompts (verbatim PLAN.md §7.2) ----------
 
 
@@ -100,7 +157,8 @@ def _build_prompt_b(card: CardInput, *, summary: str) -> str:
         f"Trend keyword: {card.keyword}\n"
         f"Summary: {summary}\n"
         f"Creator niche: {card.user_niche}\n\n"
-        "Generate three YouTube Shorts angles. Each must be a standalone-titleable hook (<=12 words).\n"
+        "Generate three YouTube Shorts angles. Each must be a standalone-titleable "
+        "hook (<=12 words).\n"
         "- \"hook\": the most clickable framing\n"
         "- \"contrarian\": the unpopular-take framing\n"
         "- \"tutorial\": the how-to framing\n\n"
@@ -197,22 +255,7 @@ def enrich_card(
         client, niche=card.user_niche, user_prompt=_build_prompt_d(card, summary=summary)
     )
 
-    return CardOutput(
-        summary=summary,
-        summary_confidence=a["confidence"],
-        angles=CreatorAngles(
-            hook=b["hook"],
-            contrarian=b["contrarian"],
-            tutorial=b["tutorial"],
-            eli_creator=d["eli_creator"],
-        ),
-        risk=RiskFlag(
-            breakout_likelihood=c["breakout_likelihood"],
-            peak_estimate_days=c.get("peak_estimate_days"),
-            risk_flag=c["risk_flag"],
-            rationale=c["rationale"],
-        ),
-    )
+    return _card_output_from_parts(a, b, c, d)
 
 
 # ---------- Batch API ----------
@@ -329,22 +372,10 @@ def enrich_cards_batch(
         d = stage2_results.get(f"d_{i}")
         if not all([a, b, c, d]):
             continue
-        outputs[i] = CardOutput(
-            summary=a["summary"],
-            summary_confidence=a["confidence"],
-            angles=CreatorAngles(
-                hook=b["hook"],
-                contrarian=b["contrarian"],
-                tutorial=b["tutorial"],
-                eli_creator=d["eli_creator"],
-            ),
-            risk=RiskFlag(
-                breakout_likelihood=c["breakout_likelihood"],
-                peak_estimate_days=c.get("peak_estimate_days"),
-                risk_flag=c["risk_flag"],
-                rationale=c["rationale"],
-            ),
-        )
+        try:
+            outputs[i] = _card_output_from_parts(a, b, c, d)
+        except ClaudeParseError:
+            continue
     return outputs
 
 

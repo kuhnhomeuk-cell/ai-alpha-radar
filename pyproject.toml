@@ -34,8 +34,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra"
+addopts = "-ra -m 'not slow'"
 pythonpath = ["."]
+markers = [
+    "slow: tests that load local embedding or clustering models",
+]
 
 [tool.ruff]
 line-length = 100

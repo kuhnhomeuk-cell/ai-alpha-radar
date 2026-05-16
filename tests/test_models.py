@@ -77,6 +77,25 @@ def test_source_counts_defaults_zero() -> None:
     assert counts.x_posts_7d == 0
 
 
+def test_source_counts_reject_negative_values() -> None:
+    with pytest.raises(ValidationError):
+        models.SourceCounts(arxiv_30d=-1)
+
+
+def test_trend_rejects_out_of_range_scores() -> None:
+    bad = _example_trend().model_dump()
+    bad["tbts"] = 101
+    with pytest.raises(ValidationError):
+        models.Trend.model_validate(bad)
+
+
+def test_trend_rejects_unknown_extra_fields() -> None:
+    bad = _example_trend().model_dump()
+    bad["new_frontend_field"] = "surprise"
+    with pytest.raises(ValidationError):
+        models.Trend.model_validate(bad)
+
+
 def test_lifecycle_stage_rejects_unknown_value() -> None:
     bad = _example_trend().model_dump()
     bad["lifecycle_stage"] = "moon"
@@ -127,6 +146,28 @@ def test_risk_flag_allows_null_peak_estimate() -> None:
         rationale="Too early to estimate.",
     )
     assert risk.peak_estimate_days is None
+
+
+def test_risk_flag_rejects_negative_peak_estimate() -> None:
+    with pytest.raises(ValidationError):
+        models.RiskFlag(
+            breakout_likelihood="low",
+            peak_estimate_days=-1,
+            risk_flag="none",
+            rationale="Too early to estimate.",
+        )
+
+
+def test_convergence_false_event_rejects_non_empty_window_data() -> None:
+    with pytest.raises(ValidationError):
+        models.ConvergenceEvent(
+            detected=False,
+            sources_hit=["arxiv"],
+            window_hours=72,
+            first_appearance={
+                "arxiv": datetime(2026, 5, 10, 4, 0, tzinfo=timezone.utc)
+            },
+        )
 
 
 def test_trend_aliases_default_empty_list() -> None:

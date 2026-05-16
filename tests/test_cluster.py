@@ -5,6 +5,8 @@ test runs use that cache. Tests deliberately use clearly-semantic phrases
 (not acronyms) so MiniLM's embedding space cleanly separates them.
 """
 
+import pytest
+
 from pipeline import cluster
 
 
@@ -26,6 +28,7 @@ def test_min_cluster_size_is_two_for_topics() -> None:
     assert cluster.HDBSCAN_MIN_CLUSTER_SIZE == 2
 
 
+@pytest.mark.slow
 def test_cluster_topics_thin_wrapper_returns_same_shape() -> None:
     """cluster_topics is a semantic alias of cluster_terms for the new pipeline."""
     names = [
@@ -45,6 +48,7 @@ def test_cluster_topics_thin_wrapper_returns_same_shape() -> None:
         assert isinstance(ca.cluster_label, str)
 
 
+@pytest.mark.slow
 def test_two_semantic_groups_cluster_separately() -> None:
     # Two clearly distinct semantic clusters. Six terms each, plus one outlier.
     world_model = [
@@ -78,6 +82,7 @@ def test_two_semantic_groups_cluster_separately() -> None:
     assert out["yogurt parfait"].cluster_id == -1
 
 
+@pytest.mark.slow
 def test_velocity_picks_cluster_label() -> None:
     # Two padded semantic clusters so HDBSCAN reliably forms them. The
     # velocity-based naming only matters when a cluster exists.
@@ -123,6 +128,7 @@ def test_velocity_picks_cluster_label() -> None:
     )
 
 
+@pytest.mark.slow
 def test_unclustered_default_label() -> None:
     # Mix of 3 unrelated terms; HDBSCAN should mark most as noise.
     out = cluster.cluster_terms(["yogurt", "asphalt", "kitten meow"])

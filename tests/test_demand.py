@@ -75,6 +75,11 @@ class FakeAnthropic:
         return SimpleNamespace(content=[SimpleNamespace(text=self._response_text)])
 
 
+class FakeEmbeddingModel:
+    def encode(self, texts: list[str], show_progress_bar: bool = False) -> list[list[float]]:
+        return [[1.0, 0.0] if "MCP" in text else [0.0, 1.0] for text in texts]
+
+
 def test_mine_demand_cluster_parses_claude_list_response() -> None:
     posts = [
         _post(
@@ -187,7 +192,8 @@ def test_dedupe_keeps_singletons_unchanged() -> None:
     assert out[0].question_shape == clusters[0].question_shape
 
 
-def test_dedupe_merges_near_duplicate_question_shapes() -> None:
+def test_dedupe_merges_near_duplicate_question_shapes(monkeypatch) -> None:
+    monkeypatch.setattr(demand, "_get_model", lambda: FakeEmbeddingModel())
     clusters = [
         DemandCluster(
             question_shape="How do I deploy MCP servers locally with Claude Desktop?",

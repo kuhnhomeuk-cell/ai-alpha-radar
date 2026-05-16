@@ -85,7 +85,9 @@ frontend interface; any change requires a frontend coordination note.
         8,
         9,
         10
-      ]
+      ],
+      "aliases": [],
+      "source_doc_ids": {}
     }
   ],
   "demand_clusters": [
