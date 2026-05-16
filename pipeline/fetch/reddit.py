@@ -207,9 +207,15 @@ def fetch_top_posts(
     aggressively rate-limits anonymous traffic with default UAs, so
     supply a real one if you can).
 
-    Returns [] on any total failure — individual subreddit failures
-    are swallowed so one rate-limited subreddit doesn't kill the rest.
+    Production state (2026-05): Reddit returns 403 to anonymous RSS
+    requests from datacenter IPs regardless of UA. Per-subreddit
+    failures are swallowed (one rate-limited sub shouldn't kill the
+    rest), but the failure mode is now logged to stderr so operators
+    can tell "0 posts" apart from "Reddit blocked us entirely". When
+    every subreddit fails, that's the loud signal.
     """
+    import sys
+
     user_agent = os.environ.get("REDDIT_USER_AGENT", REDDIT_USER_AGENT_FALLBACK)
     if subreddits is None:
         subreddits = load_subreddit_list()
@@ -217,14 +223,42 @@ def fetch_top_posts(
         return []
 
     out: list[RedditPost] = []
+    failures: list[tuple[str, str]] = []
     for sub_name in subreddits:
         url = f"{REDDIT_RSS_URL_TEMPLATE.format(sub=sub_name)}?t={time_filter}&limit={limit_per_sub}"
         try:
             xml = _fetch_rss(url, user_agent)
-        except Exception:
+        except Exception as e:
+            failures.append((sub_name, f"{type(e).__name__}: {e}"))
             continue
         feed = feedparser.parse(xml)
         for entry in feed.entries[:limit_per_sub]:
             out.append(parse_rss_entry(entry, subreddit=sub_name))
         time.sleep(REDDIT_REQUEST_INTERVAL_SECONDS)
+    if failures and not out:
+        # All subreddits failed — Reddit is blocking the whole batch.
+        # Log a single summary line so the operator sees the real issue
+        # in the daily run output. Per-sub detail still goes to stderr.
+        print(
+            f"reddit: all {len(failures)} subreddits failed "
+            f"(likely 403 from anonymous RSS; need OAuth path)",
+            file=sys.stderr,
+        )
+        for sub_name, reason in failures[:3]:
+            print(f"  r/{sub_name}: {reason}", file=sys.stderr)
     return dedupe_posts(out)
+
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    load_dotenv(".env.local", override=True)
+    subs = load_subreddit_list()
+    print(f"trying {len(subs)} subreddits: {subs}")
+    posts = fetch_top_posts(subreddits=subs[:5], limit_per_sub=10)
+    print(f"fetched {len(posts)} posts")
+    for p in posts[:5]:
+        print(f"  - r/{p.subreddit}: {p.title[:70]}")
+    # We don't sys.exit(1) on empty — Reddit's 403 wall is the known
+    # production state until OAuth is wired (week-4 spec). The verifier's
+    # job is to show the operator what happened, not gate the build.

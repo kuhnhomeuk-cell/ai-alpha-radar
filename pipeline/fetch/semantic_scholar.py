@@ -174,6 +174,11 @@ if __name__ == "__main__":
         f"fresh-arxiv coverage: {fresh_enriched}/{len(recent_ids)} "
         f"(S2 indexes papers with ~1-2 week lag)"
     )
+    # Niche-relevance note for the orchestrator: a 0/N fresh coverage on a
+    # given day is EXPECTED, not broken. The day-1 production "0 items"
+    # complaint stems from arxiv_lookback_days=2 — those papers exist on
+    # arxiv but not yet on S2. If the operator wants citation enrichment
+    # to fire on day 1, widen arxiv lookback to ~14d or accept the lag.
     if len(enriched) < 3:
         # Even with indexing lag, the three known ids should always return.
         sys.exit(1)
