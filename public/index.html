@@ -3315,6 +3315,16 @@ main {
   stroke: rgba(0, 0, 0, 0.08);
 }
 
+.quad-empty-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  fill: var(--ink-3);
+  opacity: 0.4;
+  font-style: italic;
+  pointer-events: none;
+}
+
 .bubble-fallback-svg {
   display: block;
   width: 100%;
@@ -5631,12 +5641,16 @@ function renderBubbleFallback(el) {
 
   // Hash jitter — wider amplitude in quadrant mode so the 24 trends piling
   // up at velocity≈0.43, saturation=0 actually scatter inside the BR / TR
-  // zones instead of stacking invisibly.
-  const _hashJitter = (kw) => {
+  // zones instead of stacking invisibly. PRE-BREAKOUT (BR) gets an even
+  // wider amplitude (±48 / ±36) because that is where today's pile-up
+  // concentrates (see #4).
+  const _hashJitter = (kw, isPreBreakout) => {
     let h = 0;
     for (let i = 0; i < kw.length; i++) h = ((h * 31) + kw.charCodeAt(i)) | 0;
-    const jx = ((h & 0xff) / 255 - 0.5) * 64;        // ±32 px
-    const jy = (((h >> 8) & 0xff) / 255 - 0.5) * 48; // ±24 px
+    const xAmp = isPreBreakout ? 96 : 64;  // ±48 vs ±32
+    const yAmp = isPreBreakout ? 72 : 48;  // ±36 vs ±24
+    const jx = ((h & 0xff) / 255 - 0.5) * xAmp;
+    const jy = (((h >> 8) & 0xff) / 255 - 0.5) * yAmp;
     return { jx, jy };
   };
   const _sortedTrendsByTbts = [...TRENDS].sort((a, b) => (b.tbts || 0) - (a.tbts || 0));
@@ -5655,9 +5669,12 @@ function renderBubbleFallback(el) {
         const sel = kw === state.selectedKeyword;
         const clusterActive = state.activeCluster === null || t.cluster_id === state.activeCluster;
         const lit = stageActive && clusterActive;
-        const r = Math.max(9, 8 + (t.hidden_gem || 0) * 32);
+        const baseR = Math.max(9, 8 + (t.hidden_gem || 0) * 32);
+        let r = baseR;
         const color = STAGE_META[stage]?.color || '#9aa7ba';
-        const { jx, jy } = _hashJitter(kw);
+        const _headroom = 100 - (t.saturation || 0);
+        const _isPreBreakout = _headroom > 50 && (t.velocity || 0) < Y_DIVIDER_VELOCITY;
+        const { jx, jy } = _hashJitter(kw, _isPreBreakout);
         // Clamp jittered position inside the plot so bubbles don't escape.
         let cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, x(t.saturation) + jx));
         const cy = Math.max(pad.top + r,  Math.min(pad.top + plotH - r, y(t.velocity || 0) + jy));
@@ -5732,6 +5749,43 @@ function renderBubbleFallback(el) {
       }
     });
 
+  // Overlap shrink (#4b): any bubble whose circle intersects another's gets
+  // its radius shrunk 20% so each remains individually visible inside the
+  // cluster instead of merging into one green blob.
+  trendGeometry.forEach(g => {
+    for (const other of trendGeometry) {
+      if (other === g) continue;
+      const dx = g.cx - other.cx;
+      const dy = g.cy - other.cy;
+      if ((dx * dx + dy * dy) < (g.r + other.r) * (g.r + other.r)) {
+        g.r = g.r * 0.8;
+        break;
+      }
+    }
+  });
+
+  // Empty-quadrant copy (#5): if a quadrant has zero visible bubbles, drop a
+  // dimmed line in its center so the dead space reads as a signal ("nothing
+  // here this week") instead of wasted real estate.
+  const _quadCounts = { tr: 0, tl: 0, br: 0, bl: 0 };
+  trendGeometry.forEach(g => {
+    if (!g.lit) return;
+    const right = g.cx >= xDivider;
+    const top   = g.cy <= yDivider;
+    _quadCounts[(top ? 't' : 'b') + (right ? 'r' : 'l')]++;
+  });
+  const QUAD_CENTERS = {
+    tr: { cx: (xDivider + pad.left + plotW) / 2, cy: (pad.top + yDivider) / 2 },
+    tl: { cx: (pad.left + xDivider) / 2,         cy: (pad.top + yDivider) / 2 },
+    br: { cx: (xDivider + pad.left + plotW) / 2, cy: (yDivider + pad.top + plotH) / 2 },
+    bl: { cx: (pad.left + xDivider) / 2,         cy: (yDivider + pad.top + plotH) / 2 },
+  };
+  const emptyQuadrantMarkup = Object.keys(_quadCounts).map(id => {
+    if (_quadCounts[id] > 0) return '';
+    const c = QUAD_CENTERS[id];
+    return `<text x="${c.cx}" y="${c.cy}" text-anchor="middle" class="quad-empty-text">No trends here yet — check back in a week</text>`;
+  }).join('');
+
   const points = trendGeometry.map(g => {
     const showLabel = g.sel || _topNVisible.has(g.kw);
     return `
@@ -5764,6 +5818,7 @@ function renderBubbleFallback(el) {
       ${dividerLines}
       ${xTicks}
       ${regionMarkup}
+      ${emptyQuadrantMarkup}
       ${points}
       ${quadrantLabels}
       <text x="${pad.left + plotW / 2}" y="${height - 2}" class="fallback-axis-title" text-anchor="middle">← MAINSTREAM   ·   HEADROOM   ·   NICHE →</text>
