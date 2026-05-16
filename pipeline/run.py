@@ -41,6 +41,7 @@ from pipeline import novelty as novelty_mod
 from pipeline import predict, questions as question_mining, rrf, score, snapshot, summarize, topics
 from pipeline.fetch import arxiv, github, hackernews
 from pipeline.fetch import bluesky, huggingface, newsletters
+from pipeline.fetch import grok as grok_fetcher
 from pipeline.fetch import perplexity as perplexity_fetcher
 from pipeline.fetch import producthunt as producthunt_fetcher
 from pipeline.fetch import reddit as reddit_fetcher
@@ -471,6 +472,33 @@ def _maybe_enrich_with_perplexity(
         spent_cents += cost
         if points:
             out.append(t.model_copy(update={"pain_points": points}))
+        else:
+            out.append(t)
+    return out, spent_cents
+
+
+def _maybe_enrich_with_grok(
+    trends: list[Trend], *, budget_cents: Optional[float] = None
+) -> tuple[list[Trend], float]:
+    """Wave 6 — fill `SourceCounts.x_posts_7d` per trend from xAI X Search.
+
+    Stops early when `budget_cents` is exhausted (remaining trends keep
+    `x_posts_7d=0`). Individual failures degrade silently — X mentions are
+    a signal, not a hard input. Returns (enriched_trends, total_cents).
+    """
+    if not trends:
+        return trends, 0.0
+    spent_cents: float = 0.0
+    out: list[Trend] = []
+    for t in trends:
+        if budget_cents is not None and spent_cents >= budget_cents:
+            out.append(t)
+            continue
+        count, cost = grok_fetcher.fetch_x_mention_count(t.keyword)
+        spent_cents += cost
+        if count > 0:
+            new_sources = t.sources.model_copy(update={"x_posts_7d": count})
+            out.append(t.model_copy(update={"sources": new_sources}))
         else:
             out.append(t)
     return out, spent_cents
@@ -1054,6 +1082,25 @@ def main(
             level="info",
             trends_enriched=sum(1 for t in trends if t.pain_points),
             spent_cents=round(perplexity_spent_cents, 2),
+        )
+
+        # ---- 9c. Grok X-mention enrichment (Wave 6) ----
+        # Same cost-cap pool. Remaining budget after Claude + Perplexity is
+        # what's left for Grok. Per-trend failures degrade silently — X
+        # mentions are an enrichment signal, not a hard input.
+        grok_budget_cents = (
+            None
+            if max_cost_cents is None
+            else max(0.0, max_cost_cents - estimated_cents - perplexity_spent_cents)
+        )
+        trends, grok_spent_cents = _maybe_enrich_with_grok(
+            trends, budget_cents=grok_budget_cents
+        )
+        log(
+            "grok_enrichment_done",
+            level="info",
+            trends_enriched=sum(1 for t in trends if t.sources.x_posts_7d > 0),
+            spent_cents=round(grok_spent_cents, 2),
         )
 
     # ---- 10. Predictions update ----
