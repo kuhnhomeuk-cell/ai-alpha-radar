@@ -5136,12 +5136,20 @@ function renderSourceHealth() {
   const labels = {
     arxiv: 'arXiv', github: 'GitHub', hackernews: 'HN',
     reddit: 'Reddit', huggingface: 'HF', semantic_scholar: 'SemScholar',
+    producthunt: 'PH', replicate: 'Replicate',
+    bluesky: 'Bluesky', newsletters: 'NL',
     digg: 'Digg',
   };
   const sources = (META && META.sources) || {};
   const parts = Object.entries(labels).map(([key, label]) => {
-    const s = sources[key] || { ok: false, fetched: 0 };
-    if (s.ok) {
+    const s = sources[key] || { fetched: 0 };
+    // Infer health when `ok` is missing: a source is healthy iff it
+    // returned a non-zero fetched count. Bluesky also exposes
+    // `topic_attributed` — fall back to that when present.
+    const isOk = (typeof s.ok === 'boolean')
+      ? s.ok
+      : ((s.topic_attributed || s.fetched || 0) > 0);
+    if (isOk) {
       return `<span class="src-item"><span class="name">${label}</span><span class="ok">✓</span><span class="count">${s.fetched || 0}</span></span>`;
     }
     return `<span class="src-item"><span class="name">${label}</span><span class="fail">✗</span><span class="stale-pill">stale</span></span>`;
