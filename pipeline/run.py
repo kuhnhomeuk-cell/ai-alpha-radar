@@ -700,6 +700,59 @@ def _maybe_enrich_with_claude(
     return out
 
 
+# Conservative per-trend cost for predict.generate_prediction (one Haiku
+# call, ~150 input + 150 output tokens). Used by the cost gate so
+# reordering doesn't sneak past the cap.
+PREDICTION_COST_CENTS_PER_TREND = 0.1
+
+
+def _maybe_enrich_predictions_with_claude(
+    trends: list[Trend],
+    *,
+    today: date,
+    niche: str,
+    budget_cents: Optional[float] = None,
+) -> tuple[list[Trend], float]:
+    """Replace each Trend's placeholder prediction with a Claude-generated
+    forecast. One Haiku call per trend (no batch API for predictions —
+    each prompt is independent and short, so the per-call overhead is
+    tiny).
+
+    Per-trend failures degrade silently — the placeholder prediction
+    stays so step 10's append still files a row (deduped on
+    keyword+target_lifecycle). Stops early when `budget_cents` is
+    exhausted; remaining trends keep their placeholder.
+    """
+    if not trends:
+        return trends, 0.0
+    spent_cents: float = 0.0
+    out: list[Trend] = []
+    client = anthropic.Anthropic()
+    for t in trends:
+        if budget_cents is not None and spent_cents >= budget_cents:
+            out.append(t)
+            continue
+        try:
+            pred = predict.generate_prediction(
+                keyword=t.keyword,
+                current_lifecycle=t.lifecycle_stage,
+                today=today,
+                user_niche=niche,
+                client=client,
+            )
+            out.append(t.model_copy(update={"prediction": pred}))
+            spent_cents += PREDICTION_COST_CENTS_PER_TREND
+        except Exception as e:
+            log(
+                "prediction_gen_failed",
+                level="warning",
+                keyword=t.keyword,
+                error=str(e),
+            )
+            out.append(t)
+    return out, spent_cents
+
+
 # ---------- entrypoint ----------
 
 
@@ -1354,8 +1407,16 @@ def main(
         # the shared cap since 9a fires before 9b and reordering must not
         # sneak past the existing budget gate.
         perplexity_estimated_cents = float(len(trends))
+        # Prediction generation: one Haiku call per trend at
+        # PREDICTION_COST_CENTS_PER_TREND each.
+        prediction_estimated_cents = (
+            float(len(trends)) * PREDICTION_COST_CENTS_PER_TREND
+        )
         total_claude_estimate = (
-            estimated_cents + demand_estimated_cents + perplexity_estimated_cents
+            estimated_cents
+            + demand_estimated_cents
+            + perplexity_estimated_cents
+            + prediction_estimated_cents
         )
         if max_cost_cents is not None and total_claude_estimate > max_cost_cents:
             log(
@@ -1365,6 +1426,7 @@ def main(
                 claude_card_cents=round(estimated_cents, 2),
                 demand_batch_cents=round(demand_estimated_cents, 2),
                 perplexity_cents=round(perplexity_estimated_cents, 2),
+                prediction_cents=round(prediction_estimated_cents, 2),
                 cap_cents=round(max_cost_cents, 2),
                 num_cards=len(trends),
             )
@@ -1412,6 +1474,37 @@ def main(
             level="info",
             trends_enriched=sum(1 for t in trends if t.sources.x_posts_7d > 0),
             spent_cents=round(grok_spent_cents, 2),
+        )
+
+        # ---- 9d. Claude-generated predictions ----
+        # Replace placeholder predictions with one Haiku call per trend.
+        # Per-trend failures degrade silently — the placeholder stays so
+        # step 10 still appends a row (deduped on keyword+target_lifecycle).
+        prediction_budget_cents = (
+            None
+            if max_cost_cents is None
+            else max(
+                0.0,
+                max_cost_cents
+                - estimated_cents
+                - perplexity_spent_cents
+                - grok_spent_cents
+                - demand_estimated_cents,
+            )
+        )
+        trends, prediction_spent_cents = _maybe_enrich_predictions_with_claude(
+            trends, today=today_d, niche=niche, budget_cents=prediction_budget_cents
+        )
+        log(
+            "prediction_generation_done",
+            level="info",
+            trends_with_claude_prediction=sum(
+                1
+                for t in trends
+                if t.prediction is not None
+                and "placeholder" not in (t.prediction.text or "")
+            ),
+            spent_cents=round(prediction_spent_cents, 2),
         )
 
     # ---- 10. Predictions update ----

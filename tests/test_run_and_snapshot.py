@@ -293,6 +293,68 @@ def test_orchestrator_loads_existing_predictions_into_hit_rate(tmp_path: Path) -
     assert snap.hit_rate.rate == 1.0
 
 
+def test_maybe_enrich_predictions_with_claude_replaces_placeholder(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Claude-generated prediction path should overwrite the
+    placeholder prediction on each trend. Per-trend failures should
+    leave the placeholder intact so step 10 still appends a row."""
+    from pipeline import predict
+    from pipeline.models import Prediction
+
+    # Build a minimal Trend list with placeholder predictions
+    snap = run.main(
+        today=date(2026, 5, 13),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        use_claude=False,
+        extract_topics_fn=_stub_extract_topics,
+        public_dir=Path("/tmp/test_predict_path"),
+        predictions_log=Path("/tmp/test_predict_path") / "predictions.jsonl",
+    )
+    trends_before = list(snap.trends)
+    assert all("placeholder" in t.prediction.text for t in trends_before), \
+        "fixture sanity: every trend should start with a placeholder"
+
+    # Stub generate_prediction to return a recognisable real prediction.
+    # First trend succeeds, second trend raises (degrade-silently path),
+    # remaining succeed.
+    call_count = {"n": 0}
+
+    def fake_generate(*, keyword, current_lifecycle, today, user_niche, client):
+        call_count["n"] += 1
+        if call_count["n"] == 2:
+            raise RuntimeError("simulated Sonar outage")
+        return Prediction(
+            keyword=keyword,
+            text=f"Claude says: {keyword} reaches builder by 2026-06-30.",
+            filed_at=today,
+            target_date=date(2026, 6, 30),
+            verdict="pending",
+            lifecycle_at_filing=current_lifecycle,
+            target_lifecycle="builder",
+        )
+
+    monkeypatch.setattr(predict, "generate_prediction", fake_generate)
+    # Bypass anthropic.Anthropic() instantiation — fake_generate ignores the client.
+    monkeypatch.setattr(run.anthropic, "Anthropic", lambda *_a, **_kw: None)
+
+    enriched, spent = run._maybe_enrich_predictions_with_claude(
+        trends_before, today=date(2026, 5, 13), niche="AI tools for solo creators"
+    )
+    assert len(enriched) == len(trends_before)
+    # All but the deliberately-raising second one should have a Claude prediction
+    claude_predictions = [t for t in enriched if "Claude says:" in (t.prediction.text or "")]
+    placeholders_remaining = [t for t in enriched if "placeholder" in (t.prediction.text or "")]
+    assert len(claude_predictions) == len(trends_before) - 1
+    assert len(placeholders_remaining) == 1
+    # Cost accumulated only for successful calls
+    assert spent == pytest.approx(
+        run.PREDICTION_COST_CENTS_PER_TREND * len(claude_predictions)
+    )
+
+
 def test_orchestrator_appends_new_predictions_to_log(tmp_path: Path) -> None:
     """append_prediction was defined in pipeline.predict but never invoked
     from the orchestrator — the predictions log stayed frozen at whatever
