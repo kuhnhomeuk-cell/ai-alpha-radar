@@ -493,9 +493,23 @@ html::after {
 .topbar .right {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: 18px;
   min-width: 0;
   flex-shrink: 0;
+}
+/* Visual divider between utility groups — search vs personal-state vs theme.
+   1px hairline at 18px gap (no extra spacing required). */
+.topbar .right > * + .watchlist-pill,
+.topbar .right > * + .theme-toggle,
+.topbar .right > * + .niche-wrap { position: relative; }
+.topbar .right > * + .theme-toggle::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--line);
 }
 .meta-text {
   font-family: var(--mono);
@@ -846,39 +860,82 @@ html::after {
 .briefing-text .briefing-p:last-child { margin-bottom: 0; }
 .briefing-text strong { color: var(--ink); font-weight: 600; }
 
+/* Filter bar — two deliberate rows. Primary row: Stage / Source / Sort
+   plus the Daily Briefing utility action on the right. Secondary row:
+   Overlay only (quieter). 8px gap WITHIN a group, 24px gap BETWEEN
+   groups, with a 1px divider as a visual anchor (see #4, #5, #6). */
 .filters {
-  display: flex; gap: 10px; align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin: var(--sp-4) var(--sp-5) 0;
-  padding: 10px 14px;
+  padding: 0;
   background: transparent;
   border: none;
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
   flex-wrap: wrap;
   row-gap: 10px;
 }
+.filter-row-secondary {
+  margin-left: 0;
+  opacity: 0.92;
+}
+
 .filters .label {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink-3);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding-right: 8px;
-  border-right: 1px solid rgba(255, 255, 255, 0.14);
-  margin-right: 8px;
   white-space: nowrap;
-}
-:root[data-theme="light"] .filters .label {
-  border-right-color: rgba(0, 0, 0, 0.16);
+  font-variant: small-caps;
 }
 .filter-group {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  flex-wrap: nowrap;
+  min-height: 30px;
+}
+.filter-group .chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex-wrap: nowrap;
 }
-.filter-more-group[hidden] { display: none; }
-.filter-more {
-  font-style: italic;
-  color: var(--ink-3);
+
+/* Daily Briefing is a utility action, NOT a filter — outlined treatment
+   so it doesn't read as another filter chip (see #7). Pushed to the
+   right edge of row 1 via margin-left:auto. */
+.briefing-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 100px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.briefing-toggle:hover {
+  color: var(--ink);
+  border-color: var(--champagne);
+  background: rgba(232, 196, 100, 0.06);
+}
+.briefing-toggle .bt-icon { font-size: 11px; color: var(--champagne); }
+:root[data-theme="light"] .briefing-toggle {
+  border-color: rgba(0, 0, 0, 0.18);
 }
 .chip {
   padding: 5px 10px;
@@ -1069,24 +1126,24 @@ html::after {
 .leaderboard::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 3px; }
 .lb-row {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 48px 40px 38px 22px;
-  padding: 10px 14px;
+  grid-template-columns: 26px minmax(0, 1fr) 48px 44px 36px 22px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--line);
   align-items: center;
   cursor: pointer;
-  gap: 8px;
-  min-height: 60px;
-  transition: background 0.1s;
+  gap: 12px;
+  min-height: 76px;
+  transition: background 0.12s;
 }
-.lb-main { min-width: 0; }
+.lb-main { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .lb-consensus {
-  margin-top: 4px;
+  margin-top: 2px;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
 }
-.lb-spark { display: inline-flex; opacity: 0.85; width: 48px; height: 14px; justify-content: center; }
+.lb-spark { display: inline-flex; opacity: 0.72; width: 48px; height: 14px; justify-content: center; }
 .lb-spark svg { display: block; }
 .lb-volume {
   margin-left: 10px;
@@ -1148,31 +1205,56 @@ html::after {
   display: inline-block;
 }
 .lb-row:hover { background: rgba(0, 240, 255, 0.04); }
-.lb-row .rank { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.lb-row .rank {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+  align-self: start;
+  padding-top: 2px;
+}
 .lb-row .name {
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
+  letter-spacing: -0.005em;
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.25;
 }
 .lb-row .stage-mini {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 9.5px;
   letter-spacing: 0.05em;
-  margin-top: 2px;
-  display: flex; align-items: center; gap: 4px;
+  margin-top: 0;
+  display: flex; align-items: center; gap: 6px;
+  opacity: 0.78;
+}
+.lb-row .stage-mini .stage-dot { box-shadow: none; }
+.lb-row .stage-mini .lb-volume {
+  margin-left: 8px;
+  padding-left: 8px;
+  color: var(--ink-3);
 }
 .lb-row .tbts {
-  font-family: var(--mono);
-  font-size: 14px;
+  font-family: var(--sans);
+  font-size: 18px;
   font-weight: 600;
   color: var(--ink);
   text-align: right;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
-.lb-row .vel { font-family: var(--mono); font-size: 10px; text-align: right; color: var(--ink-3); }
+.lb-row .vel {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-align: right;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
 .lb-row .vel.up   { color: var(--good); }
 .lb-row .vel.down { color: var(--bad); }
 
@@ -3206,8 +3288,9 @@ main {
 }
 
 .filters .label {
-  /* keep border-right + padding-right from the base rule so each section
-     reads as a clear divider (see #31) rather than another chip */
+  /* color override only; the new rhythm comes from the filter-row grid
+     + .filter-divider markers, not from per-label borders (see Phase 1
+     rebuild of the filter row). */
   color: var(--ink-3);
 }
 
@@ -3304,24 +3387,24 @@ main {
 }
 .quad-label {
   font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  fill: var(--ink);
+  fill: rgba(226, 236, 246, 0.78);
   paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.55);
-  stroke-width: 3px;
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 2.5px;
   stroke-linejoin: round;
 }
 .quad-sublabel {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 8.5px;
   letter-spacing: 0.06em;
-  fill: var(--ink-3);
+  fill: rgba(125, 142, 166, 0.86);
   paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.55);
-  stroke-width: 3px;
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 2.5px;
   stroke-linejoin: round;
 }
 :root[data-theme="light"] .quad-label,
@@ -4794,44 +4877,51 @@ footer .quote {
   <div class="briefing-text" id="briefingText" hidden>—</div>
 
   <div class="filters">
-    <button type="button" class="chip briefing-toggle" id="briefingToggle"
-            aria-label="Open Daily Movers briefing"
-            onclick="window.toggleBriefing && window.toggleBriefing()">
-      ⚡ Daily Briefing
-    </button>
-    <div class="filter-group">
-      <span class="label">Stage</span>
-      <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
-      <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
-      <span class="chip active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
-      <span class="chip"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
-      <span class="chip"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
+    <div class="filter-row filter-row-primary">
+      <div class="filter-group">
+        <span class="label">Stage</span>
+        <div class="chips">
+          <span class="chip active" data-filter="stage" data-value="whisper"><span class="stage-dot whisper"></span>Whisper</span>
+          <span class="chip active" data-filter="stage" data-value="builder"><span class="stage-dot builder"></span>Builder</span>
+          <span class="chip active" data-filter="stage" data-value="creator"><span class="stage-dot creator"></span>Creator</span>
+          <span class="chip"        data-filter="stage" data-value="hype"><span class="stage-dot hype"></span>Hype</span>
+          <span class="chip"        data-filter="stage" data-value="commodity"><span class="stage-dot commodity"></span>Commodity</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="label">Source</span>
+        <div class="chips">
+          <span class="chip active" data-filter="source" data-value="arxiv">arXiv</span>
+          <span class="chip active" data-filter="source" data-value="github">GitHub</span>
+          <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
+          <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
+          <span class="chip active" data-filter="source" data-value="digg">Digg</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="label">Sort</span>
+        <div class="chips">
+          <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
+          <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
+          <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
+        </div>
+      </div>
     </div>
 
-    <div class="filter-group">
-      <span class="label">Source</span>
-      <span class="chip active" data-filter="source" data-value="arxiv">arXiv</span>
-      <span class="chip active" data-filter="source" data-value="github">GitHub</span>
-      <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
-      <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
-      <span class="chip active" data-filter="source" data-value="digg">Digg</span>
-    </div>
-
-    <div class="filter-group">
-      <span class="label">Sort</span>
-      <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
-      <span class="chip"        data-filter="sort" data-value="velocity">Velocity ↓</span>
-      <span class="chip"        data-filter="sort" data-value="hidden_gem">Hidden Gem ↓</span>
-    </div>
-
-    <button type="button" class="chip filter-more" id="filterMoreToggle"
-            aria-expanded="false" aria-controls="filterMore"
-            onclick="window.toggleFilterMore && window.toggleFilterMore()">
-      … More filters
-    </button>
-    <div class="filter-group filter-more-group" id="filterMore" hidden>
-      <span class="label">Overlay</span>
-      <span class="chip" data-filter="themes">◇ Themes</span>
+    <div class="filter-row filter-row-secondary">
+      <div class="filter-group">
+        <span class="label">Overlay</span>
+        <div class="chips">
+          <span class="chip" data-filter="themes">◇ Themes</span>
+        </div>
+      </div>
+      <button type="button" class="briefing-toggle" id="briefingToggle"
+              aria-label="Open Daily Movers briefing"
+              onclick="window.toggleBriefing && window.toggleBriefing()">
+        <span class="bt-icon" aria-hidden="true">⚡</span><span class="bt-label">Daily Briefing</span>
+      </button>
     </div>
   </div>
 
@@ -5618,11 +5708,11 @@ function renderBubbleFallback(el) {
   const stageOrder = ['whisper','builder','creator','hype','commodity'];
   const width = Math.max(640, el.clientWidth || 900);
   const height = Math.max(320, el.clientHeight || 440);
-  // Internal SVG padding — roughly halved from the previous spacing so the
-  // four quadrants get more drawable area. Y-axis label needs ~40px on
-  // the left, X-axis label needs ~30px on the bottom, top needs room
-  // for the quadrant corner labels.
-  const pad = { left: 40, right: 18, top: 30, bottom: 36 };
+  // Internal SVG padding — Y-axis label sits in a 44px left gutter,
+  // X-axis title + ticks claim 44px below the plot, top gives the
+  // quadrant corner labels breathing room, right keeps the NICHE tick
+  // and rightmost label from kissing the panel edge.
+  const pad = { left: 44, right: 28, top: 36, bottom: 44 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
@@ -5655,19 +5745,22 @@ function renderBubbleFallback(el) {
   //   TR green (whisper), TL orange (exploding), BR blue (watch), BL red (skip).
   // emoji is held in a separate field so we can render it at a fixed offset
   // (see #36) and the sublabel aligns with the label *text*, not the emoji.
+  // Corner labels nudged inward 22px from each edge so they breathe away
+  // from bubbles and the tick row.
+  const QLABEL_INSET = 22;
   const QUADRANTS = [
     { id: 'tr', x: xDivider, y: pad.top,    w: (pad.left + plotW) - xDivider, h: yDivider - pad.top,
       emoji: '⚡', label: 'WHISPER · whitespace',  tag: 'Get there first',
-      anchor: 'end',   tx: pad.left + plotW - 12, ty: pad.top + 18, fill: 'rgba(0, 210, 190, 0.07)' },
+      anchor: 'end',   tx: pad.left + plotW - QLABEL_INSET, ty: pad.top + 22, fill: 'rgba(0, 210, 190, 0.07)' },
     { id: 'tl', x: pad.left, y: pad.top,    w: xDivider - pad.left,           h: yDivider - pad.top,
       emoji: '🔥', label: 'EXPLODING',              tag: 'Compete only if fast',
-      anchor: 'start', tx: pad.left + 12,         ty: pad.top + 18, fill: 'rgba(255, 156, 28, 0.07)' },
+      anchor: 'start', tx: pad.left + QLABEL_INSET,         ty: pad.top + 22, fill: 'rgba(255, 156, 28, 0.07)' },
     { id: 'br', x: xDivider, y: yDivider,   w: (pad.left + plotW) - xDivider, h: (pad.top + plotH) - yDivider,
       emoji: '🌱', label: 'PRE-BREAKOUT',           tag: 'Watch · not moving yet',
-      anchor: 'end',   tx: pad.left + plotW - 12, ty: pad.top + plotH - 12, fill: 'rgba(0, 145, 255, 0.06)' },
+      anchor: 'end',   tx: pad.left + plotW - QLABEL_INSET, ty: pad.top + plotH - 22, fill: 'rgba(0, 145, 255, 0.06)' },
     { id: 'bl', x: pad.left, y: yDivider,   w: xDivider - pad.left,           h: (pad.top + plotH) - yDivider,
       emoji: '💀', label: 'SATURATED',              tag: 'Skip · over-crowded',
-      anchor: 'start', tx: pad.left + 12,         ty: pad.top + plotH - 12, fill: 'rgba(255, 77, 109, 0.06)' },
+      anchor: 'start', tx: pad.left + QLABEL_INSET,         ty: pad.top + plotH - 22, fill: 'rgba(255, 77, 109, 0.06)' },
   ];
   const quadrantMarkup = QUADRANTS.map(q => `
     <rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" class="quad-zone" fill="${q.fill}" />
@@ -5748,7 +5841,10 @@ function renderBubbleFallback(el) {
     return { jx, jy };
   };
   const _sortedTrendsByTbts = [...TRENDS].sort((a, b) => (b.tbts || 0) - (a.tbts || 0));
-  const _topN = 4;
+  // Show only top-3 labels by default to keep the chart breathing room;
+  // every bubble still has a hover <title> for full detail. Selecting a
+  // bubble adds its label too.
+  const _topN = 3;
   const _labeledKws = new Map(_sortedTrendsByTbts.slice(0, _topN).map((t, i) => [t.canonical_form || t.keyword, i]));
   const _truncLabel = (s) => (s && s.length > 24) ? (s.slice(0, 22) + '…') : (s || '');
 
