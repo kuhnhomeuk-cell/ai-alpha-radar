@@ -70,6 +70,23 @@ def test_prompt_b_references_summary_and_niche() -> None:
     assert "AI tools for solo creators" in p
 
 
+def test_prompt_b_omits_pain_block_when_context_empty() -> None:
+    card = _make_card(pain_points_context="")
+    p = summarize._build_prompt_b(card, summary="A pithy summary.")
+    assert "Creator pain points" not in p
+
+
+def test_prompt_b_injects_pain_block_when_context_present() -> None:
+    """The Perplexity reorder + injection — angles.hook / .tutorial should
+    be grounded in real creator questions rather than generic inference."""
+    pain = "- How do I keep an agent from infinite-looping?\n- What's the cheapest way to monitor latency?"
+    card = _make_card(pain_points_context=pain)
+    p = summarize._build_prompt_b(card, summary="A pithy summary.")
+    assert "Creator pain points" in p
+    assert "infinite-looping" in p
+    assert "cheapest way to monitor latency" in p
+
+
 def test_prompt_c_references_lifecycle_velocity_saturation_convergence() -> None:
     card = _make_card()
     p = summarize._build_prompt_c(card)

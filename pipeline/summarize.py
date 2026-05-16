@@ -75,6 +75,11 @@ class CardInput(BaseModel):
     convergence_detected: bool
     lifecycle_stage: LifecycleStage
     user_niche: str = DEFAULT_NICHE
+    # Optional Perplexity pain-point context — the top 1-2 unanswered
+    # creator questions surfaced for this trend. When non-empty, prompt B
+    # injects them so angles.hook / angles.tutorial / risk.rationale are
+    # grounded in real creator frustrations rather than generic inference.
+    pain_points_context: str = ""
 
 
 class CardOutput(BaseModel):
@@ -115,10 +120,16 @@ def _build_prompt_a(card: CardInput) -> str:
 
 
 def _build_prompt_b(card: CardInput, *, summary: str) -> str:
+    pain_block = (
+        f"Creator pain points (real Sonar-sourced questions):\n{card.pain_points_context}\n\n"
+        if card.pain_points_context
+        else ""
+    )
     return (
         f"Trend keyword: {card.keyword}\n"
         f"Summary: {summary}\n"
-        f"Creator niche: {card.user_niche}\n\n"
+        f"Creator niche: {card.user_niche}\n"
+        f"{pain_block}"
         "Generate three YouTube Shorts angles. Each must be a standalone-titleable hook (<=12 words).\n"
         "- \"hook\": the most clickable framing\n"
         "- \"contrarian\": the unpopular-take framing\n"
