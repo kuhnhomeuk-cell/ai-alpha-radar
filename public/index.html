@@ -238,7 +238,8 @@ main {
   flex: 1;
   min-height: 0;
 }
-.page.active > .radar-grid > .radar-side > .panel > .leaderboard {
+.page.active > .radar-grid > .radar-side > .panel > .leaderboard,
+.page.active > .radar-grid > .radar-side > .panel > #themesList {
   flex: 1;
   min-height: 0;
   max-height: none !important;
@@ -1913,6 +1914,10 @@ html::after {
   border-radius: 3px;
   text-decoration: none;
   transition: color 120ms ease, border-color 120ms ease;
+  /* Long article titles were overflowing the 380px modal — wrap aggressively. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .detail-panel .painpoint .source-chip:hover {
   color: var(--champagne);
