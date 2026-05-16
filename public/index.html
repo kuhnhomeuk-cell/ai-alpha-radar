@@ -668,15 +668,18 @@ html::after {
 }
 
 .source-health {
-  margin: 0 var(--sp-5) var(--sp-4);
-  padding: 10px 16px;
+  /* Compacted — was claiming ~103px of vertical space (10px padding +
+     wrapped flex rows). Reduced padding and gap so the source row sits
+     in a single dense band beneath the chart panel. */
+  margin: 0 var(--sp-5) 6px;
+  padding: 5px 12px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 6px;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 4px 12px;
   font-family: var(--mono);
   font-size: 10px;
   color: var(--ink-3);
@@ -2348,8 +2351,11 @@ html::after {
 
 /* ========== FOOTER ========== */
 footer {
-  margin: 24px var(--sp-5);
-  padding: 14px 16px;
+  /* Was wasting ~88px of vertical space (24px top + 14px padding-top +
+     48px content + 14px padding-bottom + 24px bottom margin). Tightened
+     to a thin status bar at the page foot. */
+  margin: 6px var(--sp-5) 4px;
+  padding: 6px 16px;
   font-family: var(--mono);
   font-size: 10px;
   color: #6a6862;
