@@ -947,6 +947,35 @@ html::after {
   padding: 8px 16px;
   border-top: 1px solid var(--line);
   line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+.chart-caption .caption-axis { white-space: nowrap; }
+.chart-caption .caption-axis + .caption-axis::before {
+  content: '·';
+  margin-right: 14px;
+  color: var(--line-hi);
+}
+.chart-caption .stage-legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+}
+.chart-caption .stage-legend .sl-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.chart-caption .stage-legend .sl-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 4px currentColor;
 }
 .leaderboard { max-height: 580px; overflow-y: auto; }
 .leaderboard::-webkit-scrollbar { width: 6px; }
@@ -3245,6 +3274,19 @@ main {
   transform: rotate(-90deg);
 }
 
+/* Axis title sits BELOW the tick row; slightly larger + brighter so the
+   hierarchy reads top→bottom: ticks (small) then title (bold). */
+.fallback-axis-title {
+  fill: rgba(246, 247, 255, 0.78);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+:root[data-theme="light"] .fallback-axis-title {
+  fill: rgba(17, 19, 29, 0.78);
+}
+
 .fallback-region {
   fill: rgba(126, 249, 255, 0.045);
   stroke: rgba(126, 249, 255, 0.26);
@@ -4606,12 +4648,16 @@ footer .quote {
   <div class="radar-grid">
     <div class="panel">
       <div class="panel-head">
-        <div class="title">Saturation × TBTS Map</div>
+        <div class="title">Headroom × Velocity Map</div>
         <div class="meta" id="trackedMeta">— tracked terms</div>
       </div>
       <div class="chart-host" id="bubbleChart"></div>
       <div class="chart-caption">
-        X · saturation · Y · TBTS · size · hidden-gem · color · stage
+        <span class="caption-axis">X · headroom (100 − saturation)</span>
+        <span class="caption-axis">Y · velocity (× growth)</span>
+        <span class="caption-axis">size · hidden-gem</span>
+        <span class="caption-axis">color · lifecycle stage</span>
+        <span class="stage-legend" id="stageLegend"></span>
       </div>
     </div>
 
@@ -5435,12 +5481,17 @@ function renderBubbleFallback(el) {
     <line x1="${pad.left}" y1="${yDivider}" x2="${pad.left + plotW}" y2="${yDivider}" class="quad-divider"/>
   `;
 
-  // Axis ticks: X (saturation), Y (velocity, auto-zoom)
-  const xTicks = [0, 25, 50, 75, 100].map(satTick => {
+  // Axis ticks: X (headroom; satTick=0 → MAINSTREAM at RIGHT edge,
+  // satTick=100 → NICHE at LEFT edge — see x() inversion above).
+  // 50% tick dropped: the X-divider line + axis title already convey midpoint.
+  // Edge ticks use start/end anchors so they sit cleanly inside the plot
+  // (no clipping past the right edge).
+  const xTicks = [0, 25, 75, 100].map(satTick => {
     const px = x(satTick);
-    const label = satTick === 0 ? 'MAINSTREAM' : satTick === 100 ? 'NICHE' : (100 - satTick) + '%';
+    const label = satTick === 0 ? 'NICHE' : satTick === 100 ? 'MAINSTREAM' : (100 - satTick) + '%';
+    const anchor = satTick === 0 ? 'end' : satTick === 100 ? 'start' : 'middle';
     return `
-      <text x="${px}" y="${height - pad.bottom + 22}" class="fallback-tick" text-anchor="middle">${label}</text>
+      <text x="${px}" y="${height - pad.bottom + 22}" class="fallback-tick" text-anchor="${anchor}">${label}</text>
     `;
   }).join('');
   const yTickValues = [];
@@ -5477,7 +5528,9 @@ function renderBubbleFallback(el) {
   const _labeledKws = new Map(_sortedTrendsByTbts.slice(0, _topN).map((t, i) => [t.canonical_form || t.keyword, i]));
   const _truncLabel = (s) => (s && s.length > 24) ? (s.slice(0, 22) + '…') : (s || '');
 
-  const points = stageOrder.flatMap(stage => {
+  // First pass: compute bubble + tentative-label geometry for every trend.
+  // Second pass (below) resolves label collisions before render.
+  const trendGeometry = stageOrder.flatMap(stage => {
     const stageActive = state.stages.has(stage);
     return TRENDS
       .filter(t => t.stage === stage && trendVisibleBySource(t) && trendVisibleByWatchlist(t))
@@ -5494,32 +5547,77 @@ function renderBubbleFallback(el) {
         const cy = Math.max(pad.top + r,  Math.min(pad.top + plotH - r, y(t.velocity || 0) + jy));
         const rank = _labeledKws.get(kw);
         const inTopN = rank !== undefined;
-        const showLabel = sel || (lit && inTopN);
         const spaceAbove = cy - pad.top;
         const spaceBelow = (pad.top + plotH) - cy;
-        const placeAbove = spaceAbove >= spaceBelow;
         const stepPx = 14;
-        const labelY = placeAbove
+        let placeAbove = spaceAbove >= spaceBelow;
+        let labelY = placeAbove
           ? (cy - r - 10 - (inTopN ? rank * stepPx : 0))
           : (cy + r + 18 + (inTopN ? rank * stepPx : 0));
+        // Fallback: if computed labelY would fall outside the plot, flip side.
+        // Stops top-edge bubbles from drawing their labels above the plot.
+        if (labelY < pad.top + 4) {
+          placeAbove = false;
+          labelY = cy + r + 18 + (inTopN ? rank * stepPx : 0);
+        } else if (labelY > pad.top + plotH - 4) {
+          placeAbove = true;
+          labelY = cy - r - 10 - (inTopN ? rank * stepPx : 0);
+        }
+        // Quadrant-based label anchor (left half → start, right half → end)
+        // gives stacked labels in the same quadrant a clean shared anchor.
         const _bubbleXFrac = (cx - pad.left) / plotW;
-        const labelAnchor = _bubbleXFrac < 0.25 ? 'start'
-                          : _bubbleXFrac > 0.75 ? 'end'
-                          : 'middle';
-        const labelX = labelAnchor === 'start' ? (cx + r + 6)
-                     : labelAnchor === 'end'   ? (cx - r - 6)
-                     : cx;
+        const labelAnchor = _bubbleXFrac < 0.5 ? 'start' : 'end';
+        const labelX = labelAnchor === 'start' ? (cx + r + 6) : (cx - r - 6);
         const labelText = sel ? t.keyword : _truncLabel(t.keyword);
-        return `
-          <g class="fallback-point${sel ? ' selected' : ''}${lit ? '' : ' muted'}" data-bubble-kw="${escapeAttr(kw)}" style="--pt:${color}">
-            <ellipse cx="${cx + r * 0.42}" cy="${cy + r * 0.62}" rx="${r * 0.95}" ry="${r * 0.42}" class="fallback-contact" />
-            <circle cx="${cx}" cy="${cy}" r="${r}" class="fallback-bubble" />
-            <circle cx="${cx - 1.4}" cy="${cy + 1.4}" r="${Math.max(3, r * 0.26)}" class="fallback-glint" />
-            ${showLabel ? `<text x="${labelX}" y="${labelY}" class="fallback-label" text-anchor="${labelAnchor}">${escapeHtml(labelText)}</text>` : ''}
-            <title>${escapeHtml(t.keyword)} · velocity ${(t.velocity || 0).toFixed(2)}× · saturation ${Math.round(t.saturation)}%</title>
-          </g>
-        `;
+        return { t, kw, sel, lit, r, color, cx, cy, rank, inTopN, labelX, labelY, labelAnchor, labelText };
       });
+  });
+
+  // Second pass: resolve top-N label collisions. Walk labels in rank order
+  // (best first); if a label's bbox overlaps an already-placed bbox by more
+  // than 50%, drop it. Selected keyword always shows.
+  const _approxLabelBox = (g) => {
+    const charW = 6.2;
+    const charH = 12;
+    const w = (g.labelText || '').length * charW + 4;
+    const x0 = g.labelAnchor === 'start' ? g.labelX
+             : g.labelAnchor === 'end'   ? (g.labelX - w)
+             : (g.labelX - w / 2);
+    const y0 = g.labelY - charH + 2;
+    return { x0, y0, x1: x0 + w, y1: y0 + charH };
+  };
+  const _boxOverlapRatio = (a, b) => {
+    const ox = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0));
+    const oy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+    const aArea = (a.x1 - a.x0) * (a.y1 - a.y0);
+    if (!aArea) return 0;
+    return (ox * oy) / aArea;
+  };
+  const _placedBoxes = [];
+  const _topNVisible = new Set();
+  trendGeometry
+    .filter(g => g.inTopN && g.lit)
+    .sort((a, b) => a.rank - b.rank)
+    .forEach(g => {
+      const box = _approxLabelBox(g);
+      const overlap = _placedBoxes.some(b => _boxOverlapRatio(box, b) > 0.5);
+      if (!overlap) {
+        _placedBoxes.push(box);
+        _topNVisible.add(g.kw);
+      }
+    });
+
+  const points = trendGeometry.map(g => {
+    const showLabel = g.sel || _topNVisible.has(g.kw);
+    return `
+      <g class="fallback-point${g.sel ? ' selected' : ''}${g.lit ? '' : ' muted'}" data-bubble-kw="${escapeAttr(g.kw)}" style="--pt:${g.color}">
+        <ellipse cx="${g.cx + g.r * 0.42}" cy="${g.cy + g.r * 0.62}" rx="${g.r * 0.95}" ry="${g.r * 0.42}" class="fallback-contact" />
+        <circle cx="${g.cx}" cy="${g.cy}" r="${g.r}" class="fallback-bubble" />
+        <circle cx="${g.cx - 1.4}" cy="${g.cy + 1.4}" r="${Math.max(3, g.r * 0.26)}" class="fallback-glint" />
+        ${showLabel ? `<text x="${g.labelX}" y="${g.labelY}" class="fallback-label" text-anchor="${g.labelAnchor}">${escapeHtml(g.labelText)}</text>` : ''}
+        <title>${escapeHtml(g.t.keyword)} · velocity ${(g.t.velocity || 0).toFixed(2)}× · saturation ${Math.round(g.t.saturation)}%</title>
+      </g>
+    `;
   }).join('');
 
   el.innerHTML = `
@@ -5543,8 +5641,8 @@ function renderBubbleFallback(el) {
       ${xTicks}
       ${regionMarkup}
       ${points}
-      <text x="${pad.left + plotW / 2}" y="${height - 14}" class="fallback-axis" text-anchor="middle">← MAINSTREAM   ·   HEADROOM   ·   NICHE →</text>
-      <text x="16" y="${pad.top + plotH / 2}" class="fallback-axis rotate">VELOCITY (× growth)</text>
+      <text x="${pad.left + plotW / 2}" y="${height - 2}" class="fallback-axis-title" text-anchor="middle">← MAINSTREAM   ·   HEADROOM   ·   NICHE →</text>
+      <text x="12" y="${pad.top + plotH / 2}" class="fallback-axis rotate">VELOCITY</text>
     </svg>
   `;
 
@@ -5558,9 +5656,20 @@ function renderBubbleFallback(el) {
     });
   });
 }
+function renderStageLegend() {
+  const host = document.getElementById('stageLegend');
+  if (!host) return;
+  const order = ['whisper', 'builder', 'creator', 'hype', 'commodity'];
+  host.innerHTML = order.map(stage => {
+    const meta = STAGE_META[stage];
+    if (!meta) return '';
+    return `<span class="sl-item" style="color:${meta.color}"><span class="sl-swatch" style="background:${meta.color}"></span>${meta.label}</span>`;
+  }).join('');
+}
 function renderBubble() {
   const el = document.getElementById('bubbleChart');
   if (!el) return;
+  renderStageLegend();
   const tracked = document.getElementById('trackedMeta');
   if (tracked) tracked.textContent = `${TRENDS.length} tracked terms`;
   if (USE_NATIVE_LIQUID_RADAR || !window.echarts) {
