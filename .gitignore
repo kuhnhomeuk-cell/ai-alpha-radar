@@ -53,3 +53,8 @@ data/.batch_state.json
 # Wave 5 — operator working file fed to scripts/refresh_youtube_outliers.py.
 # The processed cache data/youtube_outliers.json is committed; this raw input is not.
 data/youtube_outliers_raw.json
+# Fetcher corpus caches — write-through accumulation per source, regenerated
+# on every pipeline run (see pipeline/persist.py). Local-only by design.
+# data/digg_ai_corpus.json is the historical exception and stays tracked.
+data/*_corpus.json
+!data/digg_ai_corpus.json

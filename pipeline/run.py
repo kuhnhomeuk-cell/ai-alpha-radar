@@ -38,7 +38,7 @@ from pipeline import burst, calibration, changepoint, cluster as cluster_mod, cl
 from pipeline import demand as demand_mod
 from pipeline import leadlag, meta_trends
 from pipeline import novelty as novelty_mod
-from pipeline import predict, questions as question_mining, rrf, score, snapshot, summarize, topics
+from pipeline import persist, predict, questions as question_mining, rrf, score, snapshot, summarize, topics
 from pipeline.fetch import arxiv, github, hackernews
 from pipeline.fetch import bluesky, huggingface, newsletters
 from pipeline.fetch import grok as grok_fetcher
@@ -656,6 +656,13 @@ def main(
             log("fetch_failed", level="warning", source="arxiv", error=str(e))
             papers = []
             fetch_health["arxiv"] = False
+    if papers:
+        try:
+            persist.update_corpus(
+                "arxiv", [p.model_dump() for p in papers], id_field="id"
+            )
+        except Exception as e:
+            log("corpus_update_failed", level="warning", source="arxiv", error=str(e))
     if posts is None:
         try:
             # v0.2.0 — enable points-floored keyword sweep + 3 tag-only passes
@@ -681,6 +688,18 @@ def main(
             log("fetch_failed", level="warning", source="hackernews", error=str(e))
             posts = []
             fetch_health["hackernews"] = False
+    if posts:
+        try:
+            persist.update_corpus(
+                "hackernews", [p.model_dump() for p in posts], id_field="id"
+            )
+        except Exception as e:
+            log(
+                "corpus_update_failed",
+                level="warning",
+                source="hackernews",
+                error=str(e),
+            )
     if repos is None:
         gh_pat = os.environ.get("GH_PAT", "")
         if gh_pat:
@@ -693,6 +712,18 @@ def main(
         else:
             repos = []
             fetch_health["github"] = False
+    if repos:
+        try:
+            persist.update_corpus(
+                "github", [r.model_dump() for r in repos], id_field="full_name"
+            )
+        except Exception as e:
+            log(
+                "corpus_update_failed",
+                level="warning",
+                source="github",
+                error=str(e),
+            )
 
     # Hugging Face Hub trending — no auth, free public endpoint.
     if hf_models is None:
@@ -707,6 +738,20 @@ def main(
             log("fetch_failed", level="warning", source="huggingface", error=str(e))
             hf_models = []
     fetch_health["huggingface"] = len(hf_models) > 0
+    if hf_models:
+        try:
+            persist.update_corpus(
+                "huggingface",
+                [m.model_dump() for m in hf_models],
+                id_field="id",
+            )
+        except Exception as e:
+            log(
+                "corpus_update_failed",
+                level="warning",
+                source="huggingface",
+                error=str(e),
+            )
 
     # Newsletter RSS cross-mentions — no auth.
     if newsletter_signals is None:

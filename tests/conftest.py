@@ -51,3 +51,13 @@ def _stub_live_fetchers(
     monkeypatch.setattr(
         novelty_mod, "score_topics_against_corpus", lambda topic_canonical_names, **k: {n: 0.0 for n in topic_canonical_names}
     )
+
+    # Redirect persist.update_corpus writes to a tmp dir during tests so the
+    # orchestrator's persistence path doesn't write fixture data into the
+    # production data/ tree. Fetcher tests that exercise persistence
+    # directly already pass an explicit `path=` and bypass the default.
+    from pipeline import persist
+
+    monkeypatch.setattr(
+        persist, "ROOT_DATA", request.config._tmp_path_factory.mktemp("persist_corpus")
+    )
