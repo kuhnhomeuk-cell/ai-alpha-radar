@@ -1056,11 +1056,19 @@ def main(
     perplexity_spent_cents: float = 0.0
     if use_claude:
         estimated_cents = summarize.estimate_batch_cost_cents(len(trends))
-        if max_cost_cents is not None and estimated_cents > max_cost_cents:
+        # Phase 3 — demand clusters fire one Haiku Batch request per
+        # HDBSCAN cluster (≤12 clusters). Fold its estimate into the cap
+        # gate so the operator sees the full Claude bill, not a surprise
+        # second batch later.
+        demand_estimated_cents = demand_mod.estimate_demand_batch_cost_cents(12)
+        total_claude_estimate = estimated_cents + demand_estimated_cents
+        if max_cost_cents is not None and total_claude_estimate > max_cost_cents:
             log(
                 "claude_cost_cap_exceeded",
                 level="error",
-                estimated_cents=round(estimated_cents, 2),
+                estimated_cents=round(total_claude_estimate, 2),
+                claude_card_cents=round(estimated_cents, 2),
+                demand_batch_cents=round(demand_estimated_cents, 2),
                 cap_cents=round(max_cost_cents, 2),
                 num_cards=len(trends),
             )
@@ -1069,12 +1077,13 @@ def main(
 
         # ---- 9b. Perplexity Sonar pain-point enrichment (Wave 5) ----
         # Folds into the same `--max-cost-cents` gate as Claude. Remaining
-        # budget after Claude's estimate is what's left for Sonar; if the
-        # cap is None, run uncapped. Per-trend failures degrade silently.
+        # budget after Claude's estimate (cards + demand batch) is what's
+        # left for Sonar; if the cap is None, run uncapped. Per-trend
+        # failures degrade silently.
         perplexity_budget_cents = (
             None
             if max_cost_cents is None
-            else max(0.0, max_cost_cents - estimated_cents)
+            else max(0.0, max_cost_cents - total_claude_estimate)
         )
         trends, perplexity_spent_cents = _maybe_enrich_with_perplexity(
             trends, budget_cents=perplexity_budget_cents
@@ -1132,9 +1141,39 @@ def main(
             for t in trends[:10]
         ]
         briefing = summarize.daily_briefing(movers, niche=niche)
-        demand_clusters = demand_mod.mine_demand_clusters_for_trends(
-            [t.keyword for t in trends[:10]], posts, niche=niche
-        )
+        # Phase 3 — HDBSCAN comment clustering is the product wedge.
+        # sync_probe=True fires ONE non-batch Claude call before the paid
+        # batch so we can confirm the prompt + schema produce a useful
+        # DemandCluster before spending on N more requests (Karpathy §5).
+        # Per-cluster failures degrade silently (cluster dropped); a wholly
+        # bad probe still allows the batch to run and may rescue the day.
+        demand_started = time.time()
+        try:
+            # Pass the top 10 trend keywords as fallback. On sparse-data days
+            # (typical HN with hydrate_top_n=10) HDBSCAN may yield only 1-2
+            # clusters; the legacy per-trend Sonnet path backfills toward
+            # the 6-12 target so the wedge always ships something.
+            demand_clusters = demand_mod.mine_demand_clusters_from_comments(
+                posts,
+                niche=niche,
+                max_clusters=12,
+                sync_probe=True,
+                fallback_trend_keywords=[t.keyword for t in trends[:10]],
+            )
+            log(
+                "demand_clusters_mined",
+                level="info",
+                count=len(demand_clusters),
+                elapsed_seconds=round(time.time() - demand_started, 2),
+            )
+        except Exception as e:  # pragma: no cover — defensive net
+            log(
+                "demand_mining_failed",
+                level="warning",
+                error=str(e),
+                elapsed_seconds=round(time.time() - demand_started, 2),
+            )
+            demand_clusters = []
     else:
         briefing = _placeholder_briefing()
         demand_clusters = []

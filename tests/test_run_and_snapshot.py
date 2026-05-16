@@ -291,3 +291,107 @@ def test_orchestrator_loads_existing_predictions_into_hit_rate(tmp_path: Path) -
     )
     assert snap.hit_rate.verified == 1
     assert snap.hit_rate.rate == 1.0
+
+
+def test_orchestrator_demand_clusters_populate_in_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """End-to-end verification of the demand-clusters wiring: with use_claude=True
+    and the demand mining function stubbed to return canned DemandClusters,
+    the resulting snapshot's `demand_clusters` list is populated and survives
+    the snapshot writer + Pydantic round-trip.
+
+    This is the integration sibling of tests/test_demand.py — those tests
+    exercise demand internals; this test asserts the orchestrator surface
+    reads the new function and wires its output into the public artifact.
+    """
+    from pipeline.models import DemandCluster, DemandQuote
+
+    canned = [
+        DemandCluster(
+            question_shape="How do solo creators run Claude Desktop locally?",
+            askers_estimate=7,
+            quotes=[
+                DemandQuote(text="How do I run Claude locally?", source="HN"),
+                DemandQuote(text="Is there a self-hosted option?", source="HN"),
+            ],
+            sources=["hackernews"],
+            weekly_growth_pct=18.0,
+            open_window_days=10,
+            creator_brief="Tutorial: Claude Desktop local config for indie creators.",
+            related_trends=["claude"],
+        ),
+        DemandCluster(
+            question_shape="What's the best AI agent loop for solo Shorts creators?",
+            askers_estimate=5,
+            quotes=[DemandQuote(text="Looking for an iterative agent.", source="HN")],
+            sources=["hackernews"],
+            weekly_growth_pct=14.0,
+            open_window_days=21,
+            creator_brief="Agent-loop pattern for one-person YouTube Shorts pipelines.",
+            related_trends=["agents"],
+        ),
+    ]
+
+    captured_kwargs: dict = {}
+
+    def fake_mine(*args, **kwargs):
+        # Capture for assertions; return canned list.
+        captured_kwargs.update(kwargs)
+        return list(canned)
+
+    # Patch the demand mine entry on the same module the orchestrator imports.
+    monkeypatch.setattr(
+        run.demand_mod, "mine_demand_clusters_from_comments", fake_mine
+    )
+    # The orchestrator also calls Claude card enrichment and the daily
+    # briefing under use_claude=True; stub both to skip live API calls.
+    monkeypatch.setattr(run, "_maybe_enrich_with_claude", lambda trends, *, niche: trends)
+    monkeypatch.setattr(
+        run,
+        "_maybe_enrich_with_perplexity",
+        lambda trends, *, budget_cents: (trends, 0.0),
+    )
+    from pipeline.models import DailyBriefing
+    from datetime import datetime as _dt, timezone as _tz
+
+    monkeypatch.setattr(
+        run.summarize,
+        "daily_briefing",
+        lambda movers, *, niche: DailyBriefing(
+            text="stubbed briefing for orchestrator test",
+            moved_up=[],
+            moved_down=[],
+            emerging=[],
+            generated_at=_dt.now(tz=_tz.utc),
+        ),
+    )
+
+    snap = run.main(
+        today=date(2026, 5, 16),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        use_claude=True,
+        max_cost_cents=1000,  # generous cap so the wiring test isn't budget-gated
+        extract_topics_fn=_stub_extract_topics,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+
+    # Wiring: fake_mine was called with the niche default and fallback kws.
+    assert "niche" in captured_kwargs
+    assert "fallback_trend_keywords" in captured_kwargs
+    assert isinstance(captured_kwargs["fallback_trend_keywords"], list)
+
+    # Output: the snapshot's demand_clusters reflect the canned list.
+    assert len(snap.demand_clusters) == 2
+    shapes = [c.question_shape for c in snap.demand_clusters]
+    assert any("Claude Desktop" in s for s in shapes)
+    assert any("AI agent loop" in s for s in shapes)
+
+    # And the written public/data.json round-trips through Snapshot.
+    parsed = Snapshot.model_validate_json(
+        (tmp_path / "data.json").read_text(encoding="utf-8")
+    )
+    assert len(parsed.demand_clusters) == 2

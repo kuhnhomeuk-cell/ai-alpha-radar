@@ -1,0 +1,78 @@
+{
+  "comment": "Niche-aligned HN comments fixture for demand-cluster TDD. Three latent intent clusters plus noise: (A) self-hosting Claude/MCP locally for indie dev, (B) using AI agents to write/edit shorts/YouTube content, (C) batch-API + cost-control patterns for solo builders. Plus a couple of off-niche distractors and a couple of non-question statements that must drop out.",
+  "posts": [
+    {
+      "id": 7001,
+      "title": "Claude Desktop + MCP servers — how are people running this locally?",
+      "story_text": "Want to wire a few MCP servers into Claude Desktop without paying for a VPS. Anyone got a clean local setup?",
+      "comments": [
+        {"id": 70101, "text": "How do I get Claude Desktop talking to a local MCP server without sse?", "days_ago": 1},
+        {"id": 70102, "text": "Anyone know if stdio MCP works reliably on macOS background?", "days_ago": 1},
+        {"id": 70103, "text": "Looking for a sample MCP config that actually runs as a solo creator setup, not the enterprise demo.", "days_ago": 2},
+        {"id": 70104, "text": "Is there a way to run Claude Desktop fully offline with a local model fallback?", "days_ago": 2},
+        {"id": 70105, "text": "MCP is great, no complaints.", "days_ago": 3},
+        {"id": 70106, "text": "How to debug an MCP server that silently dies after one tool call?", "days_ago": 3},
+        {"id": 70107, "text": "What's the best way to package an MCP server for non-technical creators to install?", "days_ago": 4}
+      ]
+    },
+    {
+      "id": 7002,
+      "title": "AI agents for solo creators — writing YouTube Shorts scripts",
+      "story_text": "Curious how indie creators are using agent loops to draft and edit shorts.",
+      "comments": [
+        {"id": 70201, "text": "How do I get an agent to write a YouTube Shorts hook that doesn't sound like ChatGPT?", "days_ago": 1},
+        {"id": 70202, "text": "Anyone know a good prompt chain for solo creators turning a single idea into 5 shorts variants?", "days_ago": 2},
+        {"id": 70203, "text": "What's the best way to score thumbnails before publishing? Need it cheap, single-creator scale.", "days_ago": 2},
+        {"id": 70204, "text": "Looking for a YouTube shorts agent template that actually iterates instead of one-shotting.", "days_ago": 3},
+        {"id": 70205, "text": "Is there a self-hosted equivalent of VidIQ for solo channel analytics?", "days_ago": 3},
+        {"id": 70206, "text": "Shorts are getting saturated.", "days_ago": 4},
+        {"id": 70207, "text": "How can I get an agent to fact-check a YouTube script before I record?", "days_ago": 5},
+        {"id": 70208, "text": "what's the right way to keep an agent on-brand across 20 shorts?", "days_ago": 6}
+      ]
+    },
+    {
+      "id": 7003,
+      "title": "Claude Batch API cost patterns for indie devs",
+      "story_text": "How are solo builders keeping daily Claude spend under $5 while still doing meaningful workflows?",
+      "comments": [
+        {"id": 70301, "text": "Anyone know how to estimate Batch API cost before submitting a 500-request job?", "days_ago": 1},
+        {"id": 70302, "text": "How do I cap daily Claude spend per agent in a solo-creator pipeline?", "days_ago": 1},
+        {"id": 70303, "text": "Is there a clean way to do prompt caching across batch requests for one indie project?", "days_ago": 2},
+        {"id": 70304, "text": "Looking for a cost dashboard that works for solo creators using the Anthropic SDK, not big teams.", "days_ago": 3},
+        {"id": 70305, "text": "What's the best way to split a long-running indie agent run across multiple Batch submissions?", "days_ago": 4},
+        {"id": 70306, "text": "Found a nice library for this last week.", "days_ago": 5},
+        {"id": 70307, "text": "How to avoid silent rate-limit downgrade in solo Claude Batch jobs?", "days_ago": 6}
+      ]
+    },
+    {
+      "id": 7004,
+      "title": "iPhone 17 thermals review",
+      "story_text": "Off-niche distractor.",
+      "comments": [
+        {"id": 70401, "text": "Is there a way to fix the thermal throttling in the new iPhone?", "days_ago": 1},
+        {"id": 70402, "text": "How do I check the M4 chip temperature on macOS?", "days_ago": 2}
+      ]
+    },
+    {
+      "id": 7005,
+      "title": "Sourdough fermentation in cold kitchens",
+      "story_text": "Off-niche distractor — should be filtered.",
+      "comments": [
+        {"id": 70501, "text": "How do I keep my starter alive at 60F?", "days_ago": 1},
+        {"id": 70502, "text": "Anyone know the best flour for a dense crumb?", "days_ago": 2}
+      ]
+    },
+    {
+      "id": 7006,
+      "title": "AI tools for video editing — what's working for indie creators?",
+      "story_text": "Following up on the agents thread.",
+      "comments": [
+        {"id": 70601, "text": "How can I auto-caption my YouTube Shorts in my own voice using AI?", "days_ago": 1},
+        {"id": 70602, "text": "Anyone got an AI b-roll picker that doesn't pull generic stock footage?", "days_ago": 2},
+        {"id": 70603, "text": "Looking for an AI editing flow that respects beat sync for solo music creators.", "days_ago": 3},
+        {"id": 70604, "text": "Captions plugin is fine.", "days_ago": 4},
+        {"id": 70605, "text": "what's the best way to get consistent character thumbnails across a YouTube channel using AI image gen?", "days_ago": 5}
+      ]
+    }
+  ]
+}
