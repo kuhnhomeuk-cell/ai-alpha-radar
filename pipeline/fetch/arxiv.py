@@ -81,12 +81,22 @@ def parse_atom_feed(xml_text: str, *, categories: Iterable[str]) -> list[Paper]:
 
 
 @with_retry(attempts=3, base_delay=1.0)
-def fetch_recent_papers(categories: list[str], lookback_days: int = 2) -> list[Paper]:
+def fetch_recent_papers(
+    categories: list[str],
+    lookback_days: int = 2,
+    *,
+    apply_niche_filter: bool = False,
+) -> list[Paper]:
     """Live arXiv query. One request, then a 3-second hard sleep per the rate cap.
 
     Default lookback is 2 days because arXiv batches its API release once daily at
     ~17:00 UTC; a strict 24-hour window misses the most recent batch depending on
     time-of-day. Two days absorbs one full announce cycle.
+
+    `apply_niche_filter=True` runs each paper's title+abstract through
+    `pipeline.niche_filter.is_niche_relevant`. Default is False so the day-1
+    bootstrap path (where Claude's topic extractor is the real filter) doesn't
+    over-trim. The orchestrator opts in only after the data path is healthy.
     """
     # arXiv expects ' OR ' (with spaces) as the boolean separator; spaces URL-encode
     # to '+' on the wire. Joining with literal '+' instead would send a single
@@ -110,6 +120,12 @@ def fetch_recent_papers(categories: list[str], lookback_days: int = 2) -> list[P
     if lookback_days:
         cutoff = datetime.now(tz=timezone.utc).timestamp() - lookback_days * 86400
         papers = [p for p in papers if p.published_at.timestamp() >= cutoff]
+    if apply_niche_filter:
+        # Late import to avoid a circular dep in case niche_filter ever
+        # grows to need anything from pipeline.fetch.
+        from pipeline.niche_filter import filter_niche_relevant
+
+        papers = filter_niche_relevant(papers, key=lambda p: p.title + " " + p.abstract)
     return papers
 
 

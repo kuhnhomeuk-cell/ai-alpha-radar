@@ -118,9 +118,16 @@ def fetch_trending_repos(
     topics: Iterable[str] = GH_TOPICS,
     lookback_days: int = 7,
     snapshots_dir: Optional[Path] = None,
+    apply_niche_filter: bool = False,
 ) -> list[RepoStat]:
     """Live PyGithub search across topics, dedupe, then attach star velocity
     against the snapshot from `lookback_days` ago (or warming_up if absent).
+
+    `apply_niche_filter=True` runs each repo's description+topics through
+    `pipeline.niche_filter.is_niche_relevant`. The 8 search topics already
+    bound results to AI-adjacent repos, so this is a second-stage filter
+    that drops e.g. an "ai" topic on a fashion-design library. Default
+    off to keep the orchestrator's call-shape backwards compatible.
     """
     since = (datetime.now(tz=timezone.utc) - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
     auth = Auth.Token(gh_pat)
@@ -138,6 +145,14 @@ def fetch_trending_repos(
         g.close()
 
     today = parse_search_response({"items": list(items_by_name.values())})
+
+    if apply_niche_filter:
+        from pipeline.niche_filter import filter_niche_relevant
+
+        today = filter_niche_relevant(
+            today,
+            key=lambda r: (r.description or "") + " " + " ".join(r.topics),
+        )
 
     prior: dict[str, int] = {}
     if snapshots_dir is not None:

@@ -1,0 +1,36 @@
+{
+  "id": "resp_01J123ABCDXAITEST456789",
+  "object": "response",
+  "status": "completed",
+  "model": "grok-4.3",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "Recent X posts mentioning ComfyUI in the past 7 days show steady community engagement around LTX 2.3 workflows, the new 8GB VRAM tutorials from Tensor Alchemist, and the Z-Image Turbo Catalyst release. Several creators are sharing custom-node packs and arguing about which sampler produces the cleanest video outputs."
+        }
+      ]
+    }
+  ],
+  "citations": [
+    "https://x.com/comfyanonymous/status/1798765432109876543",
+    "https://x.com/tensoralchemist/status/1798765432109876544",
+    "https://x.com/sharvinML/status/1798765432109876545",
+    "https://x.com/AiLockup/status/1798765432109876546",
+    "https://x.com/MyAIForce/status/1798765432109876547",
+    "https://x.com/sotai_ai/status/1798765432109876548",
+    "https://x.com/codecrafters/status/1798765432109876549",
+    "https://x.com/nerdyrodent/status/1798765432109876550",
+    "https://x.com/Pixovert/status/1798765432109876551"
+  ],
+  "usage": {
+    "input_tokens": 78,
+    "output_tokens": 124,
+    "total_tokens": 202,
+    "cost_in_usd_ticks": 250000000,
+    "num_sources_used": 9
+  }
+}
