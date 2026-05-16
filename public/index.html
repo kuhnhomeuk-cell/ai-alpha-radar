@@ -2033,6 +2033,24 @@ html::after {
   border-color: rgba(0, 255, 157, 0.40);
 }
 .cons-badge:hover { filter: brightness(1.25); }
+/* "Also on Digg →" pill — same shape as cons-badge, Digg green palette. */
+.digg-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.10);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 100px;
+  margin-left: 4px;
+  text-decoration: none;
+  transition: background 0.15s, filter 0.15s;
+  white-space: nowrap;
+}
+.digg-pill:hover { filter: brightness(1.25); background: rgba(34, 197, 94, 0.18); }
 .meth-section { margin: 16px 0 22px; }
 .meth-section h4 {
   margin: 0 0 6px;
@@ -4424,6 +4442,7 @@ footer .quote {
     <span class="chip active" data-filter="source" data-value="github">GitHub</span>
     <span class="chip active" data-filter="source" data-value="hackernews">HN</span>
     <span class="chip active" data-filter="source" data-value="semantic_scholar">SemScholar</span>
+    <span class="chip active" data-filter="source" data-value="digg">Digg</span>
 
     <span class="label" style="margin-left:16px">Sort</span>
     <span class="chip active" data-filter="sort" data-value="tbts">TBTS ↓</span>
@@ -4871,7 +4890,7 @@ document.querySelectorAll('.nav button').forEach(btn => {
    ========================================================== */
 const state = {
   stages:  new Set(['whisper','builder','creator']),
-  sources: new Set(['arxiv','github','hackernews','semantic_scholar']),
+  sources: new Set(['arxiv','github','hackernews','semantic_scholar','digg']),
   sort:    'tbts',
   selectedKeyword: null,
   showThemes:    false,
@@ -4895,6 +4914,7 @@ function trendVisibleBySource(t) {
     if (src === 'github'           && ((s.github_repos_7d || 0) + (s.github_stars_7d || 0)) > 0) return true;
     if (src === 'hackernews'       && ((s.hn_posts_7d || 0) + (s.hn_points_7d || 0)) > 0) return true;
     if (src === 'semantic_scholar' && (s.semantic_scholar_citations_7d || 0) > 0) return true;
+    if (src === 'digg'             && (s.digg_ai_mentions_7d || 0) > 0) return true;
   }
   return false;
 }
@@ -5116,6 +5136,7 @@ function renderSourceHealth() {
   const labels = {
     arxiv: 'arXiv', github: 'GitHub', hackernews: 'HN',
     reddit: 'Reddit', huggingface: 'HF', semantic_scholar: 'SemScholar',
+    digg: 'Digg',
   };
   const sources = (META && META.sources) || {};
   const parts = Object.entries(labels).map(([key, label]) => {
@@ -5502,7 +5523,13 @@ function renderConsensusBadge(t) {
   const total = Math.max(1, Math.round(conf.length / ratio));
   const cls = ratio >= 0.6 ? ' strong' : (ratio >= 0.4 ? ' medium' : '');
   const title = `Confirmed by ${conf.length} of ${total} active sources: ${conf.join(', ')}. Click for methodology.`;
-  return `<span class="cons-badge${cls}" data-cons="open" title="${escapeAttr(title)}">${conf.length}/${total} ✓</span>`;
+  let html = `<span class="cons-badge${cls}" data-cons="open" title="${escapeAttr(title)}">${conf.length}/${total} ✓</span>`;
+  // "Also on Digg →" pill — fires when this topic surfaced on digg.com/ai
+  // within the last 7 days. Links out to the Digg AI ranked list.
+  if (conf.includes('digg')) {
+    html += ` <a class="digg-pill" href="https://digg.com/ai" target="_blank" rel="noopener noreferrer" title="This topic also surfaced on Digg AI's top stories within the last 7 days">Also on Digg →</a>`;
+  }
+  return html;
 }
 
 /* ---- audit 3.11: inline sparkline + absolute volume ---- */
@@ -5536,6 +5563,7 @@ const CHANNEL_COLORS = {
   hackernews:  '#ff8c42',
   huggingface: '#f1c40f',
   bluesky:     '#1da1f2',
+  digg:        '#22c55e',
 };
 
 function channelMix(sources) {
@@ -5546,6 +5574,7 @@ function channelMix(sources) {
     { name: 'hackernews',  v: sources.hn_posts_7d || 0 },
     { name: 'huggingface', v: Math.round((sources.huggingface_likes_7d || 0) / 100) },
     { name: 'bluesky',     v: sources.bluesky_mentions_7d || 0 },
+    { name: 'digg',        v: sources.digg_ai_mentions_7d || 0 },
   ].filter(s => s.v > 0);
   const total = raw.reduce((a, s) => a + s.v, 0);
   if (total === 0) return [];

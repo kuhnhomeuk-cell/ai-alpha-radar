@@ -29,7 +29,7 @@ import sys
 import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import anthropic
 from dotenv import load_dotenv
@@ -40,7 +40,7 @@ from pipeline import leadlag, meta_trends
 from pipeline import novelty as novelty_mod
 from pipeline import persist, predict, questions as question_mining, rrf, score, snapshot, summarize, topics
 from pipeline.fetch import arxiv, github, hackernews
-from pipeline.fetch import bluesky, huggingface, newsletters
+from pipeline.fetch import bluesky, digg, huggingface, newsletters
 from pipeline.fetch import grok as grok_fetcher
 from pipeline.fetch import perplexity as perplexity_fetcher
 from pipeline.fetch import producthunt as producthunt_fetcher
@@ -49,6 +49,7 @@ from pipeline.fetch import replicate as replicate_fetcher
 from pipeline.fetch import semantic_scholar
 from pipeline.fetch import youtube_outliers as youtube_outliers_fetcher
 from pipeline.fetch.arxiv import Paper
+from pipeline.fetch.digg import DiggAIStory
 from pipeline.fetch.github import RepoStat
 from pipeline.fetch.hackernews import HNPost
 from pipeline.fetch.huggingface import HFModel
@@ -214,6 +215,38 @@ def _huggingface_per_topic(
     return out
 
 
+def _digg_per_topic(
+    digg_stories: list[dict[str, Any]] | list[DiggAIStory], topic_list: list[Topic]
+) -> dict[str, int]:
+    """Per-topic count of Digg AI stories whose title or excerpt mentions any
+    of the topic's needles (canonical_form / canonical_name / aliases).
+
+    Accepts either live DiggAIStory objects or the dict shape persisted in
+    data/digg_ai_corpus.json (load_recent_corpus_stories returns dicts), so
+    the pipeline can fall back to the cached corpus when today's Firecrawl
+    call fails.
+    """
+    if not digg_stories:
+        return {}
+    # Normalize to (title, excerpt) lowercase tuples
+    story_text: list[str] = []
+    for s in digg_stories:
+        if isinstance(s, DiggAIStory):
+            t = (s.title + " " + s.excerpt).lower()
+        else:
+            t = ((s.get("title") or "") + " " + (s.get("excerpt") or "")).lower()
+        story_text.append(t)
+    out: dict[str, int] = {}
+    for topic in topic_list:
+        needles = _topic_match_strings(topic)
+        if not needles:
+            continue
+        count = sum(1 for txt in story_text if any(n in txt for n in needles))
+        if count:
+            out[topic.canonical_form] = count
+    return out
+
+
 def _reddit_per_topic(
     reddit_posts: list[RedditPost], topic_list: list[Topic]
 ) -> dict[str, dict[str, object]]:
@@ -304,6 +337,7 @@ def _source_counts_from_topic(
     replicate_delta: int = 0,
     bluesky_count: int = 0,
     s2_citations: int = 0,
+    digg_count: int = 0,
 ) -> SourceCounts:
     """Bucket a topic's source docs into the SourceCounts shape the data
     contract requires.
@@ -333,6 +367,7 @@ def _source_counts_from_topic(
         reddit_mentions_7d=reddit_count,
         producthunt_launches_7d=producthunt_count,
         replicate_runs_7d_delta=replicate_delta,
+        digg_ai_mentions_7d=digg_count,
     )
 
 
@@ -392,7 +427,7 @@ def _placeholder_briefing() -> DailyBriefing:
 
 CONSENSUS_SOURCES = (
     "arxiv", "github", "hackernews", "reddit", "huggingface",
-    "producthunt", "replicate", "bluesky", "semantic_scholar",
+    "producthunt", "replicate", "bluesky", "semantic_scholar", "digg",
 )
 
 
@@ -413,6 +448,7 @@ def _sources_confirming_for_topic(
         "replicate": sources.replicate_runs_7d_delta > 0,
         "bluesky": sources.bluesky_mentions_7d > 0,
         "semantic_scholar": sources.semantic_scholar_citations_7d > 0,
+        "digg": sources.digg_ai_mentions_7d > 0,
     }
     return [src for src in active if has_signal.get(src, False)]
 
@@ -579,6 +615,20 @@ def _maybe_enrich_with_grok(
     return out, spent_cents
 
 
+def _pain_points_context(trend: Trend, *, max_points: int = 2) -> str:
+    """Format the top pain points for the Claude angles prompt.
+
+    Sonar's pain_points field is the highest-recall creator-voice signal
+    we have; routing it into the summarizer turns angles.hook /
+    angles.tutorial into grounded re-framings of real creator
+    questions instead of generic LLM inference.
+    """
+    points = list(trend.pain_points or [])[:max_points]
+    if not points:
+        return ""
+    return "\n".join(f"- {pp.text}" for pp in points)
+
+
 def _maybe_enrich_with_claude(
     trends: list[Trend], *, niche: str
 ) -> list[Trend]:
@@ -598,6 +648,7 @@ def _maybe_enrich_with_claude(
             convergence_detected=t.convergence.detected,
             lifecycle_stage=t.lifecycle_stage,
             user_niche=niche,
+            pain_points_context=_pain_points_context(t),
         )
         for t in trends
     ]
@@ -683,6 +734,7 @@ def main(
     producthunt_launches: Optional[list[ProductHuntLaunch]] = None,
     replicate_models: Optional[list[ReplicateModel]] = None,
     s2_data: Optional[dict] = None,
+    digg_stories: Optional[list[DiggAIStory]] = None,
     bluesky_db_path: Optional[Path] = None,
     use_claude: bool = False,
     extract_topics_fn: Optional[ExtractTopicsFn] = None,
@@ -706,6 +758,7 @@ def main(
         "reddit": False,
         "producthunt": False,
         "replicate": False,
+        "digg": False,
     }
     if papers is None:
         try:
@@ -818,6 +871,30 @@ def main(
         except Exception as e:
             log("fetch_failed", level="warning", source="newsletters", error=str(e))
             newsletter_signals = []
+
+    # Digg AI cross-reference — needs FIRECRAWL_API_KEY. Live fetch is
+    # best-effort; on failure the per-topic match still runs against the
+    # cached corpus (last 7d of observations).
+    if digg_stories is None:
+        try:
+            digg_stories = digg.fetch_digg_ai_stories()
+        except Exception as e:
+            log("fetch_failed", level="warning", source="digg", error=str(e))
+            digg_stories = []
+    if digg_stories:
+        try:
+            digg.update_corpus(digg_stories)
+        except Exception as e:
+            log("digg_corpus_update_failed", level="warning", error=str(e))
+    # Corpus-backed view: union of all Digg stories observed in the last 7d.
+    # This is what _digg_per_topic matches against (more recall than today's
+    # 30-story snapshot alone). Falls back to today's live list if corpus
+    # read fails.
+    try:
+        digg_recent_corpus = digg.load_recent_corpus_stories(lookback_days=7)
+    except Exception:
+        digg_recent_corpus = []
+    fetch_health["digg"] = len(digg_recent_corpus) > 0
 
     # Reddit — needs creds; empty list on miss.
     if reddit_posts is None:
@@ -979,6 +1056,7 @@ def main(
     producthunt_per_topic = _producthunt_per_topic(producthunt_launches, topic_list)
     replicate_per_topic = _replicate_per_topic(replicate_models, topic_list)
     s2_per_topic = _s2_per_topic(papers, topic_list, s2_data)
+    digg_per_topic = _digg_per_topic(digg_recent_corpus, topic_list)
 
     # Bluesky counts: query SQLite using the SHORT keyword list the
     # subscriber filters on (data/bluesky_keywords.json), then map each
@@ -1017,6 +1095,7 @@ def main(
             or (s == "replicate" and replicate_models)
             or (s == "bluesky" and bluesky_counts)
             or (s == "semantic_scholar" and s2_data)
+            or (s == "digg" and digg_recent_corpus)
         )
     ]
 
@@ -1035,6 +1114,7 @@ def main(
             replicate_delta=replicate_per_topic.get(topic.canonical_form, 0),
             bluesky_count=bluesky_counts.get(topic.canonical_form, 0),
             s2_citations=s2_per_topic.get(topic.canonical_form, 0),
+            digg_count=digg_per_topic.get(topic.canonical_form, 0),
         )
         counts_per_topic.append(counts)
         _, _, v = score.velocity_from_topic_docs(
@@ -1200,7 +1280,13 @@ def main(
         # gate so the operator sees the full Claude bill, not a surprise
         # second batch later.
         demand_estimated_cents = demand_mod.estimate_demand_batch_cost_cents(12)
-        total_claude_estimate = estimated_cents + demand_estimated_cents
+        # Conservative Sonar estimate: ~1¢/trend worst-case. Folded into
+        # the shared cap since 9a fires before 9b and reordering must not
+        # sneak past the existing budget gate.
+        perplexity_estimated_cents = float(len(trends))
+        total_claude_estimate = (
+            estimated_cents + demand_estimated_cents + perplexity_estimated_cents
+        )
         if max_cost_cents is not None and total_claude_estimate > max_cost_cents:
             log(
                 "claude_cost_cap_exceeded",
@@ -1208,21 +1294,23 @@ def main(
                 estimated_cents=round(total_claude_estimate, 2),
                 claude_card_cents=round(estimated_cents, 2),
                 demand_batch_cents=round(demand_estimated_cents, 2),
+                perplexity_cents=round(perplexity_estimated_cents, 2),
                 cap_cents=round(max_cost_cents, 2),
                 num_cards=len(trends),
             )
             sys.exit(3)
-        trends = _maybe_enrich_with_claude(trends, niche=niche)
 
-        # ---- 9b. Perplexity Sonar pain-point enrichment (Wave 5) ----
-        # Folds into the same `--max-cost-cents` gate as Claude. Remaining
-        # budget after Claude's estimate (cards + demand batch) is what's
-        # left for Sonar; if the cap is None, run uncapped. Per-trend
-        # failures degrade silently.
+        # ---- 9a. Perplexity Sonar pain-point enrichment (Wave 5) ----
+        # Runs BEFORE Claude (reordered) so pain_points reach the angles
+        # prompt as grounding — angles.hook / angles.tutorial /
+        # risk.rationale now describe real creator frustrations.
+        # Per-trend failures degrade silently. The corpus write inside
+        # _maybe_enrich_with_perplexity preserves each paid response
+        # against a downstream crash (see pipeline/persist.py).
         perplexity_budget_cents = (
             None
             if max_cost_cents is None
-            else max(0.0, max_cost_cents - total_claude_estimate)
+            else max(0.0, max_cost_cents - estimated_cents - demand_estimated_cents)
         )
         trends, perplexity_spent_cents = _maybe_enrich_with_perplexity(
             trends, budget_cents=perplexity_budget_cents
@@ -1233,6 +1321,9 @@ def main(
             trends_enriched=sum(1 for t in trends if t.pain_points),
             spent_cents=round(perplexity_spent_cents, 2),
         )
+
+        # ---- 9b. Claude angle/risk enrichment, grounded in pain points ----
+        trends = _maybe_enrich_with_claude(trends, niche=niche)
 
         # ---- 9c. Grok X-mention enrichment (Wave 6) ----
         # Same cost-cap pool. Remaining budget after Claude + Perplexity is
@@ -1405,6 +1496,11 @@ def main(
                     "topic_attributed": sum(bluesky_counts.values()),
                 },
                 "newsletters": {"fetched": len(newsletter_signals or [])},
+                "digg": {
+                    "fetched": len(digg_recent_corpus),
+                    "ok": fetch_health["digg"],
+                    "live_today": len(digg_stories or []),
+                },
             },
             "trends_processed": len(trends),
             "use_claude": use_claude,

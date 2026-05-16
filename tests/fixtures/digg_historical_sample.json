@@ -1,0 +1,56 @@
+{
+  "data": {
+    "json": {
+      "sections": [
+        {
+          "label": "Top Stories",
+          "date": "Saturday, May 16th, 2026",
+          "stories": [
+            {
+              "rank": 1,
+              "title": "Hermes Agent Outperforms OpenClaw in Local Qwen Model Agent Test",
+              "excerpt": "Hermes Agent completed a GitHub star history scraping task.",
+              "views": "61.7k",
+              "timestamp_relative": "2h",
+              "story_url": "/ai/qg9o8ozd?rank=1"
+            },
+            {
+              "rank": 2,
+              "title": "Fei-Fei Li warns AI neglects physical and embodied world",
+              "excerpt": "AI development risks falling short on real-world tasks.",
+              "views": "14.9k",
+              "timestamp_relative": "4h",
+              "story_url": "/ai/ejm0eub7"
+            }
+          ]
+        },
+        {
+          "label": "Yesterday's Top Stories",
+          "date": "May 15, 2026",
+          "stories": [
+            {
+              "rank": 1,
+              "title": "Anthropic resets Claude rate limits for all users",
+              "excerpt": "Anthropic restored full quotas for Claude.",
+              "views": "28.8k",
+              "timestamp_relative": "1d",
+              "story_url": "/ai/k6gv5lnr?rank=1"
+            },
+            {
+              "rank": 2,
+              "title": "X open-sources For You feed recommendation algorithm",
+              "excerpt": "Developers can now inspect the code that ranks posts in X's For You feed.",
+              "views": "5k",
+              "timestamp_relative": "1d",
+              "story_url": "/ai/48ydfy06"
+            },
+            {
+              "title": "missing rank — should drop",
+              "story_url": "/ai/bad"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

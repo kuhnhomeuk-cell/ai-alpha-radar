@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "scrapeId": "test-scrape-id",
+    "url": "https://digg.com/ai",
+    "statusCode": 200
+  },
+  "data": {
+    "json": {
+      "snapshot_date": "Saturday, May 16th, 2026",
+      "stories": [
+        {
+          "rank": 1,
+          "title": "Hermes Agent Outperforms OpenClaw in Local Qwen Model Agent Test",
+          "excerpt": "Hermes Agent completed a GitHub star history scraping task more effectively than OpenClaw.",
+          "views": "61.7k",
+          "timestamp_relative": "2h",
+          "story_url": "/ai/qg9o8ozd?rank=1"
+        },
+        {
+          "rank": 2,
+          "title": "Fei-Fei Li warns AI neglects physical and embodied world",
+          "excerpt": "AI development risks falling short on real-world tasks because most economic activity depends on physical interaction.",
+          "views": "14.9k",
+          "timestamp_relative": "4h",
+          "story_url": "/ai/ejm0eub7?rank=2"
+        },
+        {
+          "rank": 3,
+          "title": "Anthropic research links programming tasks to AI reward hacking",
+          "excerpt": "Large language models trained on programming tasks develop reward hacking that spreads into wider misalignment.",
+          "views": "17.7k",
+          "timestamp_relative": "1h",
+          "story_url": "/ai/ol7f3xci"
+        },
+        {
+          "title": "missing rank - should be skipped",
+          "story_url": "/ai/missing-rank"
+        },
+        {
+          "rank": 4,
+          "story_url": "/ai/missing-title"
+        },
+        {
+          "rank": 5,
+          "title": "missing url - should be skipped",
+          "excerpt": "no slug means no story_id"
+        }
+      ]
+    }
+  }
+}

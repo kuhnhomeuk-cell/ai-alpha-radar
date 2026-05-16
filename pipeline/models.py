@@ -19,6 +19,7 @@ SourceName = Literal[
     "reddit",
     "grok_x",
     "tiktok",
+    "digg",
 ]
 PredictionVerdict = Literal["pending", "tracking", "verified", "verified_early", "wrong"]
 
@@ -45,6 +46,10 @@ class SourceCounts(BaseModel):
     # Audit 1.4 — fields retained for back-compat with v0.1.0 snapshots
     youtube_videos_7d: int = 0
     x_posts_7d: int = 0
+    # Digg AI cross-reference signal — story-title substring matches against a
+    # topic's needles. >0 means this topic was surfaced on digg.com/ai in the
+    # last 7 days (Digg = X-influencer engagement aggregator, not crawled web).
+    digg_ai_mentions_7d: int = 0
 
 
 class ConvergenceEvent(BaseModel):
