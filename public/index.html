@@ -454,6 +454,29 @@ html::after {
 }
 .nav button:hover { color: var(--ink); }
 .nav button.active { color: var(--champagne); }
+.nav button .nav-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.4;
+}
+.nav button .nav-count:empty { display: none; }
+.nav button.has-zero { opacity: 0.6; }
+.nav button.has-zero .nav-count { color: var(--ink-3); opacity: 0.6; }
+.nav button.active .nav-count {
+  color: var(--champagne);
+  border-color: rgba(232, 196, 100, 0.45);
+  background: rgba(232, 196, 100, 0.08);
+}
 .nav button.active::after {
   content: '';
   position: absolute;
@@ -3325,6 +3348,60 @@ main {
   pointer-events: none;
 }
 
+/* Today's Pick — primary CTA panel above the leaderboard (see #13).
+   Warmer accent border + EXPLODING-orange tint so it reads as the page's
+   call-to-action ("make this today") rather than another metric panel. */
+.today-pick {
+  border-color: rgba(255, 156, 28, 0.45);
+  box-shadow:
+    0 0 0 1px var(--line-bezel),
+    0 0 24px -8px rgba(255, 156, 28, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.today-pick .panel-head .title { color: #ff9c1c; }
+.today-pick .panel-head .title::before { background: #ff9c1c; box-shadow: 0 0 6px #ff9c1c; }
+.tp-body { padding: 14px 16px; }
+.tp-kw {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.tp-hook {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.tp-hook-empty { color: var(--ink-3); font-style: italic; }
+.tp-summary {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  margin-bottom: 12px;
+}
+.tp-cta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ff9c1c;
+  background: rgba(255, 156, 28, 0.10);
+  border: 1px solid rgba(255, 156, 28, 0.45);
+  border-radius: 100px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tp-cta:hover {
+  background: rgba(255, 156, 28, 0.18);
+  color: var(--ink);
+}
+
 .bubble-fallback-svg {
   display: block;
   width: 100%;
@@ -4672,12 +4749,12 @@ footer .quote {
     <span class="subtitle">Trend Intelligence · est. 2026</span>
   </h1>
   <nav class="nav" aria-label="Pages">
-    <button data-page="radar" class="active" aria-current="page">Radar</button>
-    <button data-page="gems">Hidden Gems</button>
-    <button data-page="demand">Demand Clusters</button>
-    <button data-page="log">Star Log</button>
-    <button data-page="almanac">Almanac</button>
-    <button data-page="outliers">Comets</button>
+    <button data-page="radar" class="active" aria-current="page">Radar<span class="nav-count" data-count="radar"></span></button>
+    <button data-page="gems">Hidden Gems<span class="nav-count" data-count="gems"></span></button>
+    <button data-page="demand">Demand Clusters<span class="nav-count" data-count="demand"></span></button>
+    <button data-page="log">Star Log<span class="nav-count" data-count="log"></span></button>
+    <button data-page="almanac">Almanac<span class="nav-count" data-count="almanac"></span></button>
+    <button data-page="outliers">Comets<span class="nav-count" data-count="outliers"></span></button>
   </nav>
   <div class="right">
     <div class="search-wrap">
@@ -4770,9 +4847,21 @@ footer .quote {
     </div>
 
     <div class="radar-side">
+      <div class="panel today-pick" id="todayPickPanel" hidden>
+        <div class="panel-head">
+          <div class="title">Today's Pick</div>
+          <div class="meta">make this today</div>
+        </div>
+        <div class="tp-body">
+          <div class="tp-kw" id="tpKw">—</div>
+          <div class="tp-hook" id="tpHook">—</div>
+          <div class="tp-summary" id="tpSummary">—</div>
+          <button class="tp-cta" id="tpCta" type="button">Open trend detail →</button>
+        </div>
+      </div>
       <div class="panel">
         <div class="panel-head">
-          <div class="title">Top 20 · TBTS Leaderboard</div>
+          <div class="title" id="leaderboardTitle">Top 20 · TBTS Leaderboard</div>
           <div class="meta" id="leaderboardMeta">refreshed 06:00 UTC</div>
         </div>
         <div class="leaderboard" id="leaderboard"></div>
@@ -6021,6 +6110,61 @@ function renderBubble() {
   document.getElementById('trackedMeta').textContent = `${TRENDS.length} tracked terms`;
 }
 
+function renderNavBadges() {
+  // Surface a count next to each nav pill so the user knows which sections
+  // are populated before clicking. Sections with 0 items dim the pill +
+  // get an explanatory tooltip (see #14).
+  const counts = {
+    radar:    TRENDS.length,
+    gems:     TRENDS.filter(t => t.stage === 'whisper' || t.stage === 'builder').length,
+    demand:   (typeof DEMAND !== 'undefined' && DEMAND) ? DEMAND.length : 0,
+    log:      (typeof PREDICTIONS !== 'undefined' && PREDICTIONS) ? PREDICTIONS.length : 0,
+    almanac:  TRENDS.length,
+    outliers: (typeof YOUTUBE_OUTLIERS !== 'undefined' && YOUTUBE_OUTLIERS) ? YOUTUBE_OUTLIERS.length : 0,
+  };
+  const empties = {
+    radar:    'Refresh after 06:00 UTC for the next snapshot.',
+    gems:     'No Whisper or Builder trends in this snapshot.',
+    demand:   'Demand clusters populate once Reddit + YouTube comments are mined.',
+    log:      'No predictions to verify yet — wait for the next snapshot.',
+    almanac:  'Almanac populates after the first full month of snapshots.',
+    outliers: 'No YouTube outliers in this snapshot.',
+  };
+  document.querySelectorAll('.nav button[data-page]').forEach(btn => {
+    const key = btn.dataset.page;
+    const slot = btn.querySelector('.nav-count');
+    if (slot) slot.textContent = String(counts[key] ?? 0);
+    const zero = (counts[key] || 0) === 0;
+    btn.classList.toggle('has-zero', zero);
+    if (zero) btn.setAttribute('title', empties[key] || 'No items yet');
+    else btn.removeAttribute('title');
+  });
+}
+function renderTodayPick(top) {
+  // Today's Pick anchors to the leaderboard's #1 row (after the current
+  // filters/sort). Falls back to the keyword summary when no per-trend
+  // hook line is emitted yet by the pipeline.
+  // TODO: pipeline must emit per-trend hook copy for TODAY'S PICK panel
+  const panel = document.getElementById('todayPickPanel');
+  if (!panel) return;
+  if (!top) { panel.setAttribute('hidden', ''); return; }
+  panel.removeAttribute('hidden');
+  const kwEl = document.getElementById('tpKw');
+  const hookEl = document.getElementById('tpHook');
+  const sumEl = document.getElementById('tpSummary');
+  const ctaEl = document.getElementById('tpCta');
+  if (kwEl) kwEl.textContent = top.keyword;
+  const hook = (top.angles && top.angles[0]) || top.hook || '';
+  if (hookEl) {
+    hookEl.textContent = hook || 'Pick of the day from the TBTS leaderboard.';
+    hookEl.classList.toggle('tp-hook-empty', !hook);
+  }
+  if (sumEl) sumEl.textContent = top.summary || '';
+  if (ctaEl) {
+    const kw = top.canonical_form || top.keyword;
+    ctaEl.onclick = () => selectTrend(kw);
+  }
+}
 function renderLeaderboard() {
   const visible = TRENDS.filter(t =>
     state.stages.has(t.stage) &&
@@ -6034,6 +6178,11 @@ function renderLeaderboard() {
     if (sortKey === 'hidden_gem') return (b.hidden_gem || 0) - (a.hidden_gem || 0);
     return b.tbts - a.tbts;
   }).slice(0, 20);
+  // Denominator matches the chart's "N tracked terms" so the two panels
+  // tell the same story (see #9).
+  const titleEl = document.getElementById('leaderboardTitle');
+  if (titleEl) titleEl.textContent = `Top ${Math.min(20, TRENDS.length)} of ${TRENDS.length} · TBTS Leaderboard`;
+  renderTodayPick(sorted[0]);
 
   const html = sorted.map((t, i) => {
     const kw = t.canonical_form || t.keyword;
@@ -7080,6 +7229,7 @@ window.addEventListener('load', async () => {
   renderLog();
   renderAlmanac();
   renderSourceHealth();
+  renderNavBadges();
   bindLiquidGlints();
   liquidGlintObserver.observe(document.body, { childList: true, subtree: true });
   tickFooter();
