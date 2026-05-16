@@ -214,11 +214,12 @@ main {
 .page { display: none; flex: 1; min-height: 0; overflow-y: auto; }
 .page.active { display: flex; flex-direction: column; }
 /* Radar page: grid flexes to fill remaining space after briefing + filters.
-   Explicit min-height keeps the grid from collapsing to ~180px when the
-   briefing block is hidden (the chart-host's min-height was being clipped
-   by the parent panel's overflow:hidden). 70vh leaves room for the
-   filters/source-health/footer while giving the chart real estate. */
-.page.active > .radar-grid { flex: 1; min-height: 70vh; }
+   grid-template-rows:1fr makes the single grid row stretch to fill the
+   grid's available height instead of collapsing to content-size. Combined
+   with .page.active > .radar-grid being flex:1 of .page.active, the chart
+   now claims all remaining vertical space — no dead area below the chart
+   panel, no forced overflow scrollbar. */
+.page.active > .radar-grid { flex: 1; min-height: 0; grid-template-rows: 1fr; }
 .page.active > .radar-grid > .panel,
 .page.active > .radar-grid > .radar-side > .panel {
   display: flex;
@@ -1936,8 +1937,13 @@ html::after {
    scrolls when content exceeds viewport height. */
 .detail-panel.glass { overflow-y: auto; }
 
-/* ===== LEFT-SIDE BRIEFING PANEL (mirror of detail-panel) ===== */
-.briefing-panel {
+/* ===== LEFT-SIDE BRIEFING PANEL (mirror of detail-panel) =====
+   Specificity bump (.briefing-panel.glass) needed because the multi-
+   selector .glass rule at ~line 2300 sets position:relative and the
+   wider .glass rule at ~line 2848 sets overflow:hidden — both win
+   the cascade against bare .briefing-panel. Same pattern we already
+   used for .detail-panel.glass. */
+.briefing-panel.glass {
   position: fixed;
   top: 73px; left: 0; bottom: 0;
   width: 440px;
@@ -1949,9 +1955,9 @@ html::after {
   box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);
   border-radius: 0;
+  overflow-y: auto;
 }
-.briefing-panel.glass { overflow-y: auto; }
-.briefing-panel.visible { transform: translateX(0); }
+.briefing-panel.glass.visible { transform: translateX(0); }
 .briefing-panel .bp-head {
   padding: 18px 20px;
   border-bottom: 1px solid var(--line);
@@ -3140,15 +3146,16 @@ main {
 }
 
 .chart-host {
-  padding: 10px;
+  /* Padding halved from 10 → 4 to reclaim plot area inside the panel. */
+  padding: 4px;
 }
 
 .page.active > .radar-grid > .panel > .chart-host {
-  /* Bumped back up now that the chart hosts the quadrant strategy grid
-     and we've reclaimed the bottom wasted space. 56vh on a 1080px
-     viewport ≈ 605px which gives the four quadrants room to breathe.
-     Caption is single-line and short so it still fits inside the panel. */
-  min-height: clamp(360px, 56vh, 640px);
+  /* Floor only — chart now grows via flex:1 to fill the panel which
+     fills the grid row. min-height 280px protects against pathological
+     short viewports; no upper bound so the chart claims every pixel
+     the grid hands it. */
+  min-height: 280px;
 }
 
 /* Quadrant strategy grid (renderBubbleFallback v2) */
@@ -5361,7 +5368,11 @@ function renderBubbleFallback(el) {
   const stageOrder = ['whisper','builder','creator','hype','commodity'];
   const width = Math.max(640, el.clientWidth || 900);
   const height = Math.max(320, el.clientHeight || 440);
-  const pad = { left: 66, right: 34, top: 50, bottom: 58 };
+  // Internal SVG padding — roughly halved from the previous spacing so the
+  // four quadrants get more drawable area. Y-axis label needs ~40px on
+  // the left, X-axis label needs ~30px on the bottom, top needs room
+  // for the quadrant corner labels.
+  const pad = { left: 40, right: 18, top: 30, bottom: 36 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
