@@ -490,9 +490,48 @@ def daily_briefing(
             {"role": "user", "content": _build_briefing_prompt(movers, niche=niche)}
         ],
     )
-    parsed = _extract_json(response.content[0].text)
+    raw_text = response.content[0].text
+    # Sonnet has been observed embedding literal markdown quotes and
+    # newlines inside the "text" field without escaping them, blowing up
+    # json.loads with "Expecting ',' delimiter". When that happens, fall
+    # back to a placeholder briefing rather than crashing the whole
+    # snapshot — the rest of the pipeline (trends, demand clusters,
+    # predictions) is already done and worth shipping.
+    try:
+        parsed = _extract_json(raw_text)
+    except ClaudeParseError as exc:
+        import sys
+        print(
+            f"daily_briefing: Sonnet returned unparseable JSON, shipping "
+            f"fallback briefing. Error: {exc}",
+            file=sys.stderr,
+        )
+        return DailyBriefing(
+            text=(
+                "Daily briefing unavailable — model returned malformed JSON. "
+                "Trends, demand clusters, and predictions are still populated below."
+            ),
+            moved_up=[],
+            moved_down=[],
+            emerging=[],
+            generated_at=datetime.now(tz=timezone.utc),
+        )
+    if not isinstance(parsed, dict):
+        import sys
+        print(
+            f"daily_briefing: Sonnet returned a {type(parsed).__name__}, "
+            f"expected dict. Shipping fallback briefing.",
+            file=sys.stderr,
+        )
+        return DailyBriefing(
+            text="Daily briefing unavailable — model returned wrong JSON shape.",
+            moved_up=[],
+            moved_down=[],
+            emerging=[],
+            generated_at=datetime.now(tz=timezone.utc),
+        )
     return DailyBriefing(
-        text=parsed["text"],
+        text=parsed.get("text", ""),
         moved_up=parsed.get("moved_up", []),
         moved_down=parsed.get("moved_down", []),
         emerging=parsed.get("emerging", []),

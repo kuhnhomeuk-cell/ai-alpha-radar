@@ -659,7 +659,18 @@ def mine_demand_cluster(
         system=_system_block(niche),
         messages=[{"role": "user", "content": prompt}],
     )
-    parsed = _extract_json(response.content[0].text)
+    # Sonnet occasionally emits malformed JSON (literal quotes / newlines in
+    # string fields). Treat that as "no clusters from this keyword" rather
+    # than crashing the whole pipeline.
+    try:
+        parsed = _extract_json(response.content[0].text)
+    except ClaudeParseError:
+        import sys
+        print(
+            f"mine_demand_cluster: dropping cluster for '{keyword}' — Sonnet JSON unparseable",
+            file=sys.stderr,
+        )
+        return []
     rows = _coerce_cluster_list(parsed)
 
     clusters: list[DemandCluster] = []
