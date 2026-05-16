@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AI Alpha Radar // Trend Intelligence Terminal</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=jetbrains-mono:400,500,600,700|inter:400,500,600,700|space-grotesk:500,700" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --bg: #07090c;
+    --bg-2: #0c1015;
+    --bg-3: #11161e;
+    --panel: rgba(18, 24, 33, 0.72);
+    --panel-solid: #121821;
+    --border: rgba(120, 160, 200, 0.10);
+    --border-hi: rgba(120, 200, 255, 0.28);
+    --text: #d6e1ee;
+    --text-2: #8b9cb0;
+    --text-3: #5a6878;
+    --accent: #00f0ff;
+    --whisper: #00d4ff;
+    --builder: #00ff9d;
+    --creator: #ffd84d;
+    --hype: #ff8a3d;
+    --commodity: #7a8696;
+    --good: #00ff9d;
+    --bad: #ff4d6d;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+    --display: 'Space Grotesk', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* Background — grid + scanlines + radial */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(0, 240, 255, 0.06), transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(0, 255, 157, 0.04), transparent 50%),
+      linear-gradient(rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, rgba(120,160,200,0.025) 1px, transparent 1px) 0 0 / 32px 32px,
+      var(--bg);
+    z-index: -2;
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.012) 0px,
+      rgba(255,255,255,0.012) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* ----------------- TOP BAR ----------------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(7, 9, 12, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .logo .accent { color: var(--accent); }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+  .nav {
+    display: flex;
+    gap: 4px;
+    margin-left: 32px;
+  }
+  .nav button {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-2);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .nav button:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav button.active {
+    color: var(--accent);
+    background: rgba(0, 240, 255, 0.06);
+    border-color: rgba(0, 240, 255, 0.2);
+  }
+  .topbar .right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+  }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid rgba(0, 255, 157, 0.25);
+    border-radius: 100px;
+    background: rgba(0, 255, 157, 0.05);
+    color: var(--good);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  .status-pill::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 8px var(--good);
+  }
+  .niche-input {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    width: 220px;
+  }
+  .niche-input:focus { outline: 1px solid var(--accent); }
+
+  /* ----------------- LAYOUT ----------------- */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ----------------- DAILY BRIEFING BANNER ----------------- */
+  .briefing {
+    margin: 16px 20px 0;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, rgba(0,240,255,0.06), rgba(0,255,157,0.03));
+    border: 1px solid var(--border-hi);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+  }
+  .briefing::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .briefing .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .briefing .label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border-hi), transparent);
+  }
+  .briefing-text {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    max-width: 100%;
+  }
+  .briefing-text strong { color: var(--accent); font-weight: 600; }
+  .briefing-text .up { color: var(--good); font-family: var(--mono); font-size: 12px;}
+  .briefing-text .down { color: var(--bad); font-family: var(--mono); font-size: 12px;}
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--accent);
+    vertical-align: text-bottom;
+    animation: blink 1s steps(1) infinite;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ----------------- FILTER ROW ----------------- */
+  .filters {
+    display: flex; gap: 10px; align-items: center;
+    margin: 16px 20px 0;
+    padding: 10px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+    flex-wrap: wrap;
+  }
+  .filters .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-right: 6px;
+    border-right: 1px solid var(--border);
+    margin-right: 6px;
+  }
+  .chip {
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    color: var(--text-2);
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .chip:hover { color: var(--text); border-color: var(--border-hi); }
+  .chip.active { color: var(--text); border-color: var(--border-hi); background: rgba(0,240,255,0.05); }
+  .chip .stage-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .stage-dot.whisper { background: var(--whisper); box-shadow: 0 0 6px var(--whisper); }
+  .stage-dot.builder { background: var(--builder); box-shadow: 0 0 6px var(--builder); }
+  .stage-dot.creator { background: var(--creator); box-shadow: 0 0 6px var(--creator); }
+  .stage-dot.hype { background: var(--hype); box-shadow: 0 0 6px var(--hype); }
+  .stage-dot.commodity { background: var(--commodity); }
+
+  /* ----------------- RADAR PAGE GRID ----------------- */
+  .radar-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    margin: 16px 20px 20px;
+  }
+  @media (max-width: 1100px) {
+    .radar-grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-head .title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-head .title::before {
+    content: '';
+    width: 3px; height: 12px;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .panel-head .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+  }
+
+  /* ----------------- BUBBLE CHART ----------------- */
+  .chart-host { height: 580px; padding: 8px; }
+  .chart-legend {
+    display: flex; gap: 16px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    flex-wrap: wrap;
+  }
+  .chart-legend .item { display: flex; align-items: center; gap: 6px; }
+
+  /* ----------------- LEADERBOARD ----------------- */
+  .leaderboard { max-height: 580px; overflow-y: auto; }
+  .leaderboard::-webkit-scrollbar { width: 6px; }
+  .leaderboard::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+  .lb-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 60px 28px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    cursor: pointer;
+    gap: 8px;
+    transition: background 0.1s;
+  }
+  .lb-row:hover { background: rgba(0,240,255,0.04); }
+  .lb-row .rank {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+  }
+  .lb-row .name {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lb-row .stage-mini {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .lb-row .tbts {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+  }
+  .lb-row .vel {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-align: right;
+  }
+  .vel.up { color: var(--good); }
+  .vel.down { color: var(--bad); }
+
+  /* ----------------- HIDDEN GEMS GRID ----------------- */
+  .gems-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+    margin: 16px 20px 20px;
+  }
+  .gem-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.15s, transform 0.15s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .gem-card:hover {
+    border-color: var(--border-hi);
+    transform: translateY(-2px);
+  }
+  .gem-card.convergence::after {
+    content: 'CONVERGENCE';
+    position: absolute; top: 8px; right: 8px;
+    font-family: var(--mono); font-size: 8px;
+    padding: 2px 6px;
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 100px;
+    letter-spacing: 0.08em;
+  }
+  .gem-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .gem-keyword {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .gem-score {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .gem-score .label {
+    font-size: 9px;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+    display: block;
+    text-align: right;
+  }
+  .gem-meta {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+  .gem-meta .badge {
+    padding: 2px 7px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-2);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .gem-summary {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .gem-sparkline {
+    height: 32px;
+    margin-bottom: 12px;
+  }
+  .gem-angles {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .gem-angles .label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .angle {
+    display: flex; gap: 8px; align-items: flex-start;
+    padding: 5px 0;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+  .angle:hover { color: var(--text); }
+  .angle .tag {
+    font-family: var(--mono);
+    font-size: 8px;
+    padding: 2px 5px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+  }
+  .angle .tag.hook { background: rgba(0, 240, 255, 0.12); color: var(--whisper); }
+  .angle .tag.cont { background: rgba(255, 138, 61, 0.15); color: var(--hype); }
+  .angle .tag.tut  { background: rgba(0, 255, 157, 0.12); color: var(--builder); }
+
+  /* ----------------- SIGNAL PROOF TABLE ----------------- */
+  .proof-wrap { margin: 16px 20px 20px; }
+  .proof-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .proof-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.01);
+  }
+  .proof-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .proof-table tr { cursor: pointer; transition: background 0.1s; }
+  .proof-table tr:hover { background: rgba(0,240,255,0.03); }
+  .proof-table .keyword {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .proof-table .mono { font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+  .proof-table .delta {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--good);
+  }
+  .timeline-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+    width: 140px;
+  }
+  .timeline-bar .seg {
+    position: absolute; top: 0; bottom: 0;
+    border-radius: 3px;
+  }
+  .timeline-bar .arx { left: 0; background: var(--whisper); }
+  .timeline-bar .gh  { background: var(--builder); }
+  .timeline-bar .hn  { background: var(--creator); }
+  .timeline-bar .gt  { background: var(--hype); }
+
+  /* ----------------- CONTENT INTEL ----------------- */
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 16px;
+    margin: 16px 20px 20px;
+  }
+  .title-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .title-card .topic {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .title-card .topic .niche-pill {
+    color: var(--text-3);
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    text-transform: none;
+    letter-spacing: 0.05em;
+  }
+  .title-row {
+    display: flex; gap: 8px; align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .title-row:last-child { border-bottom: none; }
+  .title-row .tag {
+    font-family: var(--mono); font-size: 9px;
+    padding: 3px 6px; border-radius: 3px;
+    flex-shrink: 0; min-width: 60px; text-align: center;
+    letter-spacing: 0.06em;
+  }
+  .title-row .text {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.35;
+    flex: 1;
+  }
+  .title-row .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-3);
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    letter-spacing: 0.06em;
+  }
+  .title-row .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ----------------- SECTION LABEL ----------------- */
+  .section-label {
+    margin: 18px 20px 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-label .count {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* tooltip */
+  .echarts-tooltip {
+    background: var(--panel-solid) !important;
+    border: 1px solid var(--border-hi) !important;
+    border-radius: 4px !important;
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+  }
+
+  footer {
+    margin: 24px 20px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo"><span class="dot"></span> AI<span class="accent">/</span>ALPHA<span class="accent">/</span>RADAR</div>
+  <div class="nav">
+    <button data-page="radar" class="active">Radar</button>
+    <button data-page="gems">Hidden Gems</button>
+    <button data-page="proof">Signal Proof</button>
+    <button data-page="content">Content Intel</button>
+  </div>
+  <div class="right">
+    <input class="niche-input" id="nicheInput" placeholder="your niche: AI tools for creators" value="AI tools for solo creators">
+    <span>SNAPSHOT 2026-05-13 06:00 UTC</span>
+    <div class="status-pill">LIVE</div>
+  </div>
+</div>
+
+<!-- ============================ RADAR PAGE ============================ -->
+<div class="page active" data-page="radar">
+
+  <!-- Daily Movers Briefing -->
+  <div class="briefing">
+    <div class="label">⚡ Daily Movers · Editorial Briefing · 06:00 UTC</div>
+    <div class="briefing-text" id="briefingText"></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <span class="label">Stage</span>
+    <span class="chip active"><span class="stage-dot whisper"></span> Whisper</span>
+    <span class="chip active"><span class="stage-dot builder"></span> Builder</span>
+    <span class="chip active"><span class="stage-dot creator"></span> Creator</span>
+    <span class="chip"><span class="stage-dot hype"></span> Hype</span>
+    <span class="chip"><span class="stage-dot commodity"></span> Commodity</span>
+
+    <span class="label" style="margin-left: 16px;">Source</span>
+    <span class="chip active">arXiv</span>
+    <span class="chip active">GitHub</span>
+    <span class="chip active">HN</span>
+    <span class="chip active">SemScholar</span>
+
+    <span class="label" style="margin-left: 16px;">Sort</span>
+    <span class="chip active">TBTS ↓</span>
+    <span class="chip">Velocity ↓</span>
+    <span class="chip">Hidden Gem ↓</span>
+  </div>
+
+  <!-- Grid: chart + leaderboard -->
+  <div class="radar-grid">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="title">Trend Velocity × Saturation Map</div>
+        <div class="meta">bubble size = TBTS · 47 tracked terms</div>
+      </div>
+      <div class="chart-host" id="bubbleChart"></div>
+      <div class="chart-legend">
+        <span class="item"><span class="stage-dot whisper"></span>Whisper · pre-language</span>
+        <span class="item"><span class="stage-dot builder"></span>Builder · target zone</span>
+        <span class="item"><span class="stage-dot creator"></span>Creator · window closing</span>
+        <span class="item"><span class="stage-dot hype"></span>Hype · saturated</span>
+        <span class="item"><span class="stage-dot commodity"></span>Commodity · too late</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="title">Top 20 · TBTS Leaderboard</div>
+        <div class="meta">refreshes 06:00 UTC daily</div>
+      </div>
+      <div class="leaderboard" id="leaderboard"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ HIDDEN GEMS PAGE ============================ -->
+<div class="page" data-page="gems">
+  <div class="briefing">
+    <div class="label">💎 Hidden Gems · Whisper + Builder stage · Low saturation, high acceleration</div>
+    <div class="briefing-text">Trends in the sweet-spot quadrant — builders are active, mainstream hasn't caught on yet. Each card has a 2–4 week content window before saturation.</div>
+  </div>
+  <div class="section-label">Top Picks · <span class="count" id="gemsCount">6</span> matching today's criteria</div>
+  <div class="gems-grid" id="gemsGrid"></div>
+</div>
+
+<!-- ============================ SIGNAL PROOF PAGE ============================ -->
+<div class="page" data-page="proof">
+  <div class="briefing">
+    <div class="label">🎯 Signal Proof · The timestamp delta is the product</div>
+    <div class="briefing-text">Trends AI Alpha Radar flagged at <strong>Whisper</strong> or <strong>Builder</strong> stage — and how many days later Google Trends caught up. <strong>Median lead time: 23 days.</strong></div>
+  </div>
+  <div class="section-label">Flagged Trends · last 90 days · <span class="count">8 confirmed crossovers</span></div>
+  <div class="proof-wrap">
+    <div class="panel">
+      <table class="proof-table">
+        <thead>
+          <tr>
+            <th>Keyword</th>
+            <th>Flagged</th>
+            <th>Stage at flag</th>
+            <th>GT crossover</th>
+            <th>Delta</th>
+            <th>Convergence Timeline</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody id="proofTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ CONTENT INTEL PAGE ============================ -->
+<div class="page" data-page="content">
+  <div class="briefing">
+    <div class="label">🎬 Content Intelligence · Niche-tailored angles · screenshot-ready</div>
+    <div class="briefing-text">Three angles per trend, scoped to your niche: <strong id="nicheEcho">AI tools for solo creators</strong>. Click any title to copy.</div>
+  </div>
+  <div class="section-label">Today's Picks · <span class="count">6 trends</span> · 14-day window each</div>
+  <div class="content-grid" id="contentGrid"></div>
+</div>
+
+<footer>
+  <span>// AI ALPHA RADAR · Trend Intelligence Terminal · v0.1 mockup</span>
+  <span>data sources: arXiv · GitHub · Hacker News · Semantic Scholar</span>
+  <span id="footerClock">— : — : —</span>
+</footer>
+
+<script>
+/* =====================================================
+   FAKE DATA
+   ===================================================== */
+
+const STAGE_META = {
+  whisper:   { color: '#00d4ff', label: 'WHISPER',   weight: 0.20 },
+  builder:   { color: '#00ff9d', label: 'BUILDER',   weight: 0.50 },
+  creator:   { color: '#ffd84d', label: 'CREATOR',   weight: 0.80 },
+  hype:      { color: '#ff8a3d', label: 'HYPE',      weight: 0.40 },
+  commodity: { color: '#7a8696', label: 'COMMODITY', weight: 0.10 },
+};
+
+const TRENDS = [
+  {
+    keyword: 'world model agents', stage: 'whisper',
+    saturation: 12, velocity: 4.2, tbts: 87, hiddenGem: 0.91,
+    sources: { arxiv: 18, github: 6, hn: 4, ss: 11 },
+    convergence: true,
+    summary: 'AI agents that learn a physics-style simulator of their environment to plan ahead instead of reacting.',
+    summary_eli: 'Like giving an AI a mental sandbox to run thought experiments before acting in the real world.',
+    angles: {
+      hook: 'The AI breakthrough hiding in 6 papers from last week',
+      cont: 'Why "world models" make LLMs look like calculators',
+      tut:  'Build a tiny world-model agent in 30 lines of Python'
+    },
+    sparkline: [1,1,2,1,2,3,3,4,3,5,6,5,7,8],
+    risk: { likelihood: 'high', peakDays: 38, flag: 'single-source signal' }
+  },
+  {
+    keyword: 'test-time training', stage: 'builder',
+    saturation: 28, velocity: 3.1, tbts: 81, hiddenGem: 0.84,
+    sources: { arxiv: 22, github: 14, hn: 9, ss: 15 },
+    convergence: true,
+    summary: 'Models that fine-tune themselves on each new problem during inference, not just at training time.',
+    summary_eli: 'Imagine a student who studies the specific question briefly before answering it.',
+    angles: {
+      hook: 'The training trick that\'s eating fine-tuning alive',
+      cont: 'Test-time training won\'t scale — and here\'s why',
+      tut:  'Add test-time training to your model in one weekend'
+    },
+    sparkline: [2,2,3,4,3,5,5,7,8,9,10,11,13,14],
+    risk: { likelihood: 'high', peakDays: 32, flag: 'none' }
+  },
+  {
+    keyword: 'diffusion language models', stage: 'whisper',
+    saturation: 8, velocity: 5.6, tbts: 84, hiddenGem: 0.89,
+    sources: { arxiv: 14, github: 3, hn: 2, ss: 9 },
+    convergence: false,
+    summary: 'Text generation using diffusion instead of next-token prediction — parallel decoding, fewer hallucinations.',
+    summary_eli: 'Think of it like sculpting a paragraph all at once instead of writing it one word at a time.',
+    angles: {
+      hook: 'Why "GPT-style" might be obsolete by 2027',
+      cont: 'Diffusion LMs sound great. The benchmarks say otherwise.',
+      tut:  'Try the first open-source diffusion language model'
+    },
+    sparkline: [1,1,1,2,1,2,3,3,4,5,5,7,8,9],
+    risk: { likelihood: 'medium', peakDays: 64, flag: 'may be hype cycle' }
+  },
+  {
+    keyword: 'small reasoning models (SRM)', stage: 'builder',
+    saturation: 34, velocity: 2.8, tbts: 79, hiddenGem: 0.76,
+    sources: { arxiv: 12, github: 28, hn: 16, ss: 8 },
+    convergence: true,
+    summary: 'Sub-3B-param models trained on synthetic chain-of-thought to match GPT-4-class reasoning on math and code.',
+    summary_eli: 'A pocket-sized AI that thinks step-by-step instead of just guessing.',
+    angles: {
+      hook: 'A 1.5B-param model just beat GPT-4 at math',
+      cont: 'The "small model" trend is mostly marketing',
+      tut:  'Run a reasoning model on your MacBook in 5 minutes'
+    },
+    sparkline: [3,4,4,5,6,7,8,9,10,11,12,13,15,16],
+    risk: { likelihood: 'high', peakDays: 28, flag: 'none' }
+  },
+  {
+    keyword: 'JEPA video models', stage: 'builder',
+    saturation: 31, velocity: 2.4, tbts: 73, hiddenGem: 0.72,
+    sources: { arxiv: 9, github: 11, hn: 7, ss: 6 },
+    convergence: false,
+    summary: 'Self-supervised video models that learn by predicting representations, not pixels — way more sample-efficient.',
+    summary_eli: 'A model that learns physics from YouTube without anyone labeling a single frame.',
+    angles: {
+      hook: 'LeCun was right — and Sora was wrong',
+      cont: 'JEPA is overrated. Here\'s the dirty secret.',
+      tut:  'Train a tiny JEPA in Colab this afternoon'
+    },
+    sparkline: [4,4,5,5,6,6,7,8,8,9,10,11,12,13],
+    risk: { likelihood: 'medium', peakDays: 45, flag: 'none' }
+  },
+  {
+    keyword: 'agentic memory architectures', stage: 'whisper',
+    saturation: 14, velocity: 3.7, tbts: 78, hiddenGem: 0.85,
+    sources: { arxiv: 11, github: 4, hn: 3, ss: 7 },
+    convergence: true,
+    summary: 'Long-term memory systems for AI agents — vector + symbolic + temporal hybrid stores.',
+    summary_eli: 'How to give your AI assistant the kind of memory a human friend has, not a chatbot.',
+    angles: {
+      hook: 'Your AI agent has amnesia. Here\'s the fix.',
+      cont: 'Vector DBs are the wrong abstraction for agent memory',
+      tut:  'Build a real long-term memory layer in 200 lines'
+    },
+    sparkline: [1,1,2,2,2,3,3,4,5,5,6,7,8,9],
+    risk: { likelihood: 'high', peakDays: 41, flag: 'none' }
+  },
+  {
+    keyword: 'rStar-Math style self-evolve', stage: 'builder',
+    saturation: 26, velocity: 3.4, tbts: 76, hiddenGem: 0.79,
+    sources: { arxiv: 8, github: 22, hn: 12, ss: 5 },
+    convergence: true,
+    summary: 'Models that generate their own training data through Monte Carlo tree search, iteratively improving math skills.',
+    summary_eli: 'An AI that teaches itself by playing chess against itself — except for math problems.',
+    angles: {
+      hook: 'The AI that\'s learning math by talking to itself',
+      cont: 'Self-evolve is just RLHF with extra steps',
+      tut:  'Implement MCTS for LLM reasoning from scratch'
+    },
+    sparkline: [2,3,3,4,5,5,7,8,8,9,11,12,13,14],
+    risk: { likelihood: 'high', peakDays: 24, flag: 'none' }
+  },
+  {
+    keyword: 'browser-use agents (MCP)', stage: 'creator',
+    saturation: 52, velocity: 1.9, tbts: 71, hiddenGem: 0.58,
+    sources: { arxiv: 4, github: 67, hn: 31, ss: 3 },
+    convergence: false,
+    summary: 'Agents that drive real browsers via Anthropic\'s MCP protocol — Claude clicking buttons and filling forms.',
+    summary_eli: 'AI that uses websites the way you do, not via API.',
+    angles: {
+      hook: 'Why your job will be agent-replaced before APIs',
+      cont: 'Browser agents are a 2026 dead-end',
+      tut:  'Make Claude book your flights — full tutorial'
+    },
+    sparkline: [5,6,7,8,9,11,12,14,15,16,17,18,19,20],
+    risk: { likelihood: 'high', peakDays: 14, flag: 'window closing' }
+  },
+  {
+    keyword: 'tool-use RL post-training', stage: 'whisper',
+    saturation: 16, velocity: 4.0, tbts: 76, hiddenGem: 0.86,
+    sources: { arxiv: 13, github: 5, hn: 3, ss: 8 },
+    convergence: false,
+    summary: 'RL fine-tuning where the reward signal comes from tool-call correctness, not human preferences.',
+    summary_eli: 'Training AI by letting it use real tools and grading it on the results.',
+    angles: {
+      hook: 'The post-training trick OpenAI won\'t talk about',
+      cont: 'Tool-use RL is just sparse-reward HF in disguise',
+      tut:  'Fine-tune a tool-using model with verifiable rewards'
+    },
+    sparkline: [1,2,2,2,3,3,4,5,6,6,7,8,9,10],
+    risk: { likelihood: 'medium', peakDays: 52, flag: 'single-source signal' }
+  },
+  {
+    keyword: 'neural CAD generation', stage: 'whisper',
+    saturation: 9, velocity: 4.8, tbts: 74, hiddenGem: 0.88,
+    sources: { arxiv: 6, github: 3, hn: 1, ss: 4 },
+    convergence: false,
+    summary: 'Text-to-CAD with parametric output — generating editable Fusion 360 / OnShape files, not just meshes.',
+    summary_eli: 'Like Midjourney, but it gives you a 3D printable file you can still edit.',
+    angles: {
+      hook: 'The text-to-CAD breakthrough hardware folks missed',
+      cont: 'Neural CAD won\'t replace engineers — yet',
+      tut:  'Generate your first CAD model from a prompt'
+    },
+    sparkline: [1,1,1,1,2,2,3,3,4,4,5,5,6,7],
+    risk: { likelihood: 'medium', peakDays: 78, flag: 'single-source signal' }
+  },
+  {
+    keyword: 'agent evaluation harnesses', stage: 'builder',
+    saturation: 33, velocity: 2.6, tbts: 68, hiddenGem: 0.65,
+    sources: { arxiv: 5, github: 19, hn: 11, ss: 4 },
+    convergence: false,
+    summary: 'Open-source frameworks for systematically benchmarking AI agents on real-world tasks (browser, code, terminal).',
+    summary_eli: 'Stress-tests for AI agents to see if they actually work or just look impressive in demos.',
+    angles: {
+      hook: 'The dirty truth about every agent demo on X',
+      cont: 'Why "eval-driven development" is the new TDD',
+      tut:  'Set up an agent eval suite in under an hour'
+    },
+    sparkline: [3,4,4,5,5,6,7,8,9,9,10,11,12,12],
+    risk: { likelihood: 'medium', peakDays: 36, flag: 'none' }
+  },
+  {
+    keyword: 'speculative decoding hardware', stage: 'builder',
+    saturation: 38, velocity: 2.1, tbts: 65, hiddenGem: 0.57,
+    sources: { arxiv: 9, github: 15, hn: 8, ss: 6 },
+    convergence: false,
+    summary: 'Custom silicon and kernel work optimised specifically for draft-model speculation — Groq-style speedups.',
+    summary_eli: 'A clever shortcut that makes AI answer 4× faster without losing accuracy.',
+    angles: {
+      hook: 'How Groq quietly made LLMs feel real-time',
+      cont: 'Speculative decoding hits a wall in 2026',
+      tut:  'Implement speculative decoding with two open models'
+    },
+    sparkline: [4,4,5,5,6,6,7,7,8,9,9,10,11,11],
+    risk: { likelihood: 'medium', peakDays: 41, flag: 'none' }
+  },
+  {
+    keyword: 'synthetic dataset pipelines', stage: 'builder',
+    saturation: 42, velocity: 1.7, tbts: 58, hiddenGem: 0.48,
+    sources: { arxiv: 11, github: 24, hn: 14, ss: 7 },
+    convergence: false,
+    summary: 'End-to-end pipelines for generating, filtering, and verifying synthetic training data at scale.',
+    summary_eli: 'Factories that mass-produce fake-but-correct training examples for AI models.',
+    angles: {
+      hook: 'The synthetic data boom nobody is reporting',
+      cont: 'Why synthetic data will hit model collapse by 2027',
+      tut:  'Build a synthetic dataset pipeline this weekend'
+    },
+    sparkline: [6,7,7,8,8,9,9,10,10,11,11,12,12,13],
+    risk: { likelihood: 'medium', peakDays: 31, flag: 'none' }
+  },
+  {
+    keyword: 'AI voice cloning v3', stage: 'creator',
+    saturation: 58, velocity: 1.4, tbts: 55, hiddenGem: 0.31,
+    sources: { arxiv: 2, github: 41, hn: 23, ss: 1 },
+    convergence: false,
+    summary: 'Sub-second-sample voice cloning with emotion control and per-syllable prosody.',
+    summary_eli: 'Tools that clone your voice from 3 seconds of audio and let it sound happy or sad on command.',
+    angles: {
+      hook: 'Voice clones got scary good — here\'s the new bar',
+      cont: 'The voice cloning panic is mostly hype',
+      tut:  'Clone your voice in under 60 seconds'
+    },
+    sparkline: [10,11,11,12,12,13,13,13,14,14,14,15,15,15],
+    risk: { likelihood: 'medium', peakDays: 18, flag: 'window closing' }
+  },
+  {
+    keyword: 'AI coding agents (autonomous)', stage: 'creator',
+    saturation: 64, velocity: 1.6, tbts: 54, hiddenGem: 0.27,
+    sources: { arxiv: 3, github: 89, hn: 41, ss: 2 },
+    convergence: false,
+    summary: 'Long-running coding agents that ship PRs end-to-end — Devin, Cursor agents, Claude Code, etc.',
+    summary_eli: 'AI that doesn\'t just suggest code — it opens, edits, and submits the pull request for you.',
+    angles: {
+      hook: 'I let an AI agent ship a feature. Here\'s what happened.',
+      cont: 'AI coding agents are still 80% theater',
+      tut:  'Set up Claude Code for your daily workflow'
+    },
+    sparkline: [12,13,13,14,14,15,15,16,16,16,17,17,18,18],
+    risk: { likelihood: 'high', peakDays: 10, flag: 'window closing' }
+  },
+  {
+    keyword: '10M context window models', stage: 'hype',
+    saturation: 71, velocity: 2.3, tbts: 51, hiddenGem: 0.22,
+    sources: { arxiv: 6, github: 19, hn: 38, ss: 4 },
+    convergence: false,
+    summary: 'Frontier models pushing context to 10M+ tokens with sub-quadratic attention variants.',
+    summary_eli: 'AI that can read a whole library in one sitting and still remember chapter 1.',
+    angles: {
+      hook: 'The 10M context flex everyone is missing the point on',
+      cont: 'Long context is a benchmark trick, not a real feature',
+      tut:  'Test 10M context on a real RAG task'
+    },
+    sparkline: [8,9,11,13,14,15,16,17,18,19,19,20,20,21],
+    risk: { likelihood: 'medium', peakDays: 7, flag: 'may be hype cycle' }
+  },
+  {
+    keyword: 'RAG 2.0 / agentic retrieval', stage: 'hype',
+    saturation: 78, velocity: 1.8, tbts: 44, hiddenGem: 0.18,
+    sources: { arxiv: 5, github: 53, hn: 47, ss: 3 },
+    convergence: false,
+    summary: 'Multi-step retrieval with planning, re-ranking, and verification loops instead of single-query embedding search.',
+    summary_eli: 'Smarter document search that thinks before it grabs and grabs more than once.',
+    angles: {
+      hook: 'RAG is dead. Long live RAG.',
+      cont: 'Agentic retrieval is just RAG with PR',
+      tut:  'Migrate from naive RAG to agentic retrieval'
+    },
+    sparkline: [15,16,17,18,18,19,19,20,20,20,21,21,21,22],
+    risk: { likelihood: 'low', peakDays: 4, flag: 'may be hype cycle' }
+  },
+  {
+    keyword: 'local LLM inference (llama.cpp)', stage: 'commodity',
+    saturation: 88, velocity: 0.9, tbts: 22, hiddenGem: 0.08,
+    sources: { arxiv: 1, github: 124, hn: 28, ss: 1 },
+    convergence: false,
+    summary: 'Running quantized models on consumer hardware — mature toolchain, dozens of UIs.',
+    summary_eli: 'AI that runs on your laptop instead of a giant data center.',
+    angles: {
+      hook: 'Local AI is great. So why doesn\'t anyone use it?',
+      cont: 'Local LLMs already lost the consumer war',
+      tut:  'Set up llama.cpp + open-webui in 10 minutes'
+    },
+    sparkline: [20,20,20,21,20,20,21,21,21,21,21,22,22,21],
+    risk: { likelihood: 'low', peakDays: 0, flag: 'mature' }
+  },
+];
+
+const PROOF = [
+  { kw: 'Mixture of Experts (MoE) routing', flagged: '2026-02-04', stage: 'whisper', gt: '2026-02-28', delta: 24,
+    seg: { arx: [0,6], gh: [4,15], hn: [9,20], gt: [24,35] }, outcome: '+340% mentions' },
+  { kw: 'Test-time compute scaling', flagged: '2025-12-19', stage: 'whisper', gt: '2026-01-17', delta: 29,
+    seg: { arx: [0,8], gh: [5,18], hn: [11,22], gt: [29,40] }, outcome: 'mainstream' },
+  { kw: 'rStar-Math style self-evolve', flagged: '2026-03-22', stage: 'builder', gt: '2026-04-15', delta: 24,
+    seg: { arx: [0,7], gh: [3,18], hn: [9,21], gt: [24,32] }, outcome: 'climbing' },
+  { kw: 'O1-style chain-of-thought', flagged: '2025-11-08', stage: 'whisper', gt: '2025-12-04', delta: 26,
+    seg: { arx: [0,5], gh: [4,16], hn: [10,23], gt: [26,38] }, outcome: 'mainstream' },
+  { kw: 'Browser-use agents (MCP)', flagged: '2026-01-28', stage: 'builder', gt: '2026-02-20', delta: 23,
+    seg: { arx: [0,4], gh: [2,18], hn: [8,21], gt: [23,33] }, outcome: '+520% mentions' },
+  { kw: 'JEPA video models', flagged: '2026-04-09', stage: 'builder', gt: '—', delta: null,
+    seg: { arx: [0,9], gh: [6,18], hn: [12,22], gt: null }, outcome: 'tracking' },
+  { kw: 'Speculative decoding', flagged: '2025-10-14', stage: 'whisper', gt: '2025-11-11', delta: 28,
+    seg: { arx: [0,6], gh: [4,17], hn: [10,22], gt: [28,38] }, outcome: 'mainstream' },
+  { kw: 'Mamba state-space (v1)', flagged: '2025-09-22', stage: 'whisper', gt: '2025-10-19', delta: 27,
+    seg: { arx: [0,5], gh: [3,16], hn: [9,21], gt: [27,37] }, outcome: 'mainstream' },
+];
+
+/* =====================================================
+   PAGE SWITCHING
+   ===================================================== */
+document.querySelectorAll('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const target = document.querySelector(`.page[data-page="${btn.dataset.page}"]`);
+    target.classList.add('active');
+    // re-render bubble chart on radar tab to handle hidden->visible
+    if (btn.dataset.page === 'radar') setTimeout(renderBubble, 50);
+  });
+});
+
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('active'));
+});
+
+/* =====================================================
+   BUBBLE CHART (ECharts)
+   ===================================================== */
+let bubbleInstance = null;
+function renderBubble() {
+  const el = document.getElementById('bubbleChart');
+  if (!el) return;
+  if (bubbleInstance) bubbleInstance.dispose();
+  bubbleInstance = echarts.init(el, null, { renderer: 'canvas' });
+
+  const stageOrder = ['whisper','builder','creator','hype','commodity'];
+  const series = stageOrder.map(stage => ({
+    name: STAGE_META[stage].label,
+    type: 'scatter',
+    data: TRENDS.filter(t => t.stage === stage).map(t => ({
+      value: [t.saturation, t.velocity, t.tbts, t.keyword],
+      itemStyle: {
+        color: STAGE_META[stage].color,
+        opacity: 0.85,
+        shadowBlur: 14,
+        shadowColor: STAGE_META[stage].color,
+        borderColor: 'rgba(255,255,255,0.18)',
+        borderWidth: 1
+      }
+    })),
+    symbolSize: v => Math.max(14, v[2] * 0.55),
+    emphasis: { focus: 'series', itemStyle: { borderWidth: 2, borderColor: '#fff'} },
+    label: {
+      show: true,
+      position: 'right',
+      formatter: p => p.value[3],
+      color: '#8b9cb0',
+      fontSize: 10,
+      fontFamily: 'JetBrains Mono',
+      distance: 8
+    }
+  }));
+
+  bubbleInstance.setOption({
+    backgroundColor: 'transparent',
+    grid: { left: 60, right: 60, top: 30, bottom: 60 },
+    tooltip: {
+      backgroundColor: 'rgba(12, 16, 21, 0.95)',
+      borderColor: 'rgba(0, 240, 255, 0.4)',
+      borderWidth: 1,
+      textStyle: { color: '#d6e1ee', fontFamily: 'JetBrains Mono', fontSize: 11 },
+      formatter: p => `
+        <div style="font-family:'Space Grotesk';font-weight:700;font-size:14px;margin-bottom:6px;color:#fff">${p.value[3]}</div>
+        <div style="color:#8b9cb0">saturation <span style="color:#d6e1ee">${p.value[0]}%</span></div>
+        <div style="color:#8b9cb0">velocity   <span style="color:#d6e1ee">${p.value[1].toFixed(2)}x</span></div>
+        <div style="color:#8b9cb0">TBTS       <span style="color:${STAGE_META[p.seriesName.toLowerCase()].color}">${p.value[2]}</span></div>
+        <div style="color:#8b9cb0">stage      <span style="color:${STAGE_META[p.seriesName.toLowerCase()].color}">${p.seriesName}</span></div>
+      `
+    },
+    xAxis: {
+      type: 'value', min: 0, max: 100,
+      name: 'SATURATION %  →  MAINSTREAM',
+      nameLocation: 'middle', nameGap: 32,
+      nameTextStyle: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 1 },
+      axisLine: { lineStyle: { color: 'rgba(120,160,200,0.15)' } },
+      splitLine: { lineStyle: { color: 'rgba(120,160,200,0.05)' } },
+      axisLabel: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10 }
+    },
+    yAxis: {
+      type: 'value', min: 0, max: 6.5,
+      name: 'VELOCITY (7d / 30d-avg)  ↑',
+      nameLocation: 'middle', nameGap: 38, nameRotate: 90,
+      nameTextStyle: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 1 },
+      axisLine: { lineStyle: { color: 'rgba(120,160,200,0.15)' } },
+      splitLine: { lineStyle: { color: 'rgba(120,160,200,0.05)' } },
+      axisLabel: { color: '#5a6878', fontFamily: 'JetBrains Mono', fontSize: 10, formatter: '{value}x' }
+    },
+    series,
+    // Sweet spot highlight
+    graphic: [{
+      type: 'rect',
+      shape: { x: 0, y: 0, width: 100, height: 100 },
+      invisible: true
+    }],
+    legend: { show: false }
+  });
+
+  // sweet-spot zone overlay
+  bubbleInstance.setOption({
+    series: [...series, {
+      type: 'custom',
+      renderItem: (params, api) => {
+        const x0 = api.coord([0, 1.5])[0];
+        const y0 = api.coord([0, 6.5])[1];
+        const x1 = api.coord([40, 0])[0];
+        const y1 = api.coord([40, 1.5])[1];
+        return {
+          type: 'rect',
+          shape: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 },
+          style: {
+            fill: 'rgba(0, 255, 157, 0.04)',
+            stroke: 'rgba(0, 255, 157, 0.22)',
+            lineDash: [4, 4],
+            lineWidth: 1
+          },
+          silent: true
+        };
+      },
+      data: [0],
+      z: 0
+    }]
+  });
+}
+
+/* =====================================================
+   LEADERBOARD
+   ===================================================== */
+function renderLeaderboard() {
+  const sorted = [...TRENDS].sort((a,b) => b.tbts - a.tbts);
+  const html = sorted.map((t, i) => `
+    <div class="lb-row" data-kw="${t.keyword}">
+      <div class="rank">${String(i+1).padStart(2,'0')}</div>
+      <div>
+        <div class="name">${t.keyword}</div>
+        <div class="stage-mini" style="color:${STAGE_META[t.stage].color}">
+          <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage].label} · sat ${t.saturation}%
+        </div>
+      </div>
+      <div class="tbts">${t.tbts}</div>
+      <div class="vel ${t.velocity > 1 ? 'up' : 'down'}">${t.velocity > 1 ? '▲' : '▼'}${t.velocity.toFixed(1)}</div>
+    </div>
+  `).join('');
+  document.getElementById('leaderboard').innerHTML = html;
+}
+
+/* =====================================================
+   BRIEFING TYPEWRITER
+   ===================================================== */
+const briefingHtml = `
+<strong>What moved:</strong> <em>test-time training</em> (+3.1× velocity, 14 GitHub repos added this week) and <em>world model agents</em> hit a 3-source convergence event — arXiv, HN, and r/MachineLearning fired within 48h. Both still under 30% saturation.
+
+<br><br><strong>What died:</strong> <em>RAG 2.0</em> is saturating fast — <span class="down">window closing in ~4 days</span> per the model's peak estimate. The semantic-search-as-AI narrative is officially commodity.
+
+<br><br><strong>What's emerging:</strong> <em>neural CAD generation</em> appeared in 6 arXiv papers this week — zero coverage outside academia. <span class="up">+4.8× velocity</span>. If the convergence event hits HN in the next 10 days, this is a Whisper→Builder transition to watch.
+`;
+
+function typewriter(html) {
+  const target = document.getElementById('briefingText');
+  target.innerHTML = '<span class="cursor"></span>';
+  let buffer = '';
+  let i = 0;
+  const speed = 4;
+  function step() {
+    if (i >= html.length) return;
+    buffer += html[i];
+    i++;
+    target.innerHTML = buffer + '<span class="cursor"></span>';
+    if (html[i-1] === '<') {
+      while (i < html.length && html[i-1] !== '>') {
+        buffer += html[i]; i++;
+      }
+      target.innerHTML = buffer + '<span class="cursor"></span>';
+    }
+    setTimeout(step, speed);
+  }
+  step();
+}
+
+/* =====================================================
+   HIDDEN GEMS
+   ===================================================== */
+function renderGems() {
+  const gems = TRENDS
+    .filter(t => t.stage === 'whisper' || t.stage === 'builder')
+    .sort((a,b) => b.hiddenGem - a.hiddenGem);
+  document.getElementById('gemsCount').textContent = gems.length;
+  const html = gems.map(t => `
+    <div class="gem-card ${t.convergence ? 'convergence' : ''}">
+      <div class="gem-head">
+        <div class="gem-keyword">${t.keyword}</div>
+        <div class="gem-score">${(t.hiddenGem*100).toFixed(0)}<span class="label">GEM SCORE</span></div>
+      </div>
+      <div class="gem-meta">
+        <span class="badge"><span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage].label}</span>
+        <span class="badge">SAT ${t.saturation}%</span>
+        <span class="badge">VEL ${t.velocity.toFixed(1)}x</span>
+        <span class="badge">arXiv ${t.sources.arxiv} · GH ${t.sources.github} · HN ${t.sources.hn}</span>
+      </div>
+      <div class="gem-summary">${t.summary}</div>
+      <div class="gem-sparkline" data-spark='${JSON.stringify(t.sparkline)}' data-color="${STAGE_META[t.stage].color}"></div>
+      <div class="gem-angles">
+        <div class="label">CONTENT ANGLES · tailored to your niche</div>
+        <div class="angle"><span class="tag hook">HOOK</span><span>${t.angles.hook}</span></div>
+        <div class="angle"><span class="tag cont">CONTRARIAN</span><span>${t.angles.cont}</span></div>
+        <div class="angle"><span class="tag tut">TUTORIAL</span><span>${t.angles.tut}</span></div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('gemsGrid').innerHTML = html;
+
+  // sparklines
+  document.querySelectorAll('.gem-sparkline').forEach(el => {
+    const data = JSON.parse(el.dataset.spark);
+    const color = el.dataset.color;
+    const inst = echarts.init(el, null, { renderer: 'canvas' });
+    inst.setOption({
+      grid: { left: 0, right: 0, top: 4, bottom: 4 },
+      xAxis: { type: 'category', show: false, data: data.map((_,i)=>i) },
+      yAxis: { type: 'value', show: false },
+      series: [{
+        type: 'line',
+        data,
+        smooth: true,
+        symbol: 'none',
+        lineStyle: { color, width: 1.5 },
+        areaStyle: { color: { type: 'linear', x:0, y:0, x2:0, y2:1,
+          colorStops: [
+            { offset: 0, color: color + '40' },
+            { offset: 1, color: color + '00' }
+          ]
+        } }
+      }],
+      animation: false
+    });
+  });
+}
+
+/* =====================================================
+   SIGNAL PROOF
+   ===================================================== */
+function renderProof() {
+  const html = PROOF.map(p => {
+    const segPx = (range) => {
+      if (!range) return '';
+      const left = (range[0] / 45) * 100;
+      const width = ((range[1] - range[0]) / 45) * 100;
+      return `left:${left}%; width:${width}%`;
+    };
+    return `
+      <tr>
+        <td><div class="keyword">${p.kw}</div></td>
+        <td class="mono">${p.flagged}</td>
+        <td>
+          <span class="chip" style="display:inline-flex; pointer-events:none">
+            <span class="stage-dot ${p.stage}"></span> ${STAGE_META[p.stage].label}
+          </span>
+        </td>
+        <td class="mono">${p.gt}</td>
+        <td>${p.delta !== null ? `<span class="delta">+${p.delta}d</span>` : `<span class="mono" style="color:var(--text-3)">tracking</span>`}</td>
+        <td>
+          <div class="timeline-bar" title="arXiv → GitHub → HN → Google Trends">
+            <div class="seg arx" style="${segPx(p.seg.arx)}"></div>
+            <div class="seg gh"  style="${segPx(p.seg.gh)}"></div>
+            <div class="seg hn"  style="${segPx(p.seg.hn)}"></div>
+            ${p.seg.gt ? `<div class="seg gt" style="${segPx(p.seg.gt)}"></div>` : ''}
+          </div>
+        </td>
+        <td class="mono" style="color:${p.delta ? 'var(--good)' : 'var(--text-3)'}">${p.outcome}</td>
+      </tr>
+    `;
+  }).join('');
+  document.getElementById('proofTable').innerHTML = html;
+}
+
+/* =====================================================
+   CONTENT INTEL
+   ===================================================== */
+function renderContent() {
+  const niche = document.getElementById('nicheInput').value || 'AI tools for solo creators';
+  document.getElementById('nicheEcho').textContent = niche;
+  const top = [...TRENDS]
+    .filter(t => t.stage === 'whisper' || t.stage === 'builder')
+    .sort((a,b) => b.tbts - a.tbts).slice(0, 6);
+  const html = top.map(t => `
+    <div class="title-card">
+      <div class="topic">
+        ${t.keyword}
+        <span class="niche-pill">${niche}</span>
+      </div>
+      <div class="title-row">
+        <span class="tag" style="background:rgba(0,240,255,0.12); color:var(--whisper)">HOOK</span>
+        <div class="text">${t.angles.hook}</div>
+        <button class="copy-btn">COPY</button>
+      </div>
+      <div class="title-row">
+        <span class="tag" style="background:rgba(255,138,61,0.15); color:var(--hype)">CONTRA</span>
+        <div class="text">${t.angles.cont}</div>
+        <button class="copy-btn">COPY</button>
+      </div>
+      <div class="title-row">
+        <span class="tag" style="background:rgba(0,255,157,0.12); color:var(--builder)">TUTORIAL</span>
+        <div class="text">${t.angles.tut}</div>
+        <button class="copy-btn">COPY</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('contentGrid').innerHTML = html;
+
+  document.querySelectorAll('.copy-btn').forEach(b => {
+    b.addEventListener('click', e => {
+      const text = e.target.parentElement.querySelector('.text').textContent;
+      navigator.clipboard?.writeText(text);
+      b.textContent = 'COPIED';
+      setTimeout(() => b.textContent = 'COPY', 1200);
+    });
+  });
+}
+
+/* =====================================================
+   CLOCK & NICHE LIVE UPDATE
+   ===================================================== */
+function tickClock() {
+  const d = new Date();
+  document.getElementById('footerClock').textContent =
+    'sys uptime · ' + d.toLocaleTimeString('en-GB');
+}
+setInterval(tickClock, 1000); tickClock();
+
+document.getElementById('nicheInput').addEventListener('input', renderContent);
+
+/* =====================================================
+   INIT
+   ===================================================== */
+window.addEventListener('load', () => {
+  renderBubble();
+  renderLeaderboard();
+  renderGems();
+  renderProof();
+  renderContent();
+  typewriter(briefingHtml);
+});
+window.addEventListener('resize', () => { if (bubbleInstance) bubbleInstance.resize(); });
+</script>
+</body>
+</html>

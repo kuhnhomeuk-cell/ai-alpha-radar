@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AI Alpha Radar — Vol. I · No. 134</title>
+<style>
+  /* ============================================================
+     BRUTALIST CONSTELLATION — Mockup C
+     Direction: nexu-io/open-design "Brutalist / experimental"
+     Times Roman at extreme sizes · monospace body · cream paper ·
+     full-strength borders · one hot-red accent · zero radius.
+     ============================================================ */
+
+  :root {
+    /* OKLch palette from directions.ts — paper + ink + hot red */
+    --paper:   oklch(98% 0.004 240);
+    --surface: oklch(100% 0 0);
+    --ink:     oklch(15% 0.02 100);
+    --muted:   oklch(40% 0.02 100);
+    --rule:    oklch(15% 0.02 100);          /* borders = full ink */
+    --rule-2:  oklch(70% 0.01 100);          /* secondary hairlines */
+    --red:     oklch(60% 0.22 25);           /* hot editorial red */
+    --red-tint:oklch(96% 0.04 25);
+
+    --serif: 'Times New Roman', 'Iowan Old Style', Georgia, 'Liberation Serif', serif;
+    --mono:  ui-monospace, 'IBM Plex Mono', 'JetBrains Mono', Menlo, 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { background: var(--paper); }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* paper grain — very subtle SVG noise */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+    opacity: 0.6;
+  }
+
+  /* ===================== MASTHEAD ===================== */
+  .masthead {
+    border-bottom: 2px solid var(--rule);
+    padding: 22px 48px 16px;
+    position: sticky; top: 0;
+    background: var(--paper);
+    z-index: 50;
+  }
+  .masthead-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 32px;
+  }
+  .title-block .title {
+    font-family: var(--serif);
+    font-size: clamp(38px, 5vw, 56px);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+  .title-block .title .amp {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--red);
+  }
+  .colophon {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-top: 6px;
+    display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .colophon .pub { color: var(--red); }
+  .masthead-right {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+  .masthead-right .price {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-style: italic;
+    color: var(--ink);
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .nav {
+    margin-top: 18px;
+    display: flex;
+    gap: 28px;
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+  }
+  .nav button {
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    letter-spacing: 0.005em;
+  }
+  .nav button:hover { color: var(--red); }
+  .nav button.active {
+    color: var(--red);
+    text-decoration-thickness: 2.5px;
+  }
+  .nav-meta {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    align-self: center;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .niche-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--rule);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink);
+    padding: 2px 4px;
+    width: 240px;
+    text-align: right;
+  }
+  .niche-input:focus { outline: none; border-bottom-color: var(--red); }
+
+  /* ===================== PAGE BASE ===================== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Hero / page lede */
+  .hero {
+    padding: 48px 48px 36px;
+    border-bottom: 2px solid var(--rule);
+  }
+  .hero .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--red);
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .hero .eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(56px, 9vw, 132px);
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
+  .hero h1 em { color: var(--red); font-style: italic; }
+  .hero .lede {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--ink);
+    max-width: 720px;
+    line-height: 1.7;
+  }
+  .hero .lede strong { color: var(--red); font-weight: 600; }
+
+  /* ===================== STAR CHART PAGE ===================== */
+  .chart-wrap {
+    display: grid;
+    grid-template-columns: 70% 30%;
+    border-bottom: 2px solid var(--rule);
+    min-height: 580px;
+  }
+  .chart-panel {
+    position: relative;
+    border-right: 2px solid var(--rule);
+  }
+  #starCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+  .chart-axis-x, .chart-axis-y {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .chart-axis-x { bottom: 14px; left: 50%; transform: translateX(-50%); }
+  .chart-axis-y { top: 50%; left: 14px; transform: rotate(-90deg) translateX(50%); transform-origin: left top; }
+
+  .catalogue {
+    overflow-y: auto;
+    max-height: 580px;
+  }
+  .catalogue-head {
+    padding: 16px 24px;
+    border-bottom: 2px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    display: flex; justify-content: space-between;
+    background: var(--paper);
+    position: sticky; top: 0;
+  }
+  .catalogue-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 56px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--rule-2);
+    align-items: baseline;
+    cursor: pointer;
+    gap: 12px;
+  }
+  .catalogue-row:hover { background: var(--red-tint); }
+  .catalogue-row.selected { background: var(--red-tint); border-left: 4px solid var(--red); padding-left: 20px; }
+  .catalogue-row .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .catalogue-row .name {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .catalogue-row .stage {
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 9px;
+    margin-top: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .catalogue-row .mag {
+    font-family: var(--serif);
+    font-size: 22px;
+    text-align: right;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .catalogue-row .mag.red { color: var(--red); }
+
+  /* Observer's log under the chart */
+  .obs-strip {
+    padding: 28px 48px;
+    border-bottom: 2px solid var(--rule);
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 36px;
+  }
+  .obs-strip .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .obs-strip .label .red { color: var(--red); }
+  .obs-strip p {
+    font-family: var(--serif);
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  .obs-strip p em { font-style: italic; color: var(--red); }
+  .obs-strip p .meta {
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--red-tint);
+    padding: 0 4px;
+  }
+
+  /* Star detail panel (slides in right) */
+  .object-panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: min(520px, 100vw);
+    height: 100vh;
+    background: var(--paper);
+    border-left: 2px solid var(--rule);
+    transform: translateX(105%);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 100;
+    overflow-y: auto;
+    padding: 40px 36px 36px;
+  }
+  .object-panel.visible { transform: translateX(0); }
+  .object-panel .close {
+    position: absolute;
+    top: 16px; right: 18px;
+    background: transparent;
+    border: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .object-panel .close:hover { color: var(--red); }
+  .object-panel .designation {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--red);
+    margin-bottom: 14px;
+  }
+  .object-panel .name {
+    font-family: var(--serif);
+    font-size: 56px;
+    line-height: 0.95;
+    margin-bottom: 12px;
+    letter-spacing: -0.015em;
+  }
+  .object-panel .constellation {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .object-panel .summary {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink);
+    margin-bottom: 32px;
+  }
+  .object-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 2px solid var(--rule);
+    margin-bottom: 32px;
+  }
+  .object-stats .stat {
+    padding: 18px 20px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .object-stats .stat:nth-child(2n) { border-right: none; }
+  .object-stats .stat:nth-last-child(-n+2) { border-bottom: none; }
+  .object-stats .stat .l {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .object-stats .stat .v {
+    font-family: var(--serif);
+    font-size: 36px;
+    line-height: 1;
+  }
+  .object-stats .stat .v.red { color: var(--red); }
+  .object-panel .prediction {
+    border-top: 2px solid var(--rule);
+    padding-top: 18px;
+  }
+  .object-panel .prediction .ph {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--red);
+    margin-bottom: 8px;
+  }
+  .object-panel .prediction .text {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.4;
+  }
+
+  /* ===================== DEMAND CLUSTERS ===================== */
+  .demand-row {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    border-bottom: 2px solid var(--rule);
+    padding: 48px 48px;
+    gap: 48px;
+  }
+  .demand-row .left .askers {
+    font-family: var(--serif);
+    font-size: clamp(96px, 14vw, 200px);
+    line-height: 0.85;
+    color: var(--red);
+    letter-spacing: -0.03em;
+  }
+  .demand-row .left .askers-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-top: 14px;
+    margin-bottom: 28px;
+  }
+  .demand-row .left .question {
+    font-family: var(--serif);
+    font-size: clamp(24px, 2.6vw, 36px);
+    font-style: italic;
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+  }
+  .demand-row .left .question::before {
+    content: '“'; color: var(--red);
+  }
+  .demand-row .left .question::after {
+    content: '”'; color: var(--red);
+  }
+
+  .demand-row .right .quotes {
+    border-top: 1px solid var(--rule);
+    padding-top: 24px;
+    margin-bottom: 24px;
+  }
+  .demand-quote {
+    padding: 14px 0 14px 22px;
+    border-left: 2px solid var(--ink);
+    margin-bottom: 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .demand-quote:last-child { margin-bottom: 0; }
+  .demand-quote .src {
+    display: block;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+
+  .demand-meta {
+    border-top: 2px solid var(--rule);
+    padding-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  .demand-meta .item {
+    padding-right: 24px;
+  }
+  .demand-meta .item .l {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .demand-meta .item .v {
+    font-family: var(--serif);
+    font-size: 22px;
+  }
+  .demand-meta .item .v.red { color: var(--red); }
+  .demand-row .brief {
+    margin-top: 22px;
+    padding: 18px 22px;
+    border: 2px solid var(--red);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--red-tint);
+  }
+  .demand-row .brief .ph {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  /* ===================== STAR LOG ===================== */
+  .hit-block {
+    padding: 48px 48px 64px;
+    border-bottom: 2px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: end;
+  }
+  .hit-block .pct {
+    font-family: var(--serif);
+    font-size: clamp(160px, 22vw, 320px);
+    line-height: 0.85;
+    color: var(--red);
+    letter-spacing: -0.04em;
+  }
+  .hit-block .pct .sign { font-size: 0.4em; vertical-align: top; }
+  .hit-block .pct-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+  .hit-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 2px solid var(--rule);
+    border-left: 2px solid var(--rule);
+  }
+  .hit-stats .cell {
+    padding: 20px 24px;
+    border-right: 2px solid var(--rule);
+    border-bottom: 2px solid var(--rule);
+  }
+  .hit-stats .cell .v {
+    font-family: var(--serif);
+    font-size: 48px;
+    line-height: 1;
+  }
+  .hit-stats .cell .v.green { color: oklch(50% 0.15 145); }
+  .hit-stats .cell .v.blue  { color: oklch(50% 0.15 235); }
+  .hit-stats .cell .v.red   { color: var(--red); }
+  .hit-stats .cell .l {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .pred-table-wrap { padding: 0 48px; }
+  .pred-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 40px 0 64px;
+  }
+  .pred-table th {
+    text-align: left;
+    padding: 12px 0;
+    border-top: 2px solid var(--rule);
+    border-bottom: 2px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .pred-table td {
+    padding: 22px 16px 22px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .pred-table td:first-child {
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 110px;
+  }
+  .pred-table .pred-text {
+    font-family: var(--serif);
+    font-size: 20px;
+    line-height: 1.35;
+  }
+  .pred-table .pred-text em { color: var(--red); font-style: italic; }
+  .pred-table .verdict-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .pred-table td:last-child { width: 140px; text-align: right; }
+  .verdict-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    padding: 6px 10px;
+    border: 1.5px solid;
+    display: inline-block;
+  }
+  .verdict-badge.verified { color: oklch(50% 0.15 145); border-color: oklch(50% 0.15 145); }
+  .verdict-badge.tracking { color: oklch(50% 0.15 235); border-color: oklch(50% 0.15 235); }
+  .verdict-badge.wrong    { color: var(--red); border-color: var(--red); }
+  .verdict-badge.early    { color: var(--red); border-color: var(--red); background: var(--red-tint); }
+
+  /* ===================== ALMANAC ===================== */
+  .almanac-niche {
+    padding: 32px 48px;
+    border-bottom: 2px solid var(--rule);
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    font-family: var(--serif);
+    font-size: 19px;
+  }
+  .almanac-niche .pre {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .almanac-niche .pill {
+    font-style: italic;
+    color: var(--red);
+    border-bottom: 1.5px solid var(--red);
+  }
+
+  .almanac-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 2px solid var(--rule);
+  }
+  .almanac-card {
+    padding: 36px 40px;
+    border-right: 2px solid var(--rule);
+    border-bottom: 2px solid var(--rule);
+  }
+  .almanac-card:nth-child(2n) { border-right: none; }
+  .almanac-grid > .almanac-card:nth-last-child(-n+2) { border-bottom: none; }
+  .almanac-card .topic {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--red);
+    margin-bottom: 4px;
+  }
+  .almanac-card .topic-name {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .almanac-row {
+    padding: 12px 0;
+  }
+  .almanac-row .tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .almanac-row .title {
+    font-family: var(--serif);
+    font-size: clamp(22px, 1.8vw, 28px);
+    line-height: 1.2;
+    cursor: pointer;
+    letter-spacing: -0.005em;
+  }
+  .almanac-row .title:hover { color: var(--red); }
+  .almanac-row .title::before { content: '“'; color: var(--red); margin-right: 1px; }
+  .almanac-row .title::after  { content: '”'; color: var(--red); margin-left: 1px; }
+
+  /* ===================== FOOTER ===================== */
+  footer {
+    padding: 36px 48px;
+    border-top: 2px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: end;
+    gap: 36px;
+  }
+  footer .left {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+  footer .center {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    text-align: center;
+    line-height: 1.3;
+    max-width: 540px;
+  }
+  footer .center::before { content: '“'; color: var(--red); }
+  footer .center::after { content: '”'; color: var(--red); }
+  footer .right {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+
+  /* tooltip */
+  .star-tip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    padding: 8px 12px;
+    font-family: var(--serif);
+    font-size: 15px;
+    font-style: italic;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .star-tip .pre {
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--red);
+    margin-bottom: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============= MASTHEAD ============= -->
+<div class="masthead">
+  <div class="masthead-grid">
+    <div class="title-block">
+      <div class="title">AI Alpha Radar <span class="amp">&amp;</span> Almanac</div>
+      <div class="colophon">
+        <span class="pub">VOL. I · NO. 134</span>
+        <span>Night of 13 May 2026</span>
+        <span>Trend Observatory · est. 2026</span>
+        <span>Apache-2.0</span>
+      </div>
+    </div>
+    <div class="masthead-right">
+      <span class="price">$0 / mo</span>
+      Open-source<br>self-hosted
+    </div>
+  </div>
+  <div class="nav">
+    <button data-page="chart" class="active">The Star Chart</button>
+    <button data-page="demand">Demand Clusters</button>
+    <button data-page="log">Star Log</button>
+    <button data-page="almanac">Almanac</button>
+    <div class="nav-meta">
+      Writing for: <input id="nicheInput" class="niche-input" value="AI tools for solo creators">
+    </div>
+  </div>
+</div>
+
+<!-- ============= STAR CHART PAGE ============= -->
+<div class="page active" data-page="chart">
+  <div class="hero">
+    <div class="eyebrow">Observer's Log · Tonight's Findings</div>
+    <h1>Three stars rose <em>before the field noticed</em>.</h1>
+    <div class="lede">
+      In the past forty-eight hours, <strong>test-time training</strong> brightened by a factor of three-point-one,
+      <strong>world-model agents</strong> formed a convergence triangle across arXiv, Hacker News and r/MachineLearning,
+      and <strong>RAG 2.0</strong> began its predictable descent into commodity. Window: four days before saturation.
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-panel">
+      <canvas id="starCanvas"></canvas>
+      <div class="chart-axis-x">Saturation →  mainstream</div>
+      <div class="chart-axis-y">Velocity →  acceleration</div>
+    </div>
+    <div class="catalogue">
+      <div class="catalogue-head">
+        <span># &nbsp; Catalogue</span>
+        <span>TBTS</span>
+      </div>
+      <div id="catalogueList"></div>
+    </div>
+  </div>
+
+  <div class="obs-strip">
+    <div class="label">Reading the Sky · <span class="red">Field Notes</span></div>
+    <p>
+      The lower-right quadrant — what we call the <em>builder zone</em> —
+      is where this week's signal concentrates: seven stars within a
+      <span class="meta">12% × 35%</span> band.
+      Watch for cross-source convergence within seventy-two hours; that is the
+      single most reliable leading indicator we have catalogued in ninety days of operation.
+    </p>
+  </div>
+
+  <div class="star-tip" id="starTip"></div>
+  <div class="object-panel" id="objectPanel">
+    <button class="close" onclick="closePanel()">CLOSE ✕</button>
+    <div class="designation" id="opDes">— · — · —</div>
+    <div class="name" id="opName">—</div>
+    <div class="constellation" id="opCon">in the constellation of —</div>
+    <div class="summary" id="opSum">—</div>
+    <div class="object-stats">
+      <div class="stat"><div class="l">TBTS</div><div class="v red" id="opTbts">—</div></div>
+      <div class="stat"><div class="l">Velocity</div><div class="v" id="opVel">—</div></div>
+      <div class="stat"><div class="l">Saturation</div><div class="v" id="opSat">—</div></div>
+      <div class="stat"><div class="l">Window</div><div class="v" id="opWin">—</div></div>
+    </div>
+    <div class="prediction">
+      <div class="ph">Dated Prediction · accountability layer</div>
+      <div class="text" id="opPred">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= DEMAND CLUSTERS PAGE ============= -->
+<div class="page" data-page="demand">
+  <div class="hero">
+    <div class="eyebrow">The Hero Unit · Unmet Audience Demand</div>
+    <h1>What people are <em>begging for</em> &mdash; that nobody has made.</h1>
+    <div class="lede">
+      Below, each row is a question-shape: a cluster of variations of the same question, asked thousands of times across YouTube comments,
+      Reddit, X replies (via Grok), HN threads, and Discord servers. The number is people. The window is the time before someone fills it.
+      <strong>Be the someone.</strong>
+    </div>
+  </div>
+  <div id="demandList"></div>
+</div>
+
+<!-- ============= STAR LOG PAGE ============= -->
+<div class="page" data-page="log">
+  <div class="hero">
+    <div class="eyebrow">The Accountability Layer · Public Hit Rate</div>
+    <h1>Predictions, <em>verified</em> or wrong.</h1>
+    <div class="lede">
+      A trend tracker that doesn't predict is a thermometer pointed backwards. Every flagged trend on this radar carries a dated prediction, written at the moment of flagging. The score below is real — backtested across ninety days of snapshots.
+    </div>
+  </div>
+  <div class="hit-block">
+    <div>
+      <div class="pct">72<span class="sign">%</span></div>
+      <div class="pct-label">All-time hit rate · 90-day window</div>
+    </div>
+    <div class="hit-stats">
+      <div class="cell"><div class="v green">18</div><div class="l">Verified</div></div>
+      <div class="cell"><div class="v blue">07</div><div class="l">Tracking</div></div>
+      <div class="cell"><div class="v red">03</div><div class="l">Verified Early</div></div>
+      <div class="cell"><div class="v red">04</div><div class="l">Wrong</div></div>
+    </div>
+  </div>
+  <div class="pred-table-wrap">
+    <table class="pred-table">
+      <thead>
+        <tr>
+          <th>Date filed</th>
+          <th>Prediction</th>
+          <th style="text-align:right">Verdict</th>
+        </tr>
+      </thead>
+      <tbody id="predTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============= ALMANAC PAGE ============= -->
+<div class="page" data-page="almanac">
+  <div class="hero">
+    <div class="eyebrow">For the Creator · Title Cards Tuned to Voice</div>
+    <h1>The <em>Almanac</em> of titles, ready to ship.</h1>
+    <div class="lede">
+      Three angles per trend: the hook, the contrarian truth, the tutorial. Each written by Claude with your niche bound into the prompt.
+      Click any title to copy. Use freely.
+    </div>
+  </div>
+  <div class="almanac-niche">
+    <span class="pre">CURRENTLY WRITING FOR:</span>
+    <span class="pill" id="nichePill">AI tools for solo creators</span>
+  </div>
+  <div class="almanac-grid" id="almanacGrid"></div>
+</div>
+
+<!-- ============= FOOTER ============= -->
+<footer>
+  <div class="left">
+    AI Alpha Radar &amp; Almanac<br>
+    Vol. I · No. 134 · 13 May 2026<br>
+    Apache-2.0 · self-host friendly
+  </div>
+  <div class="center">
+    By the time it trends on Google, the star has already collapsed.
+  </div>
+  <div class="right">
+    Stack: arXiv · GitHub · HN<br>
+    Semantic Scholar · Grok (X)<br>
+    Claude · daily cron · $1.80/mo
+  </div>
+</footer>
+
+<script>
+/* =====================================================
+   DATA
+   ===================================================== */
+
+const STAGE_LABEL = {
+  whisper:   'WHISPER',
+  builder:   'BUILDER',
+  creator:   'CREATOR',
+  hype:      'HYPE',
+  commodity: 'COMMODITY',
+};
+
+const STARS = [
+  { kw:'world model agents',         stage:'whisper',   sat:12, vel:4.2, tbts:87, cluster:'Autonomous Reasoning',
+    sum:'AI agents that learn a physics-style simulator of their environment to plan ahead instead of reacting.',
+    pred:'Reaches Builder stage by 21 June 2026; first mainstream YouTube coverage by 12 July.',
+    window:38 },
+  { kw:'test-time training',         stage:'builder',   sat:28, vel:3.1, tbts:81, cluster:'Autonomous Reasoning',
+    sum:'Models that fine-tune themselves on each new problem during inference, not just at training time.',
+    pred:'Mainstream by 15 June 2026; expect 40+ tutorials by month-end.', window:32 },
+  { kw:'diffusion LMs',              stage:'whisper',   sat:8,  vel:5.6, tbts:84, cluster:'Beyond Autoregression',
+    sum:'Text generation using diffusion instead of next-token prediction — parallel decoding, fewer hallucinations.',
+    pred:'Stays Whisper through Q3 2026; first commercial product by 1 October.', window:64 },
+  { kw:'small reasoning models',     stage:'builder',   sat:34, vel:2.8, tbts:79, cluster:'Compressed Intelligence',
+    sum:'Sub-3B-param models trained on synthetic chain-of-thought to match GPT-4-class reasoning.',
+    pred:'Peaks at Creator stage by 10 June 2026.', window:28 },
+  { kw:'JEPA video models',          stage:'builder',   sat:31, vel:2.4, tbts:73, cluster:'Beyond Autoregression',
+    sum:'Self-supervised video models that learn by predicting representations, not pixels.',
+    pred:'Crosses 50% saturation by 28 June 2026.', window:45 },
+  { kw:'agentic memory',             stage:'whisper',   sat:14, vel:3.7, tbts:78, cluster:'Autonomous Reasoning',
+    sum:'Long-term memory systems for AI agents — vector + symbolic + temporal hybrid stores.',
+    pred:'Reaches Builder by 23 June 2026.', window:41 },
+  { kw:'rStar-Math self-evolve',     stage:'builder',   sat:26, vel:3.4, tbts:76, cluster:'Autonomous Reasoning',
+    sum:'Models that generate their own training data through Monte Carlo tree search.',
+    pred:'Mainstream by 6 June 2026.', window:24 },
+  { kw:'browser-use (MCP)',          stage:'creator',   sat:52, vel:1.9, tbts:71, cluster:'Tool-Using AI',
+    sum:'Agents that drive real browsers via Anthropic\'s MCP protocol.',
+    pred:'Peaks by 27 May 2026 — window already narrow.', window:14 },
+  { kw:'tool-use RL',                stage:'whisper',   sat:16, vel:4.0, tbts:76, cluster:'Tool-Using AI',
+    sum:'RL fine-tuning where the reward signal comes from tool-call correctness.',
+    pred:'Reaches Builder by 4 July 2026.', window:52 },
+  { kw:'neural CAD',                 stage:'whisper',   sat:9,  vel:4.8, tbts:74, cluster:'Generative Engineering',
+    sum:'Text-to-CAD with parametric output — editable Fusion 360 / OnShape files, not just meshes.',
+    pred:'Stays Whisper through August 2026.', window:78 },
+  { kw:'agent eval harnesses',       stage:'builder',   sat:33, vel:2.6, tbts:68, cluster:'Tool-Using AI',
+    sum:'Open-source frameworks for benchmarking AI agents on real-world tasks.',
+    pred:'Mainstream by 18 June 2026.', window:36 },
+  { kw:'speculative decoding HW',    stage:'builder',   sat:38, vel:2.1, tbts:65, cluster:'Compressed Intelligence',
+    sum:'Custom silicon and kernel work optimised for draft-model speculation.',
+    pred:'Crosses 50% saturation by 23 June 2026.', window:41 },
+  { kw:'synthetic data pipelines',   stage:'builder',   sat:42, vel:1.7, tbts:58, cluster:'Compressed Intelligence',
+    sum:'End-to-end pipelines for generating, filtering, and verifying synthetic training data.',
+    pred:'Peaks at Creator stage by 13 June 2026.', window:31 },
+  { kw:'voice cloning v3',           stage:'creator',   sat:58, vel:1.4, tbts:55, cluster:'Synthetic Media',
+    sum:'Sub-second-sample voice cloning with emotion control and per-syllable prosody.',
+    pred:'Saturates by 31 May 2026.', window:18 },
+  { kw:'autonomous coding agents',   stage:'creator',   sat:64, vel:1.6, tbts:54, cluster:'Tool-Using AI',
+    sum:'Long-running coding agents that ship PRs end-to-end.',
+    pred:'Peaks by 23 May 2026 — already saturating.', window:10 },
+  { kw:'10M context windows',        stage:'hype',      sat:71, vel:2.3, tbts:51, cluster:'Compressed Intelligence',
+    sum:'Frontier models pushing context to 10M+ tokens with sub-quadratic attention.',
+    pred:'Hype peak in 7 days; decline expected by late June.', window:7 },
+  { kw:'RAG 2.0 retrieval',          stage:'hype',      sat:78, vel:1.8, tbts:44, cluster:'Tool-Using AI',
+    sum:'Multi-step retrieval with planning, re-ranking, and verification loops.',
+    pred:'Already commodity by mid-June 2026.', window:4 },
+  { kw:'local LLM inference',        stage:'commodity', sat:88, vel:0.9, tbts:22, cluster:'Compressed Intelligence',
+    sum:'Running quantized models on consumer hardware — mature toolchain.',
+    pred:'No further movement expected.', window:0 },
+];
+
+const DEMAND = [
+  {
+    askers: 14200,
+    question: 'How do I run Claude Code on a 16 GB Mac without it crawling?',
+    quotes: [
+      { text: 'I love Claude Code but every time I open it my fan sounds like a jet engine. M2 Air, 16GB. Is there a setting I am missing?', src: 'YouTube · Claude Code workflows · 1.4k likes' },
+      { text: 'Every AI tutorial assumes you have 64GB. Where is the guide for the rest of us?', src: 'r/ClaudeAI · 312 upvotes' },
+      { text: 'Anyone got Claude Code running smoothly on consumer hardware? Tutorials please.', src: 'X reply via Grok · 1.2k impressions' },
+    ],
+    sources: 'YouTube · Reddit · X · HN',
+    velocity: '+38%',
+    window: '11 days',
+    brief: 'Make a "Claude Code on a tight machine" guide. Spec setup, memory-saving flags, model swaps. Will pull from four under-served communities at once.',
+  },
+  {
+    askers: 9800,
+    question: 'Why does my agent keep hallucinating file paths that don\'t exist?',
+    quotes: [
+      { text: 'My agent keeps trying to read files in /Users/admin/projects when I literally have no such folder. Why??', src: 'Discord · LangChain server' },
+      { text: 'Spent the whole afternoon debugging only to find Claude invented a path. Surely there is a pattern fix?', src: 'YouTube · agent debugging video' },
+      { text: 'Anyone else getting phantom-path bugs? Feels like the model is making things up under load.', src: 'HN thread · 87 comments' },
+    ],
+    sources: 'Discord · YouTube · HN · X',
+    velocity: '+52%',
+    window: '7 days',
+    brief: 'Definitive "phantom path" explainer + fix. Cover prompt design, tool whitelisting, recovery patterns. Highly technical creators dominate this.',
+  },
+  {
+    askers: 11500,
+    question: 'What is a serious local alternative to OpenAI for coding, day-to-day?',
+    quotes: [
+      { text: 'I want to leave OpenAI but every local model I try is either slow or stupid. What are people actually using?', src: 'r/LocalLLaMA · 1.4k upvotes' },
+      { text: 'Tried Llama 3.3, tried DeepSeek, none feel like Claude. Did I miss a release?', src: 'YouTube · local-AI showdown' },
+      { text: 'Real talk — is there finally a local model that doesn\'t embarrass itself on TypeScript?', src: 'X · AI builder thread via Grok' },
+    ],
+    sources: 'Reddit · YouTube · X',
+    velocity: '+24%',
+    window: '14 days',
+    brief: 'Honest comparison video: same task, same machine, four local models head-to-head. Be the source the algorithm rewards as authoritative.',
+  },
+  {
+    askers: 7800,
+    question: 'How do you actually use MCP in production — not just demos?',
+    quotes: [
+      { text: 'Every MCP demo is a screenshot of Claude opening a browser. Where are the production stories?', src: 'HN front page · 230 comments' },
+      { text: 'I have watched ten MCP tutorials and they all stop at "hello world". What does this look like in a real app?', src: 'r/ClaudeAI' },
+      { text: 'Want to ship MCP to my clients but I cannot find one real-world case study.', src: 'LinkedIn comment via Grok' },
+    ],
+    sources: 'HN · Reddit · LinkedIn',
+    velocity: '+44%',
+    window: '9 days',
+    brief: 'Build and document ONE real MCP integration end-to-end (Notion + Calendar + Slack). Show the gotchas. First mover wins category authority.',
+  },
+];
+
+const PREDICTIONS = [
+  { date:'2026-02-04', text:'Mixture-of-Experts routing reaches mainstream by end of February.', verdict:'verified', verdictText:'Crossed Google Trends threshold on 28 Feb · +340% mentions.' },
+  { date:'2025-12-19', text:'Test-time compute scaling becomes the dominant 2026 narrative.', verdict:'verified', verdictText:'Validated. Now the central frame in every frontier-model release.' },
+  { date:'2026-04-09', text:'JEPA video models cross 50% saturation by 28 June 2026.', verdict:'tracking', verdictText:'On pace. Currently 31% saturation at 2.4× velocity.' },
+  { date:'2026-01-28', text:'Browser-use agents (MCP) reach mainstream by 20 February.', verdict:'verified', verdictText:'Hit Google Trends crossover on 19 Feb · one day early. +520% mentions.' },
+  { date:'2026-03-22', text:'rStar-Math self-evolve reaches Builder stage by mid-May.', verdict:'early', verdictText:'Reached Builder on 7 May — two weeks ahead of schedule.' },
+  { date:'2025-11-08', text:'O1-style chain-of-thought becomes the default framing by Q1 2026.', verdict:'verified', verdictText:'Confirmed. Now table stakes for any reasoning model.' },
+  { date:'2026-02-14', text:'Long-context (10M+) becomes a dominant marketing axis by April.', verdict:'wrong', verdictText:'Premature. Adoption stalled; benchmarks revealed practical limits. Demoted to Hype.' },
+  { date:'2025-10-14', text:'Speculative decoding becomes mainstream by November 2025.', verdict:'verified', verdictText:'Validated. Standard across vLLM, TGI, MLC.' },
+];
+
+const ANGLES = {
+  'world model agents': {
+    hook: 'The AI breakthrough hiding in six papers from last week',
+    cont: 'Why "world models" make every current LLM look like a calculator',
+    tut:  'Build a tiny world-model agent in thirty lines of Python',
+  },
+  'test-time training': {
+    hook: 'The training trick that\'s eating fine-tuning alive',
+    cont: 'Test-time training won\'t scale — and here\'s precisely why',
+    tut:  'Add test-time training to your model in one quiet weekend',
+  },
+  'small reasoning models': {
+    hook: 'A 1.5-billion-parameter model just outscored GPT-4 at maths',
+    cont: 'The "small model" trend is mostly marketing — until it isn\'t',
+    tut:  'Run a reasoning model on your MacBook in under five minutes',
+  },
+  'agentic memory': {
+    hook: 'Your AI agent has amnesia. Here\'s the architectural fix.',
+    cont: 'Vector databases are the wrong abstraction for agent memory',
+    tut:  'Build a real long-term memory layer in two hundred lines',
+  },
+  'neural CAD': {
+    hook: 'The text-to-CAD breakthrough hardware folks completely missed',
+    cont: 'Neural CAD won\'t replace engineers — for one specific reason',
+    tut:  'Generate your first parametric CAD model from a single prompt',
+  },
+  'rStar-Math self-evolve': {
+    hook: 'The AI that learns maths by talking to itself',
+    cont: 'Self-evolve is just RLHF with extra steps — and that\'s fine',
+    tut:  'Implement MCTS for LLM reasoning, from scratch',
+  },
+};
+
+/* =====================================================
+   PAGE SWITCHING
+   ===================================================== */
+document.querySelectorAll('.nav button[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav button[data-page]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelector(`.page[data-page="${btn.dataset.page}"]`).classList.add('active');
+    if (btn.dataset.page === 'chart') setTimeout(() => { resizeCanvas(); placeStars(); drawChart(); }, 50);
+  });
+});
+
+/* =====================================================
+   STAR CHART CANVAS — printed-textbook style
+   ===================================================== */
+let canvas, ctx, dpr;
+let starObjs = [];
+let hoveredStar = null;
+let selectedStar = null;
+
+function getInkOklch(alpha = 1) {
+  // approximated ink color w/ alpha
+  return `rgba(40, 36, 22, ${alpha})`;
+}
+function getRed(alpha = 1) {
+  return `rgba(208, 60, 36, ${alpha})`;
+}
+function getStageStroke(stage) {
+  return {
+    whisper: 'rgba(50, 90, 150, 1)',   // navy
+    builder: 'rgba(30, 95, 50, 1)',    // forest
+    creator: 'rgba(180, 110, 20, 1)',  // ochre
+    hype:    'rgba(180, 60, 40, 1)',   // brick
+    commodity:'rgba(100, 95, 85, 1)',  // grey-brown
+  }[stage];
+}
+
+function resizeCanvas() {
+  canvas = document.getElementById('starCanvas');
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  dpr = window.devicePixelRatio || 1;
+  const r = canvas.getBoundingClientRect();
+  canvas.width = r.width * dpr;
+  canvas.height = r.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function placeStars() {
+  const r = canvas.getBoundingClientRect();
+  const padL = 80, padR = 60, padT = 48, padB = 60;
+  starObjs = STARS.map(s => {
+    const x = padL + ((s.sat) / 100) * (r.width - padL - padR);
+    const yFrac = Math.min(s.vel, 6) / 6;
+    const y = (r.height - padB) - yFrac * (r.height - padT - padB);
+    const radius = 3 + (s.tbts / 100) * 6;
+    return { ...s, x, y, radius };
+  });
+}
+
+function drawGrid() {
+  const r = canvas.getBoundingClientRect();
+  ctx.save();
+  ctx.strokeStyle = 'rgba(40, 36, 22, 0.12)';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([2, 4]);
+  // verticals every 10% saturation
+  const padL = 80, padR = 60, padT = 48, padB = 60;
+  for (let i = 0; i <= 10; i++) {
+    const x = padL + (i / 10) * (r.width - padL - padR);
+    ctx.beginPath();
+    ctx.moveTo(x, padT);
+    ctx.lineTo(x, r.height - padB);
+    ctx.stroke();
+  }
+  for (let i = 0; i <= 6; i++) {
+    const y = padT + (i / 6) * (r.height - padT - padB);
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(r.width - padR, y);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // outer frame
+  ctx.strokeStyle = getInkOklch(0.9);
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(padL, padT, r.width - padL - padR, r.height - padT - padB);
+  ctx.restore();
+}
+
+function drawClusterLines() {
+  const byCluster = {};
+  starObjs.forEach(s => {
+    if (!byCluster[s.cluster]) byCluster[s.cluster] = [];
+    byCluster[s.cluster].push(s);
+  });
+  ctx.save();
+  ctx.lineWidth = 0.7;
+  ctx.strokeStyle = getInkOklch(0.35);
+  for (const cluster in byCluster) {
+    const group = byCluster[cluster];
+    if (group.length < 2) continue;
+    for (let i = 0; i < group.length; i++) {
+      let nearest = null, nd = Infinity;
+      for (let j = 0; j < group.length; j++) {
+        if (i === j) continue;
+        const dx = group[i].x - group[j].x, dy = group[i].y - group[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < nd) { nd = d; nearest = group[j]; }
+      }
+      if (nearest) {
+        ctx.beginPath();
+        ctx.moveTo(group[i].x, group[i].y);
+        ctx.lineTo(nearest.x, nearest.y);
+        ctx.stroke();
+      }
+    }
+    // cluster name in italic serif at centroid
+    const cx = group.reduce((a,b)=>a+b.x,0)/group.length;
+    const cy = group.reduce((a,b)=>a+b.y,0)/group.length;
+    ctx.font = 'italic 13px "Times New Roman", serif';
+    ctx.fillStyle = getInkOklch(0.5);
+    ctx.textAlign = 'center';
+    ctx.fillText(cluster, cx, cy - 38);
+  }
+  ctx.restore();
+}
+
+function drawStars() {
+  starObjs.forEach(s => {
+    const isSelected = s === selectedStar;
+    const isHovered  = s === hoveredStar;
+
+    // filled black dot — no gradient, no glow
+    ctx.fillStyle = getInkOklch(1);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // stage ring (thin colored)
+    ctx.strokeStyle = getStageStroke(s.stage);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.radius + 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // selected: hot red square frame around it
+    if (isSelected || isHovered) {
+      ctx.strokeStyle = getRed(1);
+      ctx.lineWidth = 1.8;
+      const k = s.radius + 9;
+      ctx.strokeRect(s.x - k, s.y - k, k * 2, k * 2);
+    }
+
+    // label — serif italic next to bright stars
+    if (s.radius > 5.5 || isSelected) {
+      ctx.font = `italic ${isSelected ? 14 : 12}px "Times New Roman", serif`;
+      ctx.fillStyle = isSelected ? getRed(1) : getInkOklch(0.85);
+      ctx.textAlign = 'left';
+      ctx.fillText(s.kw, s.x + s.radius + 8, s.y + 4);
+    }
+  });
+}
+
+function drawChart() {
+  if (!canvas || !ctx) return;
+  const r = canvas.getBoundingClientRect();
+  ctx.clearRect(0, 0, r.width, r.height);
+  drawGrid();
+  drawClusterLines();
+  drawStars();
+}
+
+/* mouse */
+function getHovered(mx, my) {
+  for (let i = starObjs.length - 1; i >= 0; i--) {
+    const s = starObjs[i];
+    const dx = mx - s.x, dy = my - s.y;
+    if (Math.sqrt(dx*dx + dy*dy) < Math.max(14, s.radius + 6)) return s;
+  }
+  return null;
+}
+
+function bindMouse() {
+  canvas.addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    const h = getHovered(mx, my);
+    const tip = document.getElementById('starTip');
+    if (h !== hoveredStar) {
+      hoveredStar = h;
+      drawChart();
+    }
+    if (h) {
+      tip.innerHTML = `<span class="pre">${designation(h)} · ${STAGE_LABEL[h.stage]}</span>${h.kw}`;
+      tip.style.left = (e.clientX + 14) + 'px';
+      tip.style.top  = (e.clientY + 14) + 'px';
+      tip.style.opacity = 1;
+      canvas.style.cursor = 'pointer';
+    } else {
+      tip.style.opacity = 0;
+      canvas.style.cursor = 'crosshair';
+    }
+  });
+  canvas.addEventListener('mouseleave', () => {
+    hoveredStar = null;
+    document.getElementById('starTip').style.opacity = 0;
+    drawChart();
+  });
+  canvas.addEventListener('click', () => {
+    if (hoveredStar) openPanel(hoveredStar);
+  });
+}
+
+function designation(s) {
+  const code = s.kw.split(/[\s\-()]+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0,4);
+  return `AAR · ${code} · ${Math.round(s.tbts)}`;
+}
+
+function openPanel(s) {
+  selectedStar = s;
+  drawChart();
+  document.getElementById('opDes').textContent = designation(s) + ' · ' + STAGE_LABEL[s.stage];
+  document.getElementById('opName').textContent = s.kw;
+  document.getElementById('opCon').innerHTML = `in the constellation of <em style="color:var(--red)">${s.cluster}</em>`;
+  document.getElementById('opSum').textContent = s.sum;
+  document.getElementById('opTbts').textContent = s.tbts;
+  document.getElementById('opVel').textContent = s.vel.toFixed(1) + '×';
+  document.getElementById('opSat').textContent = s.sat + '%';
+  document.getElementById('opWin').textContent = s.window + 'd';
+  document.getElementById('opPred').textContent = s.pred;
+  document.getElementById('objectPanel').classList.add('visible');
+  // highlight catalogue
+  document.querySelectorAll('.catalogue-row').forEach(r => r.classList.remove('selected'));
+  const row = document.querySelector(`.catalogue-row[data-kw="${s.kw}"]`);
+  if (row) { row.classList.add('selected'); row.scrollIntoView({ block:'nearest' }); }
+}
+function closePanel() {
+  document.getElementById('objectPanel').classList.remove('visible');
+  selectedStar = null;
+  drawChart();
+  document.querySelectorAll('.catalogue-row').forEach(r => r.classList.remove('selected'));
+}
+window.closePanel = closePanel;
+
+/* =====================================================
+   CATALOGUE
+   ===================================================== */
+function renderCatalogue() {
+  const sorted = [...STARS].sort((a,b) => b.tbts - a.tbts);
+  const html = sorted.map((s, i) => `
+    <div class="catalogue-row" data-kw="${s.kw}">
+      <div class="num">${String(i+1).padStart(2,'0')}</div>
+      <div>
+        <div class="name">${s.kw}</div>
+        <div class="stage">${STAGE_LABEL[s.stage]} · sat ${s.sat}% · vel ${s.vel.toFixed(1)}×</div>
+      </div>
+      <div class="mag ${s.stage === 'whisper' || s.stage === 'builder' ? 'red' : ''}">${s.tbts}</div>
+    </div>
+  `).join('');
+  document.getElementById('catalogueList').innerHTML = html;
+  document.querySelectorAll('.catalogue-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const star = STARS.find(s => s.kw === row.dataset.kw);
+      if (star) openPanel(star);
+    });
+  });
+}
+
+/* =====================================================
+   DEMAND CLUSTERS
+   ===================================================== */
+function renderDemand() {
+  const html = DEMAND.map(d => `
+    <div class="demand-row">
+      <div class="left">
+        <div class="askers">${d.askers.toLocaleString()}</div>
+        <div class="askers-label">people · this week alone</div>
+        <div class="question">${d.question}</div>
+      </div>
+      <div class="right">
+        <div class="quotes">
+          ${d.quotes.map(q => `
+            <div class="demand-quote">
+              ${q.text}
+              <span class="src">— ${q.src}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="demand-meta">
+          <div class="item"><div class="l">Sources</div><div class="v">${d.sources}</div></div>
+          <div class="item"><div class="l">Weekly growth</div><div class="v red">${d.velocity}</div></div>
+          <div class="item"><div class="l">Open window</div><div class="v">${d.window}</div></div>
+        </div>
+        <div class="brief">
+          <span class="ph">Creator brief</span>
+          ${d.brief}
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('demandList').innerHTML = html;
+}
+
+/* =====================================================
+   PREDICTIONS
+   ===================================================== */
+function renderPredictions() {
+  const verdictLabel = { verified:'Verified', tracking:'Tracking', wrong:'Wrong', early:'Verified Early' };
+  const html = PREDICTIONS.map(p => `
+    <tr>
+      <td>${p.date}</td>
+      <td>
+        <div class="pred-text">${p.text.replace(/—/g, '<em>—</em>')}</div>
+        <div class="verdict-text">${p.verdictText}</div>
+      </td>
+      <td><span class="verdict-badge ${p.verdict}">${verdictLabel[p.verdict]}</span></td>
+    </tr>
+  `).join('');
+  document.getElementById('predTable').innerHTML = html;
+}
+
+/* =====================================================
+   ALMANAC
+   ===================================================== */
+function renderAlmanac() {
+  const niche = document.getElementById('nicheInput').value || 'AI tools for solo creators';
+  document.getElementById('nichePill').textContent = niche;
+  const picks = STARS.filter(s => ANGLES[s.kw]).slice(0, 6);
+  const html = picks.map(s => {
+    const a = ANGLES[s.kw];
+    return `
+      <div class="almanac-card">
+        <div class="topic">${s.kw.toUpperCase()}</div>
+        <div class="topic-name">${STAGE_LABEL[s.stage]} stage · TBTS ${s.tbts}</div>
+        <div class="almanac-row">
+          <div class="tag">Hook</div>
+          <div class="title">${a.hook}</div>
+        </div>
+        <div class="almanac-row">
+          <div class="tag">Contrarian</div>
+          <div class="title">${a.cont}</div>
+        </div>
+        <div class="almanac-row">
+          <div class="tag">Tutorial</div>
+          <div class="title">${a.tut}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('almanacGrid').innerHTML = html;
+  document.querySelectorAll('.almanac-row .title').forEach(t => {
+    t.addEventListener('click', () => {
+      const text = t.textContent.replace(/[“”]/g,'').trim();
+      navigator.clipboard?.writeText(text);
+      const orig = t.innerHTML;
+      t.innerHTML = '<em style="color:var(--red)">— copied —</em>';
+      setTimeout(() => t.innerHTML = orig, 1100);
+    });
+  });
+}
+
+document.getElementById('nicheInput').addEventListener('input', renderAlmanac);
+
+/* =====================================================
+   INIT
+   ===================================================== */
+window.addEventListener('load', () => {
+  resizeCanvas();
+  placeStars();
+  drawChart();
+  bindMouse();
+  renderCatalogue();
+  renderDemand();
+  renderPredictions();
+  renderAlmanac();
+});
+window.addEventListener('resize', () => {
+  if (document.querySelector('.page[data-page="chart"]').classList.contains('active')) {
+    resizeCanvas();
+    placeStars();
+    drawChart();
+  }
+});
+</script>
+</body>
+</html>

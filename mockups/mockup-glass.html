@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Alpha Radar — Liquid Glass Mockup</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=jetbrains-mono:400,500,600,700|inter:400,500,600,700|space-grotesk:500,700" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --bg: #04050a;
+    --bg-2: #080b14;
+    --ink: #e6ecf5;
+    --ink-2: #8a99b0;
+    --ink-3: #525e74;
+    --accent: #00f0ff;
+    --whisper: #00d4ff;
+    --builder: #00ff9d;
+    --creator: #ffd84d;
+    --hype: #ff8a3d;
+    --commodity: #7a8696;
+    --good: #00ff9d;
+    --bad: #ff4d6d;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+    --display: 'Space Grotesk', sans-serif;
+
+    /* Liquid Glass Tokens (Dark Mode) */
+    --glass-bg: rgba(30, 30, 30, 0.15);
+    --specular-top: rgba(255, 255, 255, 0.9);
+    --specular-bottom: rgba(0, 0, 0, 0.8);
+    --glass-shadow-primary: rgba(0, 0, 0, 0.6);
+    --glass-shadow-secondary: rgba(0, 0, 0, 0.3);
+  }
+
+  .light-mode {
+    --bg: #e5e5ea;
+    --bg-2: #ffffff;
+    --ink: #1d1d1f;
+    --ink-2: #4a5970;
+    --ink-3: #828e9e;
+    
+    /* Liquid Glass Tokens (Light Mode) */
+    --glass-bg: rgba(255, 255, 255, 0.25);
+    --specular-top: rgba(255, 255, 255, 1);
+    --specular-bottom: rgba(0, 0, 0, 0.15);
+    --glass-shadow-primary: rgba(0, 0, 0, 0.15);
+    --glass-shadow-secondary: rgba(0, 0, 0, 0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: hidden;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===========================================================
+     SUBSTRATE — vibrant color blobs behind everything.
+     This is what the glass REFRACTS. Without an interesting
+     substrate, liquid glass looks like grey plastic.
+     =========================================================== */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 15% 20%, rgba(0, 240, 255, 0.22), transparent 60%),
+      radial-gradient(ellipse 70% 60% at 85% 15%, rgba(0, 255, 157, 0.15), transparent 60%),
+      radial-gradient(ellipse 50% 60% at 50% 85%, rgba(255, 138, 61, 0.18), transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 70%, rgba(150, 50, 200, 0.12), transparent 60%),
+      var(--bg);
+    z-index: -2;
+    animation: drift 30s ease-in-out infinite alternate;
+  }
+  @keyframes drift {
+    0%   { transform: translate(0, 0); }
+    100% { transform: translate(-30px, 20px); }
+  }
+
+  /* faint grid overlay so the glass refracts something with line geometry */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(120,160,200,0.04) 1px, transparent 1px) 0 0 / 48px 48px,
+      linear-gradient(90deg, rgba(120,160,200,0.04) 1px, transparent 1px) 0 0 / 48px 48px;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* ===========================================================
+     LIQUID GLASS — Tier 1 (CSS-only)
+     The 90%-look-at-10%-complexity recipe.
+     =========================================================== */
+  .glass {
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-radius: 18px;
+    box-shadow: 
+      0 24px 48px var(--glass-shadow-primary),
+      0 8px 16px var(--glass-shadow-secondary),
+      inset 0 0 0 1px rgba(255,255,255, 0.02);
+    isolation: isolate;
+    border: none;
+  }
+  /* Apple 2026 Specular Highlight Rim */
+  .glass::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      115deg, 
+      var(--specular-top) 0%, 
+      transparent 25%, 
+      transparent 75%, 
+      var(--specular-bottom) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ===========================================================
+     LIQUID GLASS — Tier 2 (SVG displacement + tint + shine stack)
+     Real chromatic refraction at the edges, à la macOS Tahoe.
+     Used only on the Daily Movers hero card so the GPU cost
+     lands on one element, not six.
+     =========================================================== */
+  .glass-tier2 {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    isolation: isolate;
+    box-shadow: 
+      0 32px 64px var(--glass-shadow-primary),
+      0 12px 24px var(--glass-shadow-secondary),
+      inset 0 0 0 1px rgba(255,255,255, 0.02);
+    border: none;
+  }
+  .glass-tier2 .liquid-effect {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(3px) saturate(180%);
+    -webkit-backdrop-filter: blur(3px) saturate(180%);
+    filter: url(#glass-distortion);
+    z-index: 0;
+  }
+  .glass-tier2 .liquid-tint {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--glass-bg);
+    z-index: 1;
+  }
+  /* Specular Highlight Rim for Tier 2 */
+  .glass-tier2::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      115deg, 
+      var(--specular-top) 0%, 
+      transparent 25%, 
+      transparent 75%, 
+      var(--specular-bottom) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .glass-tier2 .liquid-content {
+    position: relative;
+    z-index: 3;
+  }
+
+  /* Annotation pills to label tiers in the demo */
+  .tier-tag {
+    position: absolute;
+    top: -8px; right: 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    padding: 3px 9px;
+    border-radius: 100px;
+    z-index: 100;
+    text-transform: uppercase;
+  }
+  .tier-tag.t1 {
+    background: rgba(0, 240, 255, 0.18);
+    color: #6cebff;
+    border: 1px solid rgba(0, 240, 255, 0.35);
+  }
+  .tier-tag.t2 {
+    background: rgba(255, 138, 61, 0.20);
+    color: #ffae7a;
+    border: 1px solid rgba(255, 138, 61, 0.45);
+  }
+
+  /* ============= TOP BAR (Tier 1 glass) ============= */
+  .topbar-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 12px 20px;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 22px;
+  }
+  .logo {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 10px;
+    position: relative; z-index: 2;
+  }
+  .logo .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .logo .accent { color: var(--accent); }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+  .nav {
+    display: flex;
+    gap: 4px;
+    margin-left: 32px;
+    position: relative; z-index: 2;
+  }
+  .nav button {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 14px;
+    cursor: pointer;
+    border-radius: 100px;
+    font-weight: 500;
+  }
+  .nav button:hover { color: var(--ink); background: rgba(255,255,255,0.05); }
+  .nav button.active {
+    color: var(--accent);
+    background: rgba(0, 240, 255, 0.08);
+    border-color: rgba(0, 240, 255, 0.25);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .topbar .right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.05em;
+    position: relative; z-index: 2;
+  }
+  .niche-input {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    width: 220px;
+    backdrop-filter: blur(8px);
+  }
+  .niche-input:focus { outline: 1px solid var(--accent); }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid rgba(0, 255, 157, 0.30);
+    border-radius: 100px;
+    background: rgba(0, 255, 157, 0.08);
+    color: var(--good);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    backdrop-filter: blur(8px);
+  }
+  .status-pill::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 8px var(--good);
+  }
+
+  /* ============= DAILY MOVERS — Tier 2 glass (HERO) ============= */
+  .briefing-wrap {
+    margin: 0 20px 16px;
+    position: relative;
+  }
+  .briefing-inner {
+    padding: 22px 26px;
+  }
+  .briefing .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .briefing .label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0,240,255,0.4), transparent);
+  }
+  .briefing-text {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink);
+    max-width: 100%;
+  }
+  .briefing-text strong { color: var(--accent); font-weight: 600; }
+  .briefing-text .up { color: var(--good); font-family: var(--mono); font-size: 12px; }
+  .briefing-text .down { color: var(--bad); font-family: var(--mono); font-size: 12px; }
+  .briefing-text em { color: #ffd8a0; font-style: italic; font-weight: 500; }
+
+  /* ============= FILTERS — Tier 1 glass pills ============= */
+  .filters-wrap {
+    margin: 0 20px 16px;
+    padding: 12px 16px;
+    display: flex; gap: 10px; align-items: center;
+    flex-wrap: wrap;
+  }
+  .filters-wrap .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-right: 6px;
+    margin-right: 4px;
+    position: relative; z-index: 2;
+  }
+  .chip {
+    padding: 6px 12px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(150%);
+    border: none;
+    border-radius: 100px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    color: var(--ink-2);
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+    position: relative; z-index: 2;
+    box-shadow: 0 8px 16px var(--glass-shadow-secondary);
+  }
+  .chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      115deg, 
+      var(--specular-top) 0%, 
+      transparent 25%, 
+      transparent 75%, 
+      var(--specular-bottom) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .chip:hover {
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  .chip.active {
+    color: var(--ink);
+    background: rgba(0, 240, 255, 0.10);
+    border-color: rgba(0, 240, 255, 0.32);
+    box-shadow:
+      0 2px 10px rgba(0, 240, 255, 0.20),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .chip .stage-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .stage-dot.whisper { background: var(--whisper); box-shadow: 0 0 6px var(--whisper); }
+  .stage-dot.builder { background: var(--builder); box-shadow: 0 0 6px var(--builder); }
+  .stage-dot.creator { background: var(--creator); box-shadow: 0 0 6px var(--creator); }
+  .stage-dot.hype { background: var(--hype); box-shadow: 0 0 6px var(--hype); }
+  .stage-dot.commodity { background: var(--commodity); }
+
+  /* ============= RADAR GRID ============= */
+  .radar-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    margin: 0 20px 20px;
+  }
+
+  /* The chart panel does NOT use glass — it's the substrate */
+  .chart-panel {
+    background: rgba(8, 11, 20, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 18px;
+    overflow: hidden;
+    backdrop-filter: blur(2px);
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .panel-head .title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-head .title::before {
+    content: '';
+    width: 3px; height: 12px;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .panel-head .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+
+  /* ============= BUBBLE CHART ============= */
+  .chart-host { height: 580px; padding: 8px; }
+
+  /* ============= LEADERBOARD (Tier 1 glass) ============= */
+  .leaderboard-panel { display: flex; flex-direction: column; }
+  .leaderboard {
+    flex: 1;
+    max-height: 580px;
+    overflow-y: auto;
+    position: relative;
+    z-index: 2;
+  }
+  .leaderboard::-webkit-scrollbar { width: 6px; }
+  .leaderboard::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+  .lb-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 60px 28px;
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    align-items: center;
+    cursor: pointer;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .lb-row:hover { background: rgba(0, 240, 255, 0.06); }
+  .lb-row.selected { background: rgba(0, 240, 255, 0.10); border-left: 2px solid var(--accent); padding-left: 14px; }
+  .lb-row .rank {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  .lb-row .name {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lb-row .stage-mini {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .lb-row .tbts {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: right;
+  }
+  .lb-row .vel {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-align: right;
+  }
+  .vel.up { color: var(--good); }
+  .vel.down { color: var(--bad); }
+  .conv-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+
+  /* ============= SIDE DETAIL PANEL (Tier 1 glass, slides in right) ============= */
+  .detail-panel {
+    position: fixed;
+    top: 88px;
+    right: -480px;
+    width: 440px;
+    height: calc(100vh - 108px);
+    padding: 28px 24px;
+    z-index: 60;
+    transition: right 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow-y: auto;
+  }
+  .detail-panel.open { right: 20px; }
+  .detail-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    z-index: 3;
+  }
+  .detail-close:hover { color: var(--ink); background: rgba(255,255,255,0.10); }
+  .detail-eyebrow {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    position: relative; z-index: 2;
+  }
+  .detail-name {
+    font-family: var(--display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 6px;
+    letter-spacing: -0.005em;
+    position: relative; z-index: 2;
+  }
+  .detail-cluster {
+    font-family: var(--sans);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-bottom: 20px;
+    position: relative; z-index: 2;
+  }
+  .detail-cluster em { color: #6cebff; font-style: normal; }
+  .detail-summary {
+    font-size: 14px;
+    color: var(--ink-2);
+    line-height: 1.55;
+    margin-bottom: 22px;
+    position: relative; z-index: 2;
+  }
+  .detail-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: rgba(255,255,255,0.06);
+    margin-bottom: 22px;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative; z-index: 2;
+  }
+  .detail-stats .stat {
+    padding: 12px 14px;
+    background: rgba(8, 11, 20, 0.6);
+  }
+  .detail-stats .stat .l {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-3);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .detail-stats .stat .v {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .detail-stats .stat .v.gold { color: var(--accent); }
+  .detail-pred {
+    padding: 14px 14px;
+    border-left: 2px solid var(--accent);
+    background: rgba(0, 240, 255, 0.06);
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 22px;
+    position: relative; z-index: 2;
+  }
+  .detail-pred .ph {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .detail-pred .text {
+    font-size: 13px;
+    color: var(--ink);
+    font-style: italic;
+    line-height: 1.45;
+  }
+  .detail-demand-slot {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 16px;
+    position: relative; z-index: 2;
+  }
+  .detail-demand-slot .ph {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .detail-demand-slot .q {
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--ink-2);
+    cursor: pointer;
+    font-style: italic;
+  }
+  .detail-demand-slot .q:hover { background: rgba(255,255,255,0.07); color: var(--ink); }
+  .detail-demand-slot .q .askers {
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 10px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  /* ============= CONVERGENCE MODAL (Tier 1 glass) ============= */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 5, 10, 0.65);
+    backdrop-filter: blur(8px);
+    z-index: 80;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    width: 620px;
+    max-width: calc(100vw - 40px);
+    padding: 32px 32px 28px;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 18px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    z-index: 3;
+  }
+  .modal-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    position: relative; z-index: 2;
+  }
+  .modal-title {
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+    position: relative; z-index: 2;
+  }
+  .modal-sub {
+    font-family: var(--sans);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-2);
+    margin-bottom: 28px;
+    position: relative; z-index: 2;
+  }
+  .timeline-wrap {
+    position: relative;
+    height: 120px;
+    margin-bottom: 18px;
+    padding: 0 12px;
+    z-index: 2;
+  }
+  .timeline-line {
+    position: absolute;
+    top: 60px; left: 12px; right: 12px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
+  }
+  .timeline-window {
+    position: absolute;
+    top: 50px; height: 20px;
+    background: rgba(0, 240, 255, 0.10);
+    border: 1px solid rgba(0, 240, 255, 0.30);
+    border-radius: 4px;
+  }
+  .timeline-dot {
+    position: absolute;
+    top: 52px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 16px currentColor;
+  }
+  .timeline-dot.arxiv  { background: var(--whisper); color: var(--whisper); top: 52px; }
+  .timeline-dot.gh     { background: var(--builder); color: var(--builder); top: 52px; }
+  .timeline-dot.hn     { background: var(--creator); color: var(--creator); top: 52px; }
+  .timeline-dot.gt     { background: var(--hype); color: var(--hype); top: 52px; }
+  .timeline-label {
+    position: absolute;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-2);
+    text-align: center;
+    width: 80px;
+  }
+  .timeline-label.above { top: 16px; }
+  .timeline-label.below { top: 80px; }
+  .timeline-label .day {
+    display: block;
+    font-size: 11px;
+    color: var(--ink);
+    margin-top: 2px;
+  }
+  .modal-stat {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-2);
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    position: relative; z-index: 2;
+  }
+  .modal-stat strong { color: var(--good); font-family: var(--mono); }
+
+  /* ============= SOURCE HEALTH FOOTER (Tier 1 glass) ============= */
+  .footer-wrap {
+    margin: 0 20px 20px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+  }
+  .footer-wrap .src {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative; z-index: 2;
+  }
+  .footer-wrap .src.ok::before { content: '✓'; color: var(--good); font-size: 11px; }
+  .footer-wrap .src.fail::before { content: '✕'; color: var(--bad); font-size: 11px; }
+  .footer-wrap .src.fail { color: var(--bad); }
+  .footer-wrap .div {
+    width: 1px; height: 12px;
+    background: rgba(255,255,255,0.10);
+  }
+  .footer-wrap .right {
+    margin-left: auto;
+    display: flex; gap: 16px;
+    position: relative; z-index: 2;
+  }
+  .footer-badge {
+    padding: 3px 8px;
+    border-radius: 100px;
+    background: rgba(0,240,255,0.08);
+    color: var(--accent);
+    border: 1px solid rgba(0,240,255,0.20);
+  }
+  .footer-badge.spend { background: rgba(0,255,157,0.08); color: var(--good); border-color: rgba(0,255,157,0.20); }
+
+  .help-strip {
+    text-align: center;
+    padding: 8px 20px 0;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-3);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .help-strip strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ============= SVG FILTERS for Tier 2 glass ============= -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="2" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="60" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<!-- ============= TOP BAR — Tier 1 ============= -->
+<div class="topbar-wrap">
+  <div class="topbar glass">
+    <span class="tier-tag t1">TIER 1 · CSS GLASS</span>
+    <div class="logo"><span class="dot"></span> AI<span class="accent">/</span>ALPHA<span class="accent">/</span>RADAR</div>
+    <div class="nav">
+      <button class="active">Radar</button>
+      <button>Hidden Gems</button>
+      <button>Demand</button>
+      <button>Star Log</button>
+      <button>Almanac</button>
+      <button id="themeToggle" style="margin-left: 12px; border: 1px solid var(--accent); color: var(--accent);">Toggle Theme</button>
+    </div>
+    <div class="right">
+      <input class="niche-input" value="AI tools for solo creators">
+      <span>2026-05-13 · 06:00 UTC</span>
+      <div class="status-pill">LIVE</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= DAILY MOVERS — Tier 2 (HERO) ============= -->
+<div class="briefing-wrap">
+  <div class="glass-tier2 briefing">
+    <span class="tier-tag t2">TIER 2 · SVG DISPLACEMENT</span>
+    <div class="liquid-effect"></div>
+    <div class="liquid-tint"></div>
+    <div class="liquid-shine"></div>
+    <div class="liquid-content briefing-inner">
+      <div class="label">⚡ Daily Movers · Editorial Briefing · 06:00 UTC</div>
+      <div class="briefing-text" id="briefingText">
+        <strong>What moved:</strong> <em>test-time training</em> brightened by <span class="up">+3.1× velocity</span> after fourteen new repositories appeared overnight. <em>World-model agents</em> formed a 3-source convergence event — arXiv, HN, and r/MachineLearning fired within forty-eight hours. Both still under 30% saturation.
+        <br><br>
+        <strong>What died:</strong> <em>RAG 2.0</em> is saturating — <span class="down">window closes in ~4 days</span> per the model's peak estimate. The semantic-search-as-AI narrative is officially commodity.
+        <br><br>
+        <strong>What's emerging:</strong> <em>neural CAD generation</em> appeared in six arXiv papers this week — zero coverage outside academia. <span class="up">+4.8× velocity</span>. If the convergence event hits HN in the next ten days, this is a Whisper→Builder transition to watch.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= FILTERS — Tier 1 pills ============= -->
+<div class="filters-wrap glass">
+  <span class="tier-tag t1">TIER 1 · CSS GLASS</span>
+  <span class="label">Stage</span>
+  <span class="chip active"><span class="stage-dot whisper"></span> Whisper</span>
+  <span class="chip active"><span class="stage-dot builder"></span> Builder</span>
+  <span class="chip active"><span class="stage-dot creator"></span> Creator</span>
+  <span class="chip"><span class="stage-dot hype"></span> Hype</span>
+  <span class="chip"><span class="stage-dot commodity"></span> Commodity</span>
+
+  <span class="label" style="margin-left: 12px;">Source Presence</span>
+  <span class="chip active">arXiv</span>
+  <span class="chip active">GitHub</span>
+  <span class="chip active">HN</span>
+  <span class="chip active">S2</span>
+
+  <span class="label" style="margin-left: 12px;">Sort</span>
+  <span class="chip active">TBTS ↓</span>
+  <span class="chip">Velocity</span>
+  <span class="chip">Hidden Gem</span>
+</div>
+
+<div class="help-strip">click a <strong>★ bubble</strong> or leaderboard row to open the glass detail panel · click the <strong>convergence badge</strong> to see the timeline modal</div>
+
+<!-- ============= RADAR GRID ============= -->
+<div class="radar-grid">
+  <div class="chart-panel">
+    <div class="panel-head">
+      <div class="title">Trend Velocity × Saturation Map</div>
+      <div class="meta">bubble size = TBTS · 18 tracked terms · substrate for glass</div>
+    </div>
+    <div class="chart-host" id="bubbleChart"></div>
+  </div>
+
+  <div class="leaderboard-panel glass" style="position: relative;">
+    <span class="tier-tag t1">TIER 1</span>
+    <div class="panel-head">
+      <div class="title">Top 18 · TBTS</div>
+      <div class="meta">refreshes 06:00 UTC</div>
+    </div>
+    <div class="leaderboard" id="leaderboard"></div>
+  </div>
+</div>
+
+<!-- ============= SOURCE HEALTH FOOTER — Tier 1 ============= -->
+<div class="footer-wrap glass">
+  <span class="tier-tag t1">TIER 1</span>
+  <span class="src ok">arXiv · 187 papers</span>
+  <span class="div"></span>
+  <span class="src fail">GitHub · 0 fetched · stale</span>
+  <span class="div"></span>
+  <span class="src ok">HN · 64 posts</span>
+  <span class="div"></span>
+  <span class="src ok">SemScholar · 180 enriched</span>
+  <span class="div"></span>
+  <span>refreshed 06:00 UTC · pipeline 142s</span>
+  <span class="right">
+    <span class="footer-badge spend">claude $0.043</span>
+    <span class="footer-badge">cache 78%</span>
+  </span>
+</div>
+
+<!-- ============= SIDE DETAIL PANEL — Tier 1 (slides in) ============= -->
+<div class="detail-panel glass" id="detailPanel">
+  <span class="tier-tag t1" style="top: 14px; left: 16px; right: auto;">TIER 1 · SLIDE-IN PANEL</span>
+  <button class="detail-close" onclick="closeDetail()">CLOSE ✕</button>
+  <div class="detail-eyebrow" id="dpEyebrow">AAR · WMA · 87 · WHISPER</div>
+  <div class="detail-name" id="dpName">world model agents</div>
+  <div class="detail-cluster" id="dpCluster">in the constellation of <em>Autonomous Reasoning</em></div>
+  <div class="detail-summary" id="dpSummary">AI agents that learn a physics-style simulator of their environment to plan ahead instead of reacting.</div>
+  <div class="detail-stats">
+    <div class="stat"><div class="l">TBTS</div><div class="v gold" id="dpTbts">87</div></div>
+    <div class="stat"><div class="l">Velocity</div><div class="v" id="dpVel">4.2×</div></div>
+    <div class="stat"><div class="l">Saturation</div><div class="v" id="dpSat">12%</div></div>
+    <div class="stat"><div class="l">Window</div><div class="v" id="dpWin">38d</div></div>
+  </div>
+  <div class="detail-pred">
+    <div class="ph">Dated Prediction · accountability</div>
+    <div class="text" id="dpPred">Reaches Builder stage by 21 June 2026; first mainstream YouTube coverage by 12 July.</div>
+  </div>
+  <div class="detail-demand-slot">
+    <div class="ph">What audiences are asking · related demand</div>
+    <div class="q">
+      <span class="askers">2,400 askers · YouTube + Reddit</span>
+      How do I build a world-model agent on consumer hardware?
+    </div>
+    <div class="q">
+      <span class="askers">1,100 askers · HN + Discord</span>
+      What's the difference between world models and LLM planners?
+    </div>
+  </div>
+</div>
+
+<!-- ============= CONVERGENCE MODAL — Tier 1 ============= -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this)closeModal()">
+  <div class="glass modal" id="modal">
+    <span class="tier-tag t1">TIER 1 · MODAL</span>
+    <button class="modal-close" onclick="closeModal()">CLOSE ✕</button>
+    <div class="modal-eyebrow">⬢ Convergence Event · world model agents</div>
+    <div class="modal-title">3-source convergence within 48 hours</div>
+    <div class="modal-sub">arXiv · Hacker News · r/MachineLearning all fired on the same concept inside the 72-hour detection window — historically a 2–4 week leading indicator.</div>
+
+    <div class="timeline-wrap">
+      <div class="timeline-line"></div>
+      <div class="timeline-window" style="left: 5%; right: 30%;"></div>
+
+      <div class="timeline-dot arxiv" style="left: 8%;"></div>
+      <div class="timeline-label above" style="left: 8%;">arXiv<span class="day">day 0</span></div>
+
+      <div class="timeline-dot gh" style="left: 28%;"></div>
+      <div class="timeline-label below" style="left: 28%;">GitHub<span class="day">day 1</span></div>
+
+      <div class="timeline-dot hn" style="left: 48%;"></div>
+      <div class="timeline-label above" style="left: 48%;">HN<span class="day">day 2</span></div>
+
+      <div class="timeline-dot gt" style="left: 88%;"></div>
+      <div class="timeline-label below" style="left: 88%;">Google Trends<span class="day">~ day 24 (predicted)</span></div>
+    </div>
+
+    <div class="modal-stat">
+      Window flagged on <strong>2026-05-11</strong> · expected mainstream crossover <strong>~2026-06-04</strong> · timestamp delta <strong>+23 days</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   DATA
+   ===================================================== */
+const STAGE_META = {
+  whisper:   { color: '#00d4ff', label: 'WHISPER' },
+  builder:   { color: '#00ff9d', label: 'BUILDER' },
+  creator:   { color: '#ffd84d', label: 'CREATOR' },
+  hype:      { color: '#ff8a3d', label: 'HYPE' },
+  commodity: { color: '#7a8696', label: 'COMMODITY' },
+};
+
+const TRENDS = [
+  { kw:'world model agents',         stage:'whisper',   sat:12, vel:4.2, tbts:87, conv:true,  cluster:'Autonomous Reasoning',
+    sum:'AI agents that learn a physics-style simulator of their environment to plan ahead instead of reacting.',
+    pred:'Reaches Builder stage by 21 June 2026; first mainstream YouTube coverage by 12 July.', window:38 },
+  { kw:'test-time training',         stage:'builder',   sat:28, vel:3.1, tbts:81, conv:true,  cluster:'Autonomous Reasoning',
+    sum:'Models that fine-tune themselves on each new problem during inference.',
+    pred:'Mainstream by 15 June 2026; expect 40+ tutorials by month-end.', window:32 },
+  { kw:'diffusion language models',  stage:'whisper',   sat:8,  vel:5.6, tbts:84, conv:false, cluster:'Beyond Autoregression',
+    sum:'Text generation using diffusion instead of next-token prediction — parallel decoding, fewer hallucinations.',
+    pred:'Stays Whisper through Q3 2026; first commercial product by 1 October.', window:64 },
+  { kw:'small reasoning models',     stage:'builder',   sat:34, vel:2.8, tbts:79, conv:true,  cluster:'Compressed Intelligence',
+    sum:'Sub-3B-param models trained on synthetic chain-of-thought to match GPT-4 reasoning.',
+    pred:'Peaks at Creator stage by 10 June 2026.', window:28 },
+  { kw:'JEPA video models',          stage:'builder',   sat:31, vel:2.4, tbts:73, conv:false, cluster:'Beyond Autoregression',
+    sum:'Self-supervised video models that learn by predicting representations, not pixels.',
+    pred:'Crosses 50% saturation by 28 June 2026.', window:45 },
+  { kw:'agentic memory',             stage:'whisper',   sat:14, vel:3.7, tbts:78, conv:true,  cluster:'Autonomous Reasoning',
+    sum:'Long-term memory systems for AI agents — vector + symbolic + temporal hybrid stores.',
+    pred:'Reaches Builder by 23 June 2026.', window:41 },
+  { kw:'rStar-Math self-evolve',     stage:'builder',   sat:26, vel:3.4, tbts:76, conv:true,  cluster:'Autonomous Reasoning',
+    sum:'Models that generate their own training data through Monte Carlo tree search.',
+    pred:'Mainstream by 6 June 2026.', window:24 },
+  { kw:'browser-use agents (MCP)',   stage:'creator',   sat:52, vel:1.9, tbts:71, conv:false, cluster:'Tool-Using AI',
+    sum:'Agents that drive real browsers via Anthropic\'s MCP protocol.',
+    pred:'Peaks by 27 May 2026 — window narrow.', window:14 },
+  { kw:'tool-use RL',                stage:'whisper',   sat:16, vel:4.0, tbts:76, conv:false, cluster:'Tool-Using AI',
+    sum:'RL fine-tuning where the reward signal comes from tool-call correctness.',
+    pred:'Reaches Builder by 4 July 2026.', window:52 },
+  { kw:'neural CAD generation',      stage:'whisper',   sat:9,  vel:4.8, tbts:74, conv:false, cluster:'Generative Engineering',
+    sum:'Text-to-CAD with parametric output — editable Fusion 360 / OnShape files.',
+    pred:'Stays Whisper through August 2026.', window:78 },
+  { kw:'agent eval harnesses',       stage:'builder',   sat:33, vel:2.6, tbts:68, conv:false, cluster:'Tool-Using AI',
+    sum:'Open-source frameworks for systematically benchmarking AI agents.',
+    pred:'Mainstream by 18 June 2026.', window:36 },
+  { kw:'speculative decoding',       stage:'builder',   sat:38, vel:2.1, tbts:65, conv:false, cluster:'Compressed Intelligence',
+    sum:'Custom silicon and kernel work optimised for draft-model speculation.',
+    pred:'Crosses 50% saturation by 23 June 2026.', window:41 },
+  { kw:'synthetic data pipelines',   stage:'builder',   sat:42, vel:1.7, tbts:58, conv:false, cluster:'Compressed Intelligence',
+    sum:'End-to-end pipelines for generating, filtering, and verifying synthetic training data.',
+    pred:'Peaks at Creator stage by 13 June 2026.', window:31 },
+  { kw:'voice cloning v3',           stage:'creator',   sat:58, vel:1.4, tbts:55, conv:false, cluster:'Synthetic Media',
+    sum:'Sub-second-sample voice cloning with emotion control.',
+    pred:'Saturates by 31 May 2026.', window:18 },
+  { kw:'autonomous coding agents',   stage:'creator',   sat:64, vel:1.6, tbts:54, conv:false, cluster:'Tool-Using AI',
+    sum:'Long-running coding agents that ship PRs end-to-end.',
+    pred:'Peaks by 23 May 2026 — already saturating.', window:10 },
+  { kw:'10M context windows',        stage:'hype',      sat:71, vel:2.3, tbts:51, conv:false, cluster:'Compressed Intelligence',
+    sum:'Frontier models pushing context to 10M+ tokens.',
+    pred:'Hype peak in 7 days; decline expected by late June.', window:7 },
+  { kw:'RAG 2.0 retrieval',          stage:'hype',      sat:78, vel:1.8, tbts:44, conv:false, cluster:'Tool-Using AI',
+    sum:'Multi-step retrieval with planning, re-ranking, and verification loops.',
+    pred:'Already commodity by mid-June 2026.', window:4 },
+  { kw:'local LLM inference',        stage:'commodity', sat:88, vel:0.9, tbts:22, conv:false, cluster:'Compressed Intelligence',
+    sum:'Running quantized models on consumer hardware — mature toolchain.',
+    pred:'No further movement expected.', window:0 },
+];
+
+/* =====================================================
+   BUBBLE CHART
+   ===================================================== */
+let bubbleInstance = null;
+function renderBubble() {
+  const el = document.getElementById('bubbleChart');
+  if (bubbleInstance) bubbleInstance.dispose();
+  bubbleInstance = echarts.init(el, null, { renderer: 'canvas' });
+  const stageOrder = ['whisper','builder','creator','hype','commodity'];
+  const series = stageOrder.map(stage => ({
+    name: STAGE_META[stage].label,
+    type: 'scatter',
+    data: TRENDS.filter(t => t.stage === stage).map(t => ({
+      value: [t.sat, t.vel, t.tbts, t.kw, stage],
+      itemStyle: {
+        color: STAGE_META[stage].color,
+        opacity: 0.92,
+        shadowBlur: 22,
+        shadowColor: STAGE_META[stage].color,
+        borderColor: 'rgba(255,255,255,0.22)',
+        borderWidth: 1.2
+      }
+    })),
+    symbolSize: v => Math.max(18, v[2] * 0.7),
+    emphasis: { focus: 'series', itemStyle: { borderWidth: 2.5, borderColor: '#fff'} },
+    label: {
+      show: true, position: 'right',
+      formatter: p => p.value[3],
+      color: '#bcc4d3', fontSize: 10, fontFamily: 'JetBrains Mono', distance: 8
+    }
+  }));
+  bubbleInstance.setOption({
+    backgroundColor: 'transparent',
+    grid: { left: 60, right: 90, top: 30, bottom: 50 },
+    tooltip: {
+      backgroundColor: 'rgba(8,11,20,0.92)',
+      borderColor: 'rgba(0,240,255,0.4)',
+      borderWidth: 1,
+      textStyle: { color: '#e6ecf5', fontFamily: 'JetBrains Mono', fontSize: 11 },
+      formatter: p => `<div style="font-family:'Space Grotesk';font-weight:700;font-size:14px;margin-bottom:6px">${p.value[3]}</div>sat ${p.value[0]}% · vel ${p.value[1].toFixed(2)}× · TBTS ${p.value[2]}`
+    },
+    xAxis: { type: 'value', min: 0, max: 100,
+      name: 'SATURATION %  →  MAINSTREAM',
+      nameLocation: 'middle', nameGap: 28,
+      nameTextStyle: { color: '#525e74', fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 1 },
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.10)' } },
+      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } },
+      axisLabel: { color: '#525e74', fontFamily: 'JetBrains Mono', fontSize: 10 }
+    },
+    yAxis: { type: 'value', min: 0, max: 6.5,
+      name: 'VELOCITY  ↑',
+      nameLocation: 'middle', nameGap: 35, nameRotate: 90,
+      nameTextStyle: { color: '#525e74', fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 1 },
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.10)' } },
+      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } },
+      axisLabel: { color: '#525e74', fontFamily: 'JetBrains Mono', fontSize: 10, formatter: '{value}×' }
+    },
+    series
+  });
+  bubbleInstance.on('click', p => {
+    const t = TRENDS.find(t => t.kw === p.value[3]);
+    if (t) openDetail(t);
+  });
+}
+
+/* =====================================================
+   LEADERBOARD
+   ===================================================== */
+function renderLeaderboard() {
+  const sorted = [...TRENDS].sort((a,b) => b.tbts - a.tbts);
+  const html = sorted.map((t, i) => `
+    <div class="lb-row" data-kw="${t.kw}">
+      <div class="rank">${String(i+1).padStart(2,'0')}</div>
+      <div>
+        <div class="name">${t.kw}${t.conv ? '<span class="conv-badge" onclick="event.stopPropagation();openModal()">CONV</span>' : ''}</div>
+        <div class="stage-mini" style="color:${STAGE_META[t.stage].color}">
+          <span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage].label} · sat ${t.sat}%
+        </div>
+      </div>
+      <div class="tbts">${t.tbts}</div>
+      <div class="vel ${t.vel > 1 ? 'up' : 'down'}">${t.vel > 1 ? '▲' : '▼'}${t.vel.toFixed(1)}</div>
+    </div>
+  `).join('');
+  document.getElementById('leaderboard').innerHTML = html;
+  document.querySelectorAll('.lb-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const t = TRENDS.find(t => t.kw === row.dataset.kw);
+      if (t) openDetail(t);
+    });
+  });
+}
+
+/* =====================================================
+   DETAIL PANEL
+   ===================================================== */
+function openDetail(t) {
+  const designation = `AAR · ${t.kw.split(/[\s\-()]+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0,4)} · ${t.tbts}`;
+  document.getElementById('dpEyebrow').textContent = designation + ' · ' + STAGE_META[t.stage].label;
+  document.getElementById('dpName').textContent = t.kw;
+  document.getElementById('dpCluster').innerHTML = `in the constellation of <em>${t.cluster}</em>`;
+  document.getElementById('dpSummary').textContent = t.sum;
+  document.getElementById('dpTbts').textContent = t.tbts;
+  document.getElementById('dpVel').textContent = t.vel.toFixed(1) + '×';
+  document.getElementById('dpSat').textContent = t.sat + '%';
+  document.getElementById('dpWin').textContent = t.window + 'd';
+  document.getElementById('dpPred').textContent = t.pred;
+  document.getElementById('detailPanel').classList.add('open');
+
+  document.querySelectorAll('.lb-row').forEach(r => r.classList.toggle('selected', r.dataset.kw === t.kw));
+}
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  document.querySelectorAll('.lb-row').forEach(r => r.classList.remove('selected'));
+}
+window.closeDetail = closeDetail;
+
+/* =====================================================
+   CONVERGENCE MODAL
+   ===================================================== */
+function openModal() { document.getElementById('modalBackdrop').classList.add('open'); }
+function closeModal() { document.getElementById('modalBackdrop').classList.remove('open'); }
+window.openModal = openModal;
+window.closeModal = closeModal;
+
+/* keyboard */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeDetail();
+    closeModal();
+  }
+});
+
+/* theme toggle */
+document.getElementById('themeToggle').addEventListener('click', () => {
+    document.documentElement.classList.toggle('light-mode');
+});
+
+/* chip toggles */
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('active'));
+});
+
+/* =====================================================
+   INIT
+   ===================================================== */
+window.addEventListener('load', () => {
+  renderBubble();
+  renderLeaderboard();
+});
+window.addEventListener('resize', () => { if (bubbleInstance) bubbleInstance.resize(); });
+</script>
+</body>
+</html>
