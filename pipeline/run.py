@@ -196,7 +196,9 @@ def _producthunt_per_topic(
 ) -> dict[str, int]:
     if not launches:
         return {}
-    launch_text = [(l.name + " " + (l.tagline or "")).lower() for l in launches]
+    launch_text = [
+        (launch.name + " " + (launch.tagline or "")).lower() for launch in launches
+    ]
     out: dict[str, int] = {}
     for topic in topic_list:
         needles = _topic_match_strings(topic)
@@ -775,8 +777,8 @@ def main(
         candidate_hints.append(huggingface.model_name(m))
     for p in reddit_posts:
         candidate_hints.append(p.title[:80])
-    for l in producthunt_launches:
-        candidate_hints.append(l.name)
+    for launch in producthunt_launches:
+        candidate_hints.append(launch.name)
     for m in replicate_models:
         candidate_hints.append(m.name)
     candidate_hints = [h for h in candidate_hints if h]

@@ -55,13 +55,11 @@ HN_MIN_POINTS_ASK_HN = 10
 # and Ask HN). The keyword sweep is already AI-constrained; tag-only
 # passes apply this filter to strip RTX/M4/iPhone noise that reaches the
 # front page without our keyword vocabulary.
-AI_SIGNAL_TERMS: frozenset[str] = frozenset({
-    "llm", "language model", "gpt", "claude", "gemini", "mistral", "llama",
-    "anthropic", "openai", "deepmind", "transformer", "fine-tun", "embedding",
-    "neural", "inference", "rag", "agent", "mcp", "model context",
-    "diffusion", "stable diffusion", "image generation", "multimodal",
-    "reinforcement learning", "rlhf", "copilot", "huggingface", "hugging face",
-})
+#
+# Single source of truth: `pipeline.niche_filter.CREATOR_NICHE_TERMS`. Kept
+# as a module-local alias so existing imports of `hackernews.AI_SIGNAL_TERMS`
+# don't break.
+from pipeline.niche_filter import CREATOR_NICHE_TERMS as AI_SIGNAL_TERMS
 
 # Tag-only extra passes that run.py opts in to. Default behavior of
 # fetch_ai_posts (keyword-only) is preserved for tests and ad-hoc callers.
