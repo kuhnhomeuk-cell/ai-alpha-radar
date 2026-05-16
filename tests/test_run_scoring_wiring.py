@@ -164,3 +164,21 @@ def test_builder_signal_uses_repo_count_plus_star_velocity(
         "acme/high-velocity": 100,
         "acme/low-velocity": 100,
     }
+
+
+def test_doc_timestamps_indexes_arxiv_short_id_alongside_url() -> None:
+    """Production Paper.id is the arXiv URL (http://arxiv.org/abs/2605.12493v1)
+    but the Claude topic extractor returns the bare short ID
+    ("2605.12493v1" or "2605.12493"). Without this alias, every
+    doc_timestamps.get(("arxiv", short_id)) lookup misses and arxiv_30d
+    ends up 0 on every trend.
+    """
+    paper_url_form = _paper("http://arxiv.org/abs/2605.12493v1")
+    out = run._build_doc_timestamps([paper_url_form], [], [])
+    # Original URL form still resolves (back-compat).
+    assert ("arxiv", "http://arxiv.org/abs/2605.12493v1") in out
+    # Both versioned and unversioned bare forms resolve to the same timestamp.
+    assert ("arxiv", "2605.12493v1") in out
+    assert ("arxiv", "2605.12493") in out
+    assert out[("arxiv", "2605.12493v1")] == paper_url_form.published_at
+    assert out[("arxiv", "2605.12493")] == paper_url_form.published_at

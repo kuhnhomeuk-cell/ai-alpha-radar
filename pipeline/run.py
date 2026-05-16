@@ -120,6 +120,17 @@ def _build_doc_timestamps(
     out: dict[tuple[str, str | int], datetime] = {}
     for p in papers:
         out[("arxiv", p.id)] = p.published_at
+        # The arXiv feedparser response gives p.id as the canonical URL
+        # ("http://arxiv.org/abs/2605.12493v1") but the Claude topic
+        # extractor returns the bare short ID ("2605.12493v1") and
+        # sometimes drops the version suffix ("2605.12493"). Without
+        # these aliases, every arxiv_30d lookup misses.
+        short = p.id.rstrip("/").rsplit("/", 1)[-1]
+        if short and short != p.id:
+            out[("arxiv", short)] = p.published_at
+            unversioned = short.split("v")[0] if "v" in short else short
+            if unversioned != short:
+                out[("arxiv", unversioned)] = p.published_at
     for p in posts:
         out[("hackernews", p.id)] = p.created_at
     for r in repos:
