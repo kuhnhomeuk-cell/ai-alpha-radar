@@ -5670,6 +5670,14 @@ footer .quote {
 .niche-input:focus-visible {
   outline: none;
 }
+/* 1px specifically for chips + lb-rows — matches the existing 1px
+   convention on nav button / theme-toggle / star-btn. Becomes
+   visible the moment either gains keyboard focus. */
+.chip:focus-visible,
+.lb-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
 
 /* ========================================================
    REDUCED-MOTION GUARDS for decorative animations
@@ -6222,7 +6230,9 @@ function toggleWatch(kw) {
   syncWatchlistViews();
   announce(`${wasIn ? 'Removed from' : 'Added to'} watchlist: ${kw}. Watchlist now has ${WATCHLIST.size} ${WATCHLIST.size === 1 ? 'item' : 'items'}.`);
   const verb = wasIn ? 'Removed' : 'Saved';
-  aarToast(verb + ' · <span class="aar-toast-accent">' + WATCHLIST.size + '/5</span>');
+  // Both values are trusted: literal string + Number. Escape the
+  // count defensively anyway so this pattern is safe to copy.
+  aarToast(verb + ' · <span class="aar-toast-accent">' + escapeHtml(String(WATCHLIST.size)) + '/5</span>');
 }
 function syncWatchlistViews() {
   updateWatchlistUI();
@@ -7237,6 +7247,7 @@ function renderBubbleFallback(el) {
   const hideTooltip = () => {
     if (!tooltip) return;
     tooltip.classList.remove('visible');
+    tooltip.removeAttribute('data-instant');
     tooltip.setAttribute('aria-hidden', 'true');
   };
   const showTooltip = (kw, clientX, clientY, target) => {
