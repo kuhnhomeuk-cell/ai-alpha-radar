@@ -407,3 +407,27 @@ def test_cross_source_consensus_zero_active_returns_zero() -> None:
 def test_cross_source_consensus_caps_at_one() -> None:
     """If somehow confirming exceeds active, cap at 1.0."""
     assert score.cross_source_consensus(["a", "b", "c"], 2) == 1.0
+
+
+# -------- lifecycle_stage — priority-order boundary -----------------------
+
+
+def test_lifecycle_stage_commodity_fires_before_hype_when_both_rules_match() -> None:
+    """Commodity rule is listed first in the code; when both its conditions
+    (sat>75, vel<1.1, repos>100) AND the hype rule (sat>60, vel>2.0) would
+    fire simultaneously, the first-match wins — but in practice the two
+    rules can't both fire because commodity requires vel<1.1 and hype
+    requires vel>2.0.  This test pins the *creator-vs-hype* boundary instead:
+    saturation=65, velocity=2.5, hn_points=300 satisfies hype (sat>60, vel>2.0)
+    first, so creator's mid-band rule must not override it."""
+    stage = score.lifecycle_stage(
+        arxiv_30d=20,
+        github_repos_7d=40,
+        hn_points_7d=300,
+        saturation=65,
+        velocity=2.5,
+        builder_signal=0.8,
+    )
+    # Both creator (35<=sat<=60 fails — sat=65) and hype (sat>60, vel>2.0) fire;
+    # only hype actually qualifies since creator's sat bound is 60. Pin that.
+    assert stage == "hype"
