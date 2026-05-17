@@ -6958,6 +6958,12 @@ function renderBubbleFallback(el) {
   `;
 
   const tooltip = el.querySelector('#bubbleTooltip');
+  // Sonner-style "hot" window: after one tooltip is shown, subsequent
+  // tooltips within 800ms appear instantly (no delay/animation). The
+  // timer resets on every hover so quickly scanning the chart never
+  // re-introduces the open-delay.
+  let __tooltipHotUntil = 0;
+  const isTooltipHot = () => Date.now() < __tooltipHotUntil;
   const hideTooltip = () => {
     if (!tooltip) return;
     tooltip.classList.remove('visible');
@@ -6988,8 +6994,11 @@ function renderBubbleFallback(el) {
       <div class="bt-headline">${escapeHtml(data.headline)}</div>
       <div class="bt-meta">${escapeHtml(data.meta)}</div>
     `;
+    if (isTooltipHot()) tooltip.setAttribute('data-instant', '');
+    else tooltip.removeAttribute('data-instant');
     tooltip.classList.add('visible');
     tooltip.setAttribute('aria-hidden', 'false');
+    __tooltipHotUntil = Date.now() + 800;
   };
   el.querySelectorAll('[data-bubble-kw]').forEach(node => {
     node.addEventListener('click', () => selectTrend(node.dataset.bubbleKw));
