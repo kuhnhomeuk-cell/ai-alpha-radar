@@ -679,6 +679,42 @@ html::after {
 }
 .theme-toggle:active { transform: scale(0.96); }
 .theme-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+/* ========================================================
+   PRESS FEEDBACK — base transition + :active scale on every
+   clickable. Subtle scale dip on press, snap-back on release.
+   ======================================================== */
+.nav button,
+.chip,
+.watchlist-pill,
+.star-btn,
+.gem-card,
+.demand-card,
+.almanac-card,
+.outlier-card,
+.lb-row,
+.tp-cta,
+.cons-badge,
+.detail-panel .close,
+.conv-modal .close {
+  transition: transform var(--dur-instant) var(--ease-out-strong),
+              border-color var(--dur-fast) var(--ease-out-strong),
+              background var(--dur-fast) var(--ease-out-strong),
+              box-shadow var(--dur-med) var(--ease-out-strong);
+}
+.nav button:active            { transform: scale(0.97); }
+.chip:active                  { transform: scale(0.96); }
+.watchlist-pill:active        { transform: scale(0.97); filter: brightness(1.15); }
+.star-btn:active              { transform: scale(0.9) rotate(-8deg); }
+.gem-card:active              { transform: scale(0.994); border-color: var(--accent); }
+.demand-card:active           { transform: scale(0.994); border-color: var(--accent); }
+.almanac-card:active          { transform: scale(0.97); }
+.outlier-card:active          { transform: scale(0.97); }
+.lb-row:active                { transform: scale(0.992); background: var(--surface-3); }
+.tp-cta:active                { transform: scale(0.97); }
+.cons-badge:active            { transform: scale(0.95); }
+.detail-panel .close:active,
+.conv-modal .close:active     { transform: scale(0.92) rotate(90deg); }
 .theme-toggle .theme-icon {
   width: 16px; height: 16px;
   position: absolute;
