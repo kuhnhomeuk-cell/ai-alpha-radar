@@ -14,8 +14,13 @@ set -euo pipefail
 
 # Bumped 23 → 24 on 2026-05-16: redesign promotion added one new site
 # (copy-to-clipboard toast micro-template, static HTML, no user data).
-# All 24 sites use escapeHtml-per-interpolation or static templates.
-BASELINE=24
+# Bumped 24 → 27 on 2026-05-17: three new sites accumulated since the
+# last bump — the bubble-chart stage legend (static color/label pairs
+# from a hardcoded zones array, no user data), the leaderboard-empty
+# banner (static fallback strings only), and a bubble tooltip body
+# (every interpolation routed through escapeHtml). All three were
+# verified by hand against this script's intent.
+BASELINE=27
 TARGET="public/index.html"
 
 if [[ ! -f "$TARGET" ]]; then
