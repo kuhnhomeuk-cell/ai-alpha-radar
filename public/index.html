@@ -1169,7 +1169,7 @@ html::after {
   color: var(--ink);
   border-color: rgba(44, 230, 255, 0.55);
   background: rgba(44, 230, 255, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(44, 230, 255, 0.18);
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 1px transparent;
 }
 :root[data-theme="light"] .chip.active {
   background: rgba(0, 122, 153, 0.14);
@@ -2039,13 +2039,24 @@ html::after {
 .hit-rate .caption {
   font-family: var(--serif);
   font-style: italic;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--ink-2);
   max-width: 240px;
   line-height: 1.5;
   margin-left: auto;
   border-left: 1px solid var(--line);
   padding-left: 24px;
+  position: relative;
+}
+.hit-rate .caption::before {
+  content: '"';
+  position: absolute;
+  left: 8px;
+  top: -8px;
+  font-size: 32px;
+  color: var(--champagne);
+  font-style: normal;
+  line-height: 1;
 }
 
 .prediction-list { display: flex; flex-direction: column; }
@@ -2190,6 +2201,8 @@ html::after {
   letter-spacing: 0.06em;
   font-weight: 600;
 }
+.outlier-breakout-num    { color: var(--accent); font-weight: 600; }
+.outlier-breakout-unit   { color: var(--ink-3); margin-left: 1px; }
 .outliers-empty {
   border: 1px dashed var(--line-hi);
   padding: 48px;
@@ -2308,8 +2321,8 @@ html::after {
   display: flex; align-items: flex-start; gap: 12px;
 }
 .almanac-row .title:hover { color: var(--champagne); }
-.almanac-row .title::before { content: '\201C'; color: var(--champagne); flex-shrink: 0; }
-.almanac-row .title::after  { content: '\201D'; color: var(--champagne); margin-left: -8px; flex-shrink: 0; }
+.almanac-row .title::before { content: '\201C'; color: var(--champagne); flex-shrink: 0; opacity: 0.5; }
+.almanac-row .title::after  { content: '\201D'; color: var(--champagne); margin-left: -8px; flex-shrink: 0; opacity: 0.5; }
 
 /* ====================================================
    DETAIL PANEL (slide-in from right) + selected row
@@ -7989,7 +8002,14 @@ function renderOutliers() {
     const badge = document.createElement('span');
     badge.className = 'outlier-badge';
     const multiple = (o.outlier_multiple || 0).toFixed(o.outlier_multiple < 10 ? 1 : 0);
-    badge.textContent = multiple + '× baseline';
+    const num = document.createElement('span');
+    num.className = 'outlier-breakout-num';
+    num.textContent = multiple + '×';
+    const unit = document.createElement('span');
+    unit.className = 'outlier-breakout-unit';
+    unit.textContent = ' baseline';
+    badge.appendChild(num);
+    badge.appendChild(unit);
     statsRow.appendChild(badge);
     body.appendChild(statsRow);
 
