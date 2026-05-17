@@ -2332,6 +2332,29 @@ html::after {
 .detail-panel:not(.visible) {
   transition: transform var(--dur-slow-exit) var(--ease-in-fast);
 }
+/* Content sections reveal staggered while the panel slides in.
+   Panel slides 0–400ms; content arrives 240–520ms. */
+.detail-panel.visible .dp-head,
+.detail-panel.visible .stats,
+.detail-panel.visible .pred,
+.detail-panel.visible .audience-section,
+.detail-panel.visible .painpoints-section {
+  animation: aar-fade-up var(--dur-med) var(--ease-out-quart) backwards;
+}
+.detail-panel.visible .dp-head             { animation-delay: 240ms; }
+.detail-panel.visible .stats               { animation-delay: 280ms; }
+.detail-panel.visible .pred                { animation-delay: 320ms; }
+.detail-panel.visible .audience-section    { animation-delay: 360ms; }
+.detail-panel.visible .painpoints-section  { animation-delay: 400ms; }
+@media (prefers-reduced-motion: reduce) {
+  .detail-panel.visible .dp-head,
+  .detail-panel.visible .stats,
+  .detail-panel.visible .pred,
+  .detail-panel.visible .audience-section,
+  .detail-panel.visible .painpoints-section {
+    animation: none;
+  }
+}
 .detail-panel .dp-head {
   padding: 18px 20px;
   border-bottom: 1px solid var(--line);
