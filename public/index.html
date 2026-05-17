@@ -5180,6 +5180,212 @@ footer .quote {
 :root[data-theme="light"] .gems-grid .gem-card::before {
   opacity: 0.12;
 }
+
+/* Header density pass: keep the live glass treatment, but prevent the
+   navigation and filter controls from growing into stacked rows. */
+.topbar {
+  min-height: 62px;
+  padding: 8px 14px 8px 18px;
+  gap: 12px;
+  align-items: center;
+}
+.brand {
+  flex: 0 0 auto;
+}
+.brand .star {
+  width: 34px;
+  height: 34px;
+}
+.brand .subtitle {
+  font-size: 10px;
+  margin-top: 3px;
+}
+.nav {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  justify-content: center;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  margin-left: clamp(8px, 1.2vw, 18px);
+  gap: 2px;
+  padding: 3px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.nav::-webkit-scrollbar {
+  display: none;
+}
+.nav button {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+.nav button .nav-count {
+  margin-left: 4px;
+  padding: 0 4px;
+  font-size: 8px;
+}
+.topbar .right {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 8px;
+}
+.topbar .niche-wrap {
+  display: none !important;
+}
+.topbar .search-wrap {
+  flex: 0 1 220px;
+  min-width: 176px;
+}
+.topbar .search-input {
+  width: 100%;
+  min-height: 34px;
+}
+.topbar .watchlist-pill {
+  min-height: 34px;
+  padding: 0 10px;
+  gap: 5px;
+  font-size: 10.5px;
+  letter-spacing: 0;
+  flex: 0 0 auto;
+}
+.topbar .watchlist-pill .wl-star {
+  font-size: 12px;
+}
+.topbar .theme-toggle {
+  width: 40px;
+  height: 34px;
+}
+.topbar .meta-text {
+  height: 34px;
+  padding: 0 11px;
+}
+
+.filters {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  row-gap: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.filters::-webkit-scrollbar {
+  display: none;
+}
+.filter-row,
+.filter-row-secondary {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 10px;
+  row-gap: 0;
+  margin: 0;
+}
+.filter-row-secondary {
+  opacity: 1;
+}
+.filter-group {
+  flex: 0 0 auto;
+  gap: 5px;
+  min-height: 28px;
+}
+.filter-group .chips {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.filters .label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.chip {
+  min-height: 28px;
+  padding: 0 6px;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+.briefing-toggle {
+  margin-left: 0;
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 10px;
+  flex: 0 0 auto;
+}
+.radar-grid {
+  margin-top: 14px;
+}
+.source-health {
+  align-items: center;
+  min-height: 34px;
+  padding: 5px 14px;
+}
+.src-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 16px;
+}
+.src-list .refreshed {
+  grid-column: auto;
+}
+.src-claude {
+  align-self: center;
+  min-height: 28px;
+  flex: 0 0 auto;
+}
+.src-claude::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  box-shadow: 0 0 0 0 transparent;
+}
+.src-claude.live::before {
+  background: var(--good);
+  box-shadow: 0 0 10px rgba(0, 230, 168, 0.7);
+}
+.src-claude.pending::before {
+  background: var(--bad);
+  box-shadow: 0 0 10px rgba(255, 77, 109, 0.62);
+}
+
+@media (max-width: 1180px) {
+  .nav {
+    order: 3;
+    flex: 1 0 100%;
+    width: 100%;
+    margin-left: 0;
+  }
+  .filters {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    min-height: auto;
+    align-items: flex-start;
+  }
+  .topbar .right {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .topbar .search-wrap {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .filters {
+    margin-left: var(--sp-3);
+    margin-right: var(--sp-3);
+  }
+}
 </style>
 </head>
 <body>
