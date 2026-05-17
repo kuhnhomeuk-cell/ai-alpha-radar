@@ -602,6 +602,86 @@ def test_mine_demand_clusters_from_comments_passes_sync_probe_when_enabled() -> 
     assert len(clusters) >= 1
 
 
+# ---- synthesize_demand_from_trends: alternate-key tolerance + diagnostics ----
+
+
+def _trend_stub(keyword: str, summary: str = "", hook: str = "") -> SimpleNamespace:
+    """Minimal Trend-shaped stub for synthesize_demand_from_trends.
+
+    The function only reads `.keyword`, `.summary`, and `.angles.hook`, so a
+    SimpleNamespace is enough — no need to instantiate the full Pydantic Trend.
+    """
+    return SimpleNamespace(
+        keyword=keyword,
+        summary=summary,
+        angles=SimpleNamespace(hook=hook),
+    )
+
+
+def test_synthesize_accepts_alternate_key_shape() -> None:
+    """Sonnet sometimes returns rows keyed `question` or `pain_point` instead of
+    `question_shape`. The coercion path should map those synonyms in, not drop
+    the row silently (which would ship a 0-cluster wedge)."""
+    response = json.dumps(
+        [
+            {
+                # Alternate key — Sonnet drift from the prompt
+                "question": "How do solo creators run Claude Desktop locally?",
+                "askers_estimate": 7,
+                "weekly_growth_pct": 12,
+                "open_window_days": 14,
+                "creator_brief": "Tutorial: Claude Desktop local config.",
+                "related_trends": ["claude"],
+            },
+            {
+                "pain_point": "Why does my MCP server keep dropping the stdio connection?",
+                "askers_estimate": 5,
+                "weekly_growth_pct": 8,
+                "open_window_days": 21,
+                "creator_brief": "Diagnose MCP stdio drops for indie devs.",
+                "related_trends": ["mcp"],
+            },
+        ]
+    )
+    fake = FakeAnthropic(response)
+    trends = [_trend_stub("claude"), _trend_stub("mcp")]
+    clusters = demand.synthesize_demand_from_trends(trends, client=fake)
+    assert len(clusters) == 2
+    shapes = [c.question_shape for c in clusters]
+    assert any("Claude Desktop" in s for s in shapes)
+    assert any("MCP server" in s for s in shapes)
+
+
+def test_synthesize_logs_count_and_keys_on_exit(
+    capsys: "pytest.CaptureFixture[str]",
+) -> None:
+    """Drift guard: on exit, synthesize_demand_from_trends must emit a single
+    structured log line containing the row count and the first row's keys so a
+    future schema drift is visible in the GitHub Actions log."""
+    response = json.dumps(
+        [
+            {
+                "question": "What's the cheapest agent loop for Shorts creators?",
+                "askers_estimate": 6,
+            }
+        ]
+    )
+    fake = FakeAnthropic(response)
+    trends = [_trend_stub("agents")]
+    demand.synthesize_demand_from_trends(trends, client=fake)
+    err = capsys.readouterr().err
+    # Find the diagnostic line — JSON structured, one per line.
+    records = [
+        json.loads(line)
+        for line in err.strip().splitlines()
+        if line.strip().startswith("{")
+    ]
+    diag = [r for r in records if r.get("event") == "demand_synthesize_parsed"]
+    assert len(diag) == 1, f"expected one diagnostic line, got {len(diag)}: {records}"
+    assert diag[0]["row_count"] == 1
+    assert "question" in diag[0]["first_row_keys"]
+
+
 # ---- cost estimation ----
 
 

@@ -1603,11 +1603,24 @@ def main(
                 demand_clusters = demand_mod.synthesize_demand_from_trends(
                     trends, niche=niche, max_clusters=6,
                 )
+                # If even the synth fallback ships zero, surface it loudly:
+                # the wedge widget on the dashboard goes blank with no other
+                # operator signal. Escalate to warning so it's not invisible.
+                synth_level = "warning" if not demand_clusters else "info"
                 log(
                     "demand_clusters_synthesized",
-                    level="info",
+                    level=synth_level,
                     count=len(demand_clusters),
                     elapsed_seconds=round(time.time() - synth_started, 2),
+                )
+            # Wedge guard: if both the HDBSCAN path and the synth fallback
+            # produced nothing, emit a single warning-level event so future
+            # silent-empty-wedge regressions are visible in the CI logs.
+            if not demand_clusters:
+                log(
+                    "demand_wedge_empty",
+                    level="warning",
+                    trends_count=len(trends),
                 )
         except Exception as e:  # pragma: no cover — defensive net
             log(

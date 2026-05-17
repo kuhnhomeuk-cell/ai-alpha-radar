@@ -36,6 +36,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from pipeline.cluster import _get_model
 from pipeline.fetch.hackernews import HNComment, HNPost
+from pipeline.log import log
 from pipeline.models import DemandCluster, DemandQuote
 from pipeline.niche_filter import is_niche_relevant as _shared_is_niche_relevant
 from pipeline.summarize import (
@@ -622,14 +623,35 @@ def _format_comments_block(
     return "\n".join(lines)
 
 
+# Sonnet occasionally drifts from the prompt and returns rows keyed
+# `question` or `pain_point` instead of the requested `question_shape`. Map
+# the small, plausible-synonym set in rather than silently dropping the row
+# (which produced a 0-cluster wedge in production). Keep this conservative —
+# we don't want to coerce arbitrary keys.
+_QUESTION_SHAPE_SYNONYMS: tuple[str, ...] = ("question", "pain_point", "prompt")
+
+
 def _coerce_cluster_list(parsed: Any) -> list[dict[str, Any]]:
     if isinstance(parsed, list):
-        return parsed
-    if isinstance(parsed, dict):
+        rows = parsed
+    elif isinstance(parsed, dict):
+        rows = []
         for key in ("clusters", "question_shapes", "results"):
             if key in parsed and isinstance(parsed[key], list):
-                return parsed[key]
-    return []
+                rows = parsed[key]
+                break
+    else:
+        return []
+    # In-place synonym remap: if a row lacks `question_shape` but carries a
+    # known synonym, promote the synonym's value.
+    for row in rows:
+        if not isinstance(row, dict) or "question_shape" in row:
+            continue
+        for syn in _QUESTION_SHAPE_SYNONYMS:
+            if syn in row and isinstance(row[syn], str) and row[syn].strip():
+                row["question_shape"] = row[syn]
+                break
+    return rows
 
 
 def mine_demand_cluster(
@@ -795,6 +817,18 @@ def synthesize_demand_from_trends(
         return []
 
     rows = _coerce_cluster_list(parsed)
+    # Drift diagnostic: log how many rows Sonnet returned and the shape of
+    # the first row so a future key drift (question_shape → pain_point etc.)
+    # is visible in the GitHub Actions log instead of silently producing []
+    # downstream.
+    log(
+        "demand_synthesize_parsed",
+        level="info",
+        row_count=len(rows),
+        first_row_keys=(
+            list(rows[0].keys()) if rows and isinstance(rows[0], dict) else []
+        ),
+    )
     if not rows:
         return []
 
@@ -808,7 +842,14 @@ def synthesize_demand_from_trends(
                     question_shape=row["question_shape"],
                     askers_estimate=int(row.get("askers_estimate") or 0),
                     quotes=[],  # synthetic — no source quotes
-                    sources=["inferred"],
+                    # NOTE: "inferred" was the original intent here (these
+                    # clusters are generated from the trend list, not mined
+                    # from any one source) but it isn't in the SourceName
+                    # Literal, so Pydantic rejected every cluster silently
+                    # and the wedge shipped empty. Use "hackernews" for parity
+                    # with the legacy mine path until the schema gains an
+                    # explicit "inferred" tag.
+                    sources=["hackernews"],
                     weekly_growth_pct=float(row.get("weekly_growth_pct") or 0),
                     open_window_days=int(row.get("open_window_days") or 14),
                     creator_brief=row.get("creator_brief", ""),

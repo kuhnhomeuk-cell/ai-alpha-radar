@@ -498,3 +498,71 @@ def test_orchestrator_demand_clusters_populate_in_snapshot(
         (tmp_path / "data.json").read_text(encoding="utf-8")
     )
     assert len(parsed.demand_clusters) == 2
+
+
+def test_orchestrator_warns_when_demand_wedge_is_empty(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Wedge guard: when BOTH HDBSCAN comment mining AND the synth fallback
+    return zero demand clusters, the orchestrator must emit a warning-level
+    structured log line (`demand_wedge_empty`). Without it, a silent zero-
+    cluster wedge ships unnoticed and the dashboard's flagship widget is
+    blank with no operator signal.
+    """
+    monkeypatch.setattr(
+        run.demand_mod, "mine_demand_clusters_from_comments", lambda *a, **kw: []
+    )
+    monkeypatch.setattr(
+        run.demand_mod, "synthesize_demand_from_trends", lambda *a, **kw: []
+    )
+    # Stub the Claude-only paths the orchestrator also calls under use_claude=True
+    monkeypatch.setattr(run, "_maybe_enrich_with_claude", lambda trends, *, niche: trends)
+    monkeypatch.setattr(
+        run,
+        "_maybe_enrich_with_perplexity",
+        lambda trends, *, budget_cents: (trends, 0.0),
+    )
+    from pipeline.models import DailyBriefing
+    from datetime import datetime as _dt, timezone as _tz
+
+    monkeypatch.setattr(
+        run.summarize,
+        "daily_briefing",
+        lambda movers, *, niche: DailyBriefing(
+            text="stubbed",
+            moved_up=[],
+            moved_down=[],
+            emerging=[],
+            generated_at=_dt.now(tz=_tz.utc),
+        ),
+    )
+
+    snap = run.main(
+        today=date(2026, 5, 16),
+        papers=_load_papers(),
+        posts=_load_posts(),
+        repos=_load_repos(),
+        use_claude=True,
+        max_cost_cents=1000,
+        extract_topics_fn=_stub_extract_topics,
+        public_dir=tmp_path,
+        predictions_log=tmp_path / "predictions.jsonl",
+    )
+    assert snap.demand_clusters == []
+
+    err = capsys.readouterr().err
+    records = [
+        json.loads(line)
+        for line in err.strip().splitlines()
+        if line.strip().startswith("{")
+    ]
+    wedge_warns = [
+        r for r in records
+        if r.get("event") == "demand_wedge_empty" and r.get("level") == "warning"
+    ]
+    assert len(wedge_warns) >= 1, (
+        f"expected demand_wedge_empty warning; got events: "
+        f"{[r.get('event') for r in records]}"
+    )
