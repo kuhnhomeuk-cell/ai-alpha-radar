@@ -114,7 +114,17 @@ def velocity(
             beta=prior_beta,
             n_days=7,
         )
-    floored_30d = max(mentions_30d, MENTIONS_30D_FLOOR)
+    # MENTIONS_30D_FLOOR was specced to suppress spikes from low-history terms
+    # (mentions_30d=1, mentions_7d=5 → spurious 21× velocity). On cold start —
+    # day-1 of the pipeline or a freshly-introduced topic — there is no 30d
+    # history at all, so the floor over-suppresses real signal: a topic with
+    # mentions_7d=1, mentions_30d=0 was returning velocity=0.43 (looks dead)
+    # instead of velocity=1.0 (looks fresh). The clamp below pegs the floor
+    # at the actual 7d count when that count is smaller than the configured
+    # floor, so cold-start topics differentiate while established topics
+    # (mentions_7d ≥ MENTIONS_30D_FLOOR) keep the original spike-suppression.
+    cold_floor = min(MENTIONS_30D_FLOOR, max(mentions_7d, 1))
+    floored_30d = max(mentions_30d, cold_floor)
     expected_7d = floored_30d / 30 * 7
     denom = max(expected_7d, 1.0)
     return smoothed_7d / denom
@@ -187,8 +197,14 @@ def tbts(
     hidden_gem_score: float,
     lifecycle: LifecycleStage,
     convergence_detected: bool,
-) -> int:
-    """Composite Trend-Before-Trend Score 0-100 per PLAN.md §6.8."""
+) -> float:
+    """Composite Trend-Before-Trend Score 0-100 per PLAN.md §6.8.
+
+    Returned as float (not rounded to int) so trends with near-identical
+    inputs still differentiate in the last decimal place. Without this,
+    integer rounding collapses ~80% of niche-stage trends to the same
+    score and the Sky Map scatter overplots.
+    """
     vnorm = min(velocity_score, VELOCITY_CLIP) / VELOCITY_CLIP
     lc_weight = LIFECYCLE_WEIGHTS[lifecycle]
     conv = 1.0 if convergence_detected else 0.0
@@ -198,7 +214,7 @@ def tbts(
         + TBTS_WEIGHTS["lifecycle"] * lc_weight
         + TBTS_WEIGHTS["convergence"] * conv
     )
-    return round(raw * 100)
+    return raw * 100
 
 
 def detect_convergence(

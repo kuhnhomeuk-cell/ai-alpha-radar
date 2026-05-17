@@ -132,7 +132,7 @@ class Trend(BaseModel):
     hidden_gem_score: float
     builder_signal: float
     lifecycle_stage: LifecycleStage
-    tbts: int
+    tbts: float
     convergence: ConvergenceEvent
     summary: str
     summary_confidence: Literal["high", "medium", "low"]
