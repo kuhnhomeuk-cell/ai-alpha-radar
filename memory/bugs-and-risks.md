@@ -10,11 +10,9 @@ Format: - **slug** *(severity / category)*: description · evidence · what woul
 
 ## Open
 
-- **topic-carryover-unverified** *(medium / regression-watch)*: Task 4 (yesterday-keyword bias on topic extraction) shipped via `6073f63` and signed off, but the empirical 3-day day-over-day keyword overlap can't be measured until 3 more daily snapshots accumulate. First measurable date: 2026-05-20. If carry-over is still <50%, the fuzzy fallback in `predict.build_lifecycle_lookup` (0.4 cosine threshold) is doing more work than expected and the bias prompt needs sharpening. Evidence: `memory/next-actions.md` Task 4 final checkbox.
+- **topic-carryover-unverified** *(medium / regression-watch)*: Task 4 (yesterday-keyword bias on topic extraction) shipped via `6073f63` and signed off, but the empirical 3-day day-over-day keyword overlap can't be measured until 3 more daily snapshots accumulate. First measurable date: 2026-05-20. **Measurement tool now exists** — run `poetry run python scripts/topic_carryover.py` against the snapshots on or after that date and check the PASS / FAIL verdict. First-pass run on 2026-05-17 showed 0% on the (single) post-bias pair (2026-05-16 → 2026-05-17), but this is likely because the bias commit landed AFTER that day's 06:00 UTC daily cron rather than the bias being broken — confirm with 2026-05-18+ data. If <50% across 3 post-bias pairs, sharpen the bias prompt. Evidence: `memory/next-actions.md` Task 4 final checkbox; `scripts/topic_carryover.py` (commit `96c3fe3`).
 
 - **comets-cache-staleness** *(medium / data-freshness)*: VidIQ MCP tools are only callable inside Claude Code sessions, so `pipeline/fetch/youtube_outliers.py` reads from a disk-backed cache (`data/youtube_outliers.json`) that an operator must manually refresh. If no one runs the refresh, the Comets route silently goes stale. Open: weekly reminder vs external scheduler vs surfacing cache age on the page. Evidence: `pipeline/fetch/youtube_outliers.py` docstring.
-
-- **predictions-jsonl-legacy-keywords** *(low / cosmetic)*: `data/predictions.jsonl` contains older entries with garbage keywords (`llms`, `ai`, `hn`, `claude`) from the pre-2026-05-14 n-gram normalization era. PR #9's embedding-cosine fallback makes these harmless (they fail to match anything sensible), but they bloat the file. Optional prune. Evidence: `memory/next-actions.md` "Cosmetic / not urgent" section.
 
 - **paid-api-cost-unobserved-post-wave-5-6** *(medium / cost)*: Wave 5 (Perplexity Sonar) and Wave 6 (xAI Grok X Search) both fold into `--max-cost-cents 50` but the actual daily spend with both enrichers live hasn't been observed end-to-end yet. Target: <50¢/day total. If overshooting, tighten `top_k`, narrow query windows, or rate-limit. Evidence: `pipeline/fetch/perplexity.py` and `pipeline/fetch/grok.py` cost-tracking is present but no daily report aggregates them yet.
 
@@ -25,6 +23,10 @@ Format: - **slug** *(severity / category)*: description · evidence · what woul
 - **comets-cache-no-staleness-surface** *(low / UX)*: When the Comets cache is older than N days, the dashboard doesn't visually indicate it. Operator may not notice they're looking at week-old YouTube outliers. Add an "as of {date}" stamp on the Comets route header. Evidence: `public/index.html` line 1911+ — `outliers-wrap` has no freshness marker.
 
 ## Resolved (recent)
+
+- ✅ 2026-05-17 — **Predictions.jsonl legacy n-gram-era rows pruned** — 15 rows dropped (all `filed_at=2026-05-13`, all `verdict=pending`, all single-token n-gram garbage: `llm`, `ai`, `llms`, `model`, `agent`, `agents`, `hn`, `language`, `models`, `memory`, `training`, `introduce`, `work`, `ai-agents`, `claude`). New tool `scripts/prune_legacy_predictions.py` (commit `0a5a8ea`) is the reusable cleanup; data change committed separately as `cdd9657 chore(data)`. No `verified` / `verified_early` / `wrong` / `tracking` rows touched.
+
+- ✅ 2026-05-17 — **Topic carry-over measurement tool added** — `scripts/topic_carryover.py` (commit `96c3fe3`) walks `public/snapshots/` and emits the day-over-day overlap ratio + PASS / FAIL / NEEDS-MORE-DATA verdict. The carry-over-unverified risk above is still open until 2026-05-20 produces 3 post-bias pairs, but the tooling to measure is no longer the blocker.
 
 - ✅ 2026-05-17 — **Audit/roadmap doc marked closed** — added a "Status: CLOSED — historical snapshot" banner to `docs/AUDIT_AND_ROADMAP.md` pointing readers to `CLAUDE.md` section D and `memory/decisions.md` for current state. Doc preserved unchanged below the banner.
 
