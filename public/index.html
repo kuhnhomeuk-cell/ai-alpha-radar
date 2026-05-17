@@ -605,6 +605,16 @@ html::after {
   line-height: 1;
 }
 .watchlist-pill:disabled .wl-star { color: var(--ink-3); }
+.watchlist-pill.empty {
+  color: var(--ink);
+  border-color: rgba(0, 210, 190, 0.42);
+  background: rgba(0, 210, 190, 0.08);
+}
+.watchlist-pill.empty:hover {
+  border-color: rgba(0, 210, 190, 0.7);
+  background: rgba(0, 210, 190, 0.14);
+}
+.watchlist-pill.empty .wl-star { color: var(--accent); }
 .watchlist-pill.active {
   color: var(--ink);
   border-color: var(--champagne);
@@ -677,6 +687,19 @@ html::after {
 .star-btn.on { color: var(--accent); opacity: 1; }
 .star-btn.on:hover { color: var(--ink); }
 .star-btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.leaderboard-empty {
+  margin: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-ui);
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.025);
+}
 
 .search-wrap { position: relative; }
 .search-input {
@@ -1100,6 +1123,7 @@ html::after {
 }
 .panel-head .meta { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
 .chart-host { height: 580px; padding: 8px; }
+.chart-host { position: relative; }
 .chart-caption {
   font-family: var(--mono);
   font-size: 10px;
@@ -1137,6 +1161,72 @@ html::after {
   height: 8px;
   border-radius: 50%;
   box-shadow: 0 0 4px currentColor;
+}
+.bubble-tooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  width: min(260px, calc(100% - 24px));
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)),
+    rgba(9, 14, 22, 0.86);
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 18px 36px -22px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - 14px)) scale(0.98);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.bubble-tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%, calc(-100% - 18px)) scale(1);
+}
+.bubble-tooltip .bt-kicker {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.bubble-tooltip .bt-name {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.bubble-tooltip .bt-headline {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+.bubble-tooltip .bt-meta {
+  margin-top: 7px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+:root[data-theme="light"] .bubble-tooltip {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(238, 247, 248, 0.72)),
+    rgba(255, 255, 255, 0.88);
+  border-color: rgba(30, 40, 60, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 18px 36px -24px rgba(84, 101, 130, 0.36);
 }
 .leaderboard { max-height: 580px; overflow-y: auto; }
 .leaderboard::-webkit-scrollbar { width: 6px; }
@@ -3444,43 +3534,53 @@ main {
 }
 .quad-label {
   font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 750;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  fill: rgba(226, 236, 246, 0.78);
+  fill: rgba(248, 251, 255, 0.94);
   paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.5);
-  stroke-width: 2.5px;
+  stroke: rgba(0, 0, 0, 0.72);
+  stroke-width: 2.8px;
   stroke-linejoin: round;
 }
 .quad-sublabel {
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: 8.8px;
   letter-spacing: 0.06em;
-  fill: rgba(125, 142, 166, 0.86);
+  fill: rgba(226, 236, 246, 0.82);
   paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.5);
-  stroke-width: 2.5px;
+  stroke: rgba(0, 0, 0, 0.7);
+  stroke-width: 2.6px;
   stroke-linejoin: round;
 }
 :root[data-theme="light"] .quad-label,
 :root[data-theme="light"] .quad-sublabel {
-  stroke: rgba(255, 255, 255, 0.85);
+  stroke: rgba(255, 255, 255, 0.96);
+}
+:root[data-theme="light"] .quad-label {
+  fill: rgba(29, 38, 52, 0.86);
+  stroke-width: 1.35px;
+}
+:root[data-theme="light"] .quad-sublabel {
+  fill: rgba(75, 88, 108, 0.82);
+  stroke-width: 1.2px;
 }
 :root[data-theme="light"] .quad-divider {
   stroke: rgba(0, 0, 0, 0.18);
 }
 
 .quad-label-bg {
-  fill: rgba(0, 0, 0, 0.45);
-  stroke: rgba(255, 255, 255, 0.08);
+  fill: rgba(4, 8, 16, 0.74);
+  stroke: rgba(255, 255, 255, 0.18);
   stroke-width: 1;
   pointer-events: none;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.22));
 }
 :root[data-theme="light"] .quad-label-bg {
-  fill: rgba(255, 255, 255, 0.7);
-  stroke: rgba(0, 0, 0, 0.08);
+  fill: rgba(255, 255, 255, 0.94);
+  stroke: rgba(60, 75, 95, 0.18);
+  filter: drop-shadow(0 10px 18px rgba(84, 101, 130, 0.16));
 }
 
 .quad-empty-text {
@@ -3627,9 +3727,7 @@ main {
 }
 
 .fallback-point .fallback-glint {
-  fill: rgba(255, 255, 255, 0.72);
-  stroke: none;
-  opacity: 0.86;
+  display: none;
 }
 
 .fallback-point.muted {
@@ -4790,7 +4888,8 @@ footer .quote {
 
 .fallback-point .fallback-glint {
   fill: rgba(255, 255, 255, 0.52);
-  opacity: 0.38;
+  display: none;
+  opacity: 0;
 }
 
 .fallback-point .fallback-contact {
@@ -4848,6 +4947,238 @@ footer .quote {
 
 :root[data-theme="light"] .fallback-point.muted .fallback-bubble {
   stroke: rgba(18, 23, 34, 0.18);
+}
+
+/* Cluster drill-down and label controls. The chart no longer prints long
+   theme names directly over dense points; short C-codes live on the plot,
+   full names live in the Themes panel and tooltips. */
+.chip[data-filter="labels"].active {
+  border-color: rgba(245, 196, 81, 0.45);
+  background:
+    linear-gradient(135deg, rgba(245, 196, 81, 0.16), rgba(255, 255, 255, 0.06)),
+    rgba(255, 255, 255, 0.075);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-rim-bright),
+    inset 0 -1px 0 rgba(245, 196, 81, 0.12),
+    0 10px 24px -16px rgba(245, 196, 81, 0.38);
+}
+
+.fallback-cluster-boundary {
+  fill: rgba(0, 210, 190, 0.035);
+  stroke: rgba(0, 210, 190, 0.24);
+  stroke-width: 1.2;
+  stroke-dasharray: 6 7;
+  pointer-events: none;
+}
+
+.fallback-cluster-boundary.active {
+  fill: rgba(0, 210, 190, 0.085);
+  stroke: rgba(0, 210, 190, 0.62);
+  stroke-width: 1.8;
+  stroke-dasharray: none;
+}
+
+.fallback-cluster-marker {
+  cursor: pointer;
+}
+
+.fallback-cluster-marker rect {
+  fill: rgba(9, 14, 22, 0.74);
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 1;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
+}
+
+.fallback-cluster-marker text {
+  fill: rgba(247, 248, 255, 0.9);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.fallback-cluster-marker.active rect {
+  fill: rgba(0, 210, 190, 0.2);
+  stroke: rgba(255, 255, 255, 0.58);
+}
+
+.bubble-fallback-svg.cluster-focus .fallback-point:not(.muted) .fallback-bubble {
+  stroke-width: 1.8;
+  filter:
+    drop-shadow(0 0 10px rgba(0, 210, 190, 0.24))
+    drop-shadow(0 14px 18px rgba(0, 0, 0, 0.24));
+}
+
+.bubble-fallback-svg.cluster-focus .fallback-label {
+  font-size: 10.5px;
+  stroke-width: 3.4px;
+}
+
+.theme-row {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
+.theme-row .theme-code {
+  min-width: 28px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 210, 190, 0.26);
+  background: rgba(0, 210, 190, 0.08);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.theme-row.active .theme-code {
+  background: rgba(0, 210, 190, 0.18);
+  border-color: rgba(0, 210, 190, 0.5);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .fallback-cluster-boundary {
+  fill: rgba(0, 127, 115, 0.05);
+  stroke: rgba(0, 127, 115, 0.26);
+}
+
+:root[data-theme="light"] .fallback-cluster-boundary.active {
+  fill: rgba(0, 127, 115, 0.11);
+  stroke: rgba(0, 127, 115, 0.62);
+}
+
+:root[data-theme="light"] .fallback-cluster-marker rect {
+  fill: rgba(255, 255, 255, 0.86);
+  stroke: rgba(0, 127, 115, 0.28);
+  filter: drop-shadow(0 8px 14px rgba(84, 101, 130, 0.16));
+}
+
+:root[data-theme="light"] .fallback-cluster-marker text {
+  fill: rgba(17, 19, 29, 0.78);
+}
+
+:root[data-theme="light"] .fallback-cluster-marker.active rect {
+  fill: rgba(207, 246, 241, 0.86);
+  stroke: rgba(0, 127, 115, 0.5);
+}
+
+/* Final usability polish — keeps the liquid material, but removes ambiguity
+   and glare from repeated operational surfaces. */
+.theme-toggle {
+  width: 44px;
+  height: 36px;
+  color: var(--ink);
+}
+.theme-toggle::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  width: auto;
+  height: auto;
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 18px -14px var(--liquid-contact);
+  opacity: 0.78;
+  transform: none !important;
+  z-index: 0;
+}
+.theme-toggle::after {
+  content: none !important;
+  display: none !important;
+}
+.theme-toggle .theme-icon {
+  display: block !important;
+  position: absolute;
+  z-index: 3;
+  width: 17px;
+  height: 17px;
+  color: currentColor;
+  pointer-events: none;
+}
+:root[data-theme="dark"] .theme-toggle .icon-sun {
+  opacity: 0;
+  transform: rotate(-80deg) scale(0.65);
+}
+:root[data-theme="dark"] .theme-toggle .icon-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+:root[data-theme="light"] .theme-toggle {
+  color: #121722;
+}
+:root[data-theme="light"] .theme-toggle .icon-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+:root[data-theme="light"] .theme-toggle .icon-moon {
+  opacity: 0;
+  transform: rotate(80deg) scale(0.65);
+}
+
+.lb-row {
+  grid-template-columns: 22px minmax(0, 1fr) 36px 36px 30px 18px;
+  gap: 8px;
+  padding: 12px 14px;
+}
+.lb-row .name {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: clip;
+  overflow: hidden;
+  max-width: none;
+}
+.lb-spark {
+  width: 36px;
+  opacity: 0.58;
+}
+.lb-row .tbts {
+  font-size: 17px;
+}
+.lb-row .vel {
+  font-size: 9px;
+}
+
+.gems-grid .gem-card {
+  backdrop-filter: blur(20px) saturate(1.28);
+  -webkit-backdrop-filter: blur(20px) saturate(1.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 34px -24px var(--liquid-contact);
+}
+.gems-grid .gem-card::before {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 34%),
+    radial-gradient(80% 70% at 18% 0%, rgba(255, 255, 255, 0.10), transparent 52%);
+  mix-blend-mode: normal;
+  opacity: 0.18;
+}
+.gems-grid .gem-card:not(.convergence)::after {
+  content: none;
+  display: none;
+}
+.gems-grid .gem-card:hover::after {
+  transform: none;
+}
+.gems-grid .gem-card.convergence::after {
+  inset: auto;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  opacity: 1;
+  transform: none;
+  background: rgba(0, 210, 190, 0.12);
+  box-shadow: none;
+}
+:root[data-theme="light"] .gems-grid .gem-card::before {
+  opacity: 0.12;
 }
 </style>
 </head>
@@ -4907,10 +5238,10 @@ footer .quote {
       <input class="search-input" id="searchInput" type="search" placeholder="Search trends, clusters, sources" autocomplete="off">
       <div class="search-results" id="searchResults"></div>
     </div>
-    <button class="watchlist-pill" id="watchlistPill" type="button" disabled
-            title="Global watchlist — toggle to filter the Radar to only your starred trends"
-            aria-pressed="false"><span class="wl-star" aria-hidden="true">★</span><span class="wl-label">Watchlist (0)</span></button>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme">
+    <button class="watchlist-pill empty" id="watchlistPill" type="button"
+            title="Save the current top 5 Radar signals as a starter watchlist"
+            aria-pressed="false"><span class="wl-star" aria-hidden="true">★</span><span class="wl-label">Save Top 5</span></button>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
       <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
@@ -4971,7 +5302,8 @@ footer .quote {
       <div class="filter-group">
         <span class="label">Overlay</span>
         <div class="chips">
-          <span class="chip" data-filter="themes">◇ Themes</span>
+          <span class="chip" data-filter="themes" aria-pressed="false">◇ Clusters</span>
+          <span class="chip" data-filter="labels" aria-pressed="false">Names</span>
         </div>
       </div>
       <button type="button" class="briefing-toggle" id="briefingToggle"
@@ -4992,8 +5324,8 @@ footer .quote {
       <div class="chart-caption">
         <span class="caption-axis">X · headroom (100 − saturation)</span>
         <span class="caption-axis">Y · velocity (× growth)</span>
-        <span class="caption-axis">size · hidden-gem</span>
-        <span class="caption-axis">color · lifecycle stage</span>
+          <span class="caption-axis">size · signal weight</span>
+        <span class="caption-axis">color · quadrant</span>
         <span class="stage-legend" id="stageLegend"></span>
       </div>
     </div>
@@ -5020,8 +5352,8 @@ footer .quote {
       </div>
       <div class="panel">
         <div class="panel-head">
-          <div class="title">Themes</div>
-          <div class="meta" id="themesMeta">click to filter</div>
+          <div class="title">Clusters</div>
+          <div class="meta" id="themesMeta">click to focus</div>
         </div>
         <div id="themesList"></div>
       </div>
@@ -5378,11 +5710,20 @@ function updateWatchlistUI() {
   const n = WATCHLIST.size;
   const pill = document.getElementById('watchlistPill');
   if (pill) {
+    if (n === 0 && typeof state !== 'undefined') state.watchlistOnly = false;
+    const isFiltering = n > 0 && typeof state !== 'undefined' && state.watchlistOnly;
     const lbl = pill.querySelector('.wl-label');
-    if (lbl) lbl.textContent = `Watchlist (${n})`;
-    else pill.textContent = `★ Watchlist (${n})`;
+    const label = n === 0 ? 'Save Top 5' : (isFiltering ? `Watching (${n})` : `Watchlist (${n})`);
+    if (lbl) lbl.textContent = label;
+    else pill.textContent = `★ ${label}`;
+    pill.classList.toggle('empty', n === 0);
     pill.classList.toggle('has-items', n > 0);
-    pill.disabled = n === 0;
+    pill.classList.toggle('active', isFiltering);
+    pill.disabled = false;
+    pill.setAttribute('aria-pressed', String(isFiltering));
+    pill.setAttribute('title', n === 0
+      ? 'Save the current top 5 Radar signals as a starter watchlist'
+      : 'Toggle Radar to only your starred trends');
   }
 }
 
@@ -5453,6 +5794,7 @@ const state = {
   sort:    'tbts',
   selectedKeyword: null,
   showThemes:    false,
+  showLabels:    false,
   activeCluster: null,
   watchlistOnly: false,
 };
@@ -5478,10 +5820,37 @@ function trendVisibleBySource(t) {
   return false;
 }
 
+function radarTrendCandidates({ ignoreWatchlist = false, ignoreFilters = false } = {}) {
+  return TRENDS.filter(t =>
+    (ignoreFilters || state.stages.has(t.stage)) &&
+    (ignoreFilters || trendVisibleBySource(t)) &&
+    (ignoreWatchlist || trendVisibleByWatchlist(t)) &&
+    (ignoreFilters || state.activeCluster === null || t.cluster_id === state.activeCluster)
+  );
+}
+
+function sortRadarTrends(trends) {
+  const sortKey = state.sort;
+  return [...trends].sort((a, b) => {
+    if (sortKey === 'velocity')   return (b.velocity || 0)   - (a.velocity || 0);
+    if (sortKey === 'hidden_gem') return (b.hidden_gem || 0) - (a.hidden_gem || 0);
+    return (b.tbts || 0) - (a.tbts || 0);
+  });
+}
+
+function seedWatchlistFromRadar(limit = 5) {
+  let picks = sortRadarTrends(radarTrendCandidates({ ignoreWatchlist: true })).slice(0, limit);
+  if (!picks.length) picks = sortRadarTrends(radarTrendCandidates({ ignoreWatchlist: true, ignoreFilters: true })).slice(0, limit);
+  picks.forEach(t => WATCHLIST.add(t.canonical_form || t.keyword));
+  persistWatchlist();
+  return picks.length;
+}
+
 function applyState() {
   renderBubble();
   renderLeaderboard();
   renderThemes();
+  updateWatchlistUI();
 }
 
 /* Cluster region geometry — used by the overlay AND the panel/click handler.
@@ -5495,6 +5864,29 @@ function clusterGroups() {
     byCluster.get(key).push(t);
   });
   return byCluster;
+}
+
+function clusterThemeRows() {
+  return [...clusterGroups().entries()].map(([id, members]) => {
+    const label   = members[0].cluster_label || (id < 0 ? 'Unclustered' : `cluster ${id}`);
+    const avgTbts = Math.round(members.reduce((a, t) => a + (t.tbts || 0), 0) / members.length);
+    return { id, label, count: members.length, avg: avgTbts, unclustered: id < 0 };
+  }).sort((a, b) => b.count - a.count)
+    .map((row, i) => ({ ...row, code: row.unclustered ? 'UC' : `C${i + 1}` }));
+}
+
+function clusterCodeMap() {
+  return new Map(clusterThemeRows().map(row => [row.id, row.code]));
+}
+
+function shortClusterLabel(label) {
+  const words = String(label || '')
+    .replace(/[^\w\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(w => !['for', 'and', 'with', 'the', 'of', 'to', 'in'].includes(w.toLowerCase()));
+  if (!words.length) return 'Cluster';
+  return words.slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
 function clusterRegions() {
@@ -5521,16 +5913,19 @@ function clusterRegions() {
 function renderThemes() {
   const host = document.getElementById('themesList');
   if (!host) return;
-  const rows = [...clusterGroups().entries()].map(([id, members]) => {
-    const label   = members[0].cluster_label || (id < 0 ? 'Unclustered' : `cluster ${id}`);
-    const avgTbts = Math.round(members.reduce((a, t) => a + (t.tbts || 0), 0) / members.length);
-    return { id, label, count: members.length, avg: avgTbts, unclustered: id < 0 };
-  }).sort((a, b) => b.count - a.count);
+  const rows = clusterThemeRows();
+  const meta = document.getElementById('themesMeta');
+  if (meta) {
+    meta.textContent = state.activeCluster === null
+      ? 'click to focus'
+      : 'Esc clears focus';
+  }
 
   host.innerHTML = rows.map(th => {
     const active = state.activeCluster === th.id;
     return `
       <div class="theme-row${active ? ' active' : ''}" data-cluster="${th.id}">
+        <div class="theme-code">${escapeHtml(th.code)}</div>
         <div class="label">${escapeHtml(th.label)}${th.unclustered ? ' <span style="color:var(--ink-3)">·</span>' : ''}</div>
         <div class="count">${th.count} trends</div>
         <div class="avg${th.unclustered ? ' dim' : ''}">avg ${th.avg} TBTS</div>
@@ -5554,6 +5949,17 @@ function clearSelection() {
   closeDetailPanel();
 }
 window.clearSelection = clearSelection;
+
+function syncOverlayChips() {
+  document.querySelectorAll('.filters .chip[data-filter="themes"]').forEach(c => {
+    c.classList.toggle('active', state.showThemes);
+    c.setAttribute('aria-pressed', String(state.showThemes));
+  });
+  document.querySelectorAll('.filters .chip[data-filter="labels"]').forEach(c => {
+    c.classList.toggle('active', state.showLabels);
+    c.setAttribute('aria-pressed', String(state.showLabels));
+  });
+}
 
 /* Stage chips: fade outside-set bubbles + hide rows */
 document.querySelectorAll('.filters .chip[data-filter="stage"]').forEach(c => {
@@ -5583,16 +5989,23 @@ document.querySelectorAll('.filters .chip[data-filter="sort"]').forEach(c => {
   });
 });
 
-/* Watchlist pill (topbar): single global entry point — navigates to Radar
-   then toggles state.watchlistOnly. The duplicate filter-row chip was
-   removed in favour of this one (see #11). */
+/* Watchlist pill (topbar): when empty, it creates a starter list from the
+   current Radar; once populated, it becomes the saved-signals focus toggle. */
 document.getElementById('watchlistPill').addEventListener('click', () => {
-  if (WATCHLIST.size === 0) return;
   document.querySelector('.nav button[data-page="radar"]').click();
+  if (WATCHLIST.size === 0) {
+    const added = seedWatchlistFromRadar(5);
+    if (!added) {
+      announce('No visible Radar signals to save yet.');
+      updateWatchlistUI();
+      return;
+    }
+    state.watchlistOnly = true;
+    syncWatchlistViews();
+    announce(`Starter watchlist saved: ${added} top Radar signals.`);
+    return;
+  }
   state.watchlistOnly = !state.watchlistOnly;
-  const pill = document.getElementById('watchlistPill');
-  pill.classList.toggle('active', state.watchlistOnly);
-  pill.setAttribute('aria-pressed', String(state.watchlistOnly));
   applyState();
 });
 /* Global star click delegation — stopPropagation so leaderboard row click doesn't fire */
@@ -5730,18 +6143,33 @@ function renderSourceHealth() {
   }
 }
 
-/* Themes chip: toggles the cluster-region overlay on the chart */
+/* Overlay chips: clusters are the drill-down layer; names are optional to
+   keep the default plot clean in both dark and light mode. */
 document.querySelectorAll('.filters .chip[data-filter="themes"]').forEach(c => {
   c.addEventListener('click', () => {
     state.showThemes = !state.showThemes;
     c.classList.toggle('active', state.showThemes);
+    c.setAttribute('aria-pressed', String(state.showThemes));
+    if (!state.showThemes && state.activeCluster !== null) state.activeCluster = null;
+    renderThemes();
+    renderBubble();
+  });
+});
+document.querySelectorAll('.filters .chip[data-filter="labels"]').forEach(c => {
+  c.addEventListener('click', () => {
+    state.showLabels = !state.showLabels;
+    c.classList.toggle('active', state.showLabels);
+    c.setAttribute('aria-pressed', String(state.showLabels));
     renderBubble();
   });
 });
 
 /* Cluster filter helper — toggled by Themes panel rows + overlay-label clicks */
 function toggleActiveCluster(id) {
-  state.activeCluster = (state.activeCluster === id) ? null : id;
+  const next = state.activeCluster === id ? null : id;
+  state.activeCluster = next;
+  if (next !== null) state.showThemes = true;
+  syncOverlayChips();
   applyState();
 }
 
@@ -5769,7 +6197,7 @@ function renderBubbleFallback(el) {
   // X-axis title + ticks claim 44px below the plot, top gives the
   // quadrant corner labels breathing room, right keeps the NICHE tick
   // and rightmost label from kissing the panel edge.
-  const pad = { left: 44, right: 28, top: 36, bottom: 44 };
+  const pad = { left: 44, right: 28, top: 64, bottom: 88 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
@@ -5800,49 +6228,60 @@ function renderBubbleFallback(el) {
 
   // Quadrant tinted backgrounds — opportunity-coded.
   //   TR green (whisper), TL orange (exploding), BR blue (watch), BL red (skip).
-  // emoji is held in a separate field so we can render it at a fixed offset
-  // (see #36) and the sublabel aligns with the label *text*, not the emoji.
-  // Corner labels nudged inward 22px from each edge so they breathe away
-  // from bubbles and the tick row.
+  // Labels live in rails outside the plot so the scatter area remains pure data.
   const QLABEL_INSET = 22;
   const QUADRANTS = [
     { id: 'tr', x: xDivider, y: pad.top,    w: (pad.left + plotW) - xDivider, h: yDivider - pad.top,
-      emoji: '⚡', label: 'WHISPER · whitespace',  tag: 'Get there first',
-      anchor: 'end',   tx: pad.left + plotW - QLABEL_INSET, ty: pad.top + 22, fill: 'rgba(0, 210, 190, 0.07)' },
+      emoji: '⚡', label: 'WHISPER',               tag: 'Get there first',
+      anchor: 'end',   tx: pad.left + plotW - QLABEL_INSET, ty: pad.top + 22, fill: 'rgba(0, 210, 190, 0.07)', color: '#00bfae' },
     { id: 'tl', x: pad.left, y: pad.top,    w: xDivider - pad.left,           h: yDivider - pad.top,
       emoji: '🔥', label: 'EXPLODING',              tag: 'Compete only if fast',
-      anchor: 'start', tx: pad.left + QLABEL_INSET,         ty: pad.top + 22, fill: 'rgba(255, 156, 28, 0.07)' },
+      anchor: 'start', tx: pad.left + QLABEL_INSET,         ty: pad.top + 22, fill: 'rgba(255, 156, 28, 0.07)', color: '#f08a24' },
     { id: 'br', x: xDivider, y: yDivider,   w: (pad.left + plotW) - xDivider, h: (pad.top + plotH) - yDivider,
       emoji: '🌱', label: 'PRE-BREAKOUT',           tag: 'Watch · not moving yet',
-      anchor: 'end',   tx: pad.left + plotW - QLABEL_INSET, ty: pad.top + plotH - 22, fill: 'rgba(0, 145, 255, 0.06)' },
+      anchor: 'end',   tx: pad.left + plotW - QLABEL_INSET, ty: pad.top + plotH - 22, fill: 'rgba(0, 145, 255, 0.06)', color: '#4f8df7' },
     { id: 'bl', x: pad.left, y: yDivider,   w: xDivider - pad.left,           h: (pad.top + plotH) - yDivider,
       emoji: '💀', label: 'SATURATED',              tag: 'Skip · over-crowded',
-      anchor: 'start', tx: pad.left + QLABEL_INSET,         ty: pad.top + plotH - 22, fill: 'rgba(255, 77, 109, 0.06)' },
+      anchor: 'start', tx: pad.left + QLABEL_INSET,         ty: pad.top + plotH - 22, fill: 'rgba(255, 77, 109, 0.06)', color: '#d6556f' },
   ];
+  const QUADRANT_STYLE = Object.fromEntries(QUADRANTS.map(q => [q.id, q]));
+  const quadrantIdFor = (saturation, velocity) => {
+    const headroom = 100 - (saturation || 0);
+    const right = headroom >= X_DIVIDER_HEADROOM;
+    const top = (velocity || 0) >= Y_DIVIDER_VELOCITY;
+    return `${top ? 't' : 'b'}${right ? 'r' : 'l'}`;
+  };
   const quadrantMarkup = QUADRANTS.map(q => `
     <rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" class="quad-zone" fill="${q.fill}" />
   `).join('');
-  // Quadrant labels wrap a translucent dark pill so they stay legible even
-  // when bubbles cluster in the same corner (e.g. PRE-BREAKOUT bottom-right).
-  // Width is hardcoded to the widest pair across all four quadrants.
-  // Emoji sits in a fixed 18px slot (see #36) so the label text and sublabel
-  // share the same x — emojis no longer offset the optical left edge.
-  const QLABEL_W = 168;
-  const QLABEL_H = 38;
-  const EMOJI_W = 18;
-  const quadrantLabels = QUADRANTS.map(q => {
-    const rectX = q.anchor === 'end' ? (q.tx + 4 - QLABEL_W) : (q.tx - 4);
-    const rectY = q.ty - 14;
-    const textTx = q.anchor === 'start' ? (q.tx + EMOJI_W) : q.tx;
-    const emojiTx = q.anchor === 'start'
-      ? q.tx
-      : (q.tx - (q.label.length * 6.2) - 4);
+  const QLABEL_W = 160;
+  const QLABEL_H = 32;
+  const EMOJI_W = 16;
+  const _quadRailPosition = (q) => {
+    const railInset = 18;
+    const topRailY = pad.top - 28;
+    const bottomRailY = pad.top + plotH + 47;
+    const leftX = pad.left + railInset;
+    const rightX = pad.left + plotW - railInset;
+    if (q.id === 'tl') return { tx: leftX,  ty: topRailY,    anchor: 'start' };
+    if (q.id === 'tr') return { tx: rightX, ty: topRailY,    anchor: 'end' };
+    if (q.id === 'bl') return { tx: leftX,  ty: bottomRailY, anchor: 'start' };
+    return { tx: rightX, ty: bottomRailY, anchor: 'end' };
+  };
+  const _renderQuadrantLabels = () => QUADRANTS.map(q => {
+    const { tx, ty, anchor } = _quadRailPosition(q);
+    const rectX = anchor === 'end' ? (tx + 4 - QLABEL_W) : (tx - 4);
+    const rectY = ty - 14;
+    const textTx = anchor === 'start' ? (tx + EMOJI_W) : tx;
+    const emojiTx = anchor === 'start'
+      ? tx
+      : (rectX + 10);
     return `
-      <g class="quad-label-group">
+      <g class="quad-label-group quad-label-rail">
         <rect x="${rectX}" y="${rectY}" width="${QLABEL_W}" height="${QLABEL_H}" rx="6" class="quad-label-bg" />
-        <text x="${emojiTx}" y="${q.ty}" class="quad-label quad-emoji" text-anchor="start">${q.emoji}</text>
-        <text x="${textTx}" y="${q.ty}" class="quad-label" text-anchor="${q.anchor}">${q.label}</text>
-        <text x="${textTx}" y="${q.ty + 14}" class="quad-sublabel" text-anchor="${q.anchor}">${q.tag}</text>
+        <text x="${emojiTx}" y="${ty}" class="quad-label quad-emoji" text-anchor="start">${q.emoji}</text>
+        <text x="${textTx}" y="${ty}" class="quad-label" text-anchor="${anchor}">${q.label}</text>
+        <text x="${textTx}" y="${ty + 14}" class="quad-sublabel" text-anchor="${anchor}">${q.tag}</text>
       </g>
     `;
   }).join('');
@@ -5872,27 +6311,14 @@ function renderBubbleFallback(el) {
     <text x="${pad.left - 12}" y="${y(vt) + 4}" class="fallback-tick" text-anchor="end">${vt.toFixed(vt < 10 ? 1 : 0)}×</text>
   `).join('');
 
-  const regionMarkup = state.showThemes ? clusterRegions().map(r => {
-    // clusterRegions returns saturation/tbts bounds; remap to headroom/velocity.
-    // Without a true velocity range from clusterRegions we draw a centroid hint.
-    const cxR = (x(r.minX) + x(r.maxX)) / 2;
-    const cyR = pad.top + plotH * 0.5;
-    return `
-      <circle cx="${cxR}" cy="${cyR}" r="20" class="fallback-region${r.active ? ' active' : ''}" data-cluster="${r.id}"/>
-      <text x="${cxR}" y="${cyR - 26}" text-anchor="middle" class="fallback-region-label">${escapeHtml(r.label)}</text>
-    `;
-  }).join('') : '';
-
-  // Hash jitter — wider amplitude in quadrant mode so the 24 trends piling
-  // up at velocity≈0.43, saturation=0 actually scatter inside the BR / TR
-  // zones instead of stacking invisibly. PRE-BREAKOUT (BR) gets an even
-  // wider amplitude (±48 / ±36) because that is where today's pile-up
-  // concentrates (see #4).
+  // Hash jitter separates identical coordinates without overriding the
+  // scatterplot. It is intentionally modest: position should still read as
+  // data first, not as a packed bubble layout.
   const _hashJitter = (kw, isPreBreakout) => {
     let h = 0;
     for (let i = 0; i < kw.length; i++) h = ((h * 31) + kw.charCodeAt(i)) | 0;
-    const xAmp = isPreBreakout ? 96 : 64;  // ±48 vs ±32
-    const yAmp = isPreBreakout ? 72 : 48;  // ±36 vs ±24
+    const xAmp = isPreBreakout ? 72 : 46;  // ±36 vs ±23
+    const yAmp = isPreBreakout ? 54 : 34;  // ±27 vs ±17
     const jx = ((h & 0xff) / 255 - 0.5) * xAmp;
     const jy = (((h >> 8) & 0xff) / 255 - 0.5) * yAmp;
     return { jx, jy };
@@ -5904,6 +6330,41 @@ function renderBubbleFallback(el) {
   const _topN = 3;
   const _labeledKws = new Map(_sortedTrendsByTbts.slice(0, _topN).map((t, i) => [t.canonical_form || t.keyword, i]));
   const _truncLabel = (s) => (s && s.length > 24) ? (s.slice(0, 22) + '…') : (s || '');
+  const _clusterCodes = clusterCodeMap();
+  const _activeClusterMembers = state.activeCluster !== null
+    ? visibleTrends.filter(t => t.cluster_id === state.activeCluster)
+    : [];
+  const _activeClusterIndex = new Map(_activeClusterMembers.map((t, i) => [t.canonical_form || t.keyword, i]));
+  const _activeClusterTotal = _activeClusterMembers.length;
+  const _range = (values) => {
+    const clean = values.filter(Number.isFinite);
+    return clean.length ? { min: Math.min(...clean), max: Math.max(...clean) } : { min: 0, max: 1 };
+  };
+  const _norm = (value, range) => {
+    if (!Number.isFinite(value)) return 0;
+    const span = range.max - range.min;
+    if (span < 0.0001) return 0.5;
+    return Math.max(0, Math.min(1, (value - range.min) / span));
+  };
+  const _sourceMass = (t) => Object.values(t.sources || {})
+    .reduce((sum, raw) => sum + Math.log1p(Math.max(0, Number(raw) || 0)), 0);
+  const _tbtsRange = _range(visibleTrends.map(t => Number(t.tbts) || 0));
+  const _gemRange = _range(visibleTrends.map(t => Number(t.hidden_gem) || 0));
+  const _sourceRange = _range(visibleTrends.map(_sourceMass));
+  const _rawSignalWeight = (t) => {
+    const tbts = _norm(Number(t.tbts) || 0, _tbtsRange);
+    const gem = _norm(Number(t.hidden_gem) || 0, _gemRange);
+    const sources = _norm(_sourceMass(t), _sourceRange);
+    return Math.max(0, Math.min(1, tbts * 0.58 + gem * 0.32 + sources * 0.10));
+  };
+  const _signalRange = _range(visibleTrends.map(_rawSignalWeight));
+  const _signalWeight = (t) => _norm(_rawSignalWeight(t), _signalRange);
+  const _radiusForTrend = (t) => {
+    const weight = _signalWeight(t);
+    const minR = state.activeCluster !== null ? 7 : 7.5;
+    const maxR = state.activeCluster !== null ? 22 : 27;
+    return minR + Math.pow(weight, 0.9) * (maxR - minR);
+  };
 
   // First pass: compute bubble + tentative-label geometry for every trend.
   // Second pass (below) resolves label collisions before render.
@@ -5916,15 +6377,35 @@ function renderBubbleFallback(el) {
         const sel = kw === state.selectedKeyword;
         const clusterActive = state.activeCluster === null || t.cluster_id === state.activeCluster;
         const lit = stageActive && clusterActive;
-        const baseR = Math.max(9, 8 + (t.hidden_gem || 0) * 32);
+        const weight = _signalWeight(t);
+        const baseR = _radiusForTrend(t);
         let r = baseR;
-        const color = STAGE_META[stage]?.color || '#9aa7ba';
+        const zone = quadrantIdFor(t.saturation, t.velocity || 0);
+        const color = QUADRANT_STYLE[zone]?.color || STAGE_META[stage]?.color || '#9aa7ba';
         const _headroom = 100 - (t.saturation || 0);
         const _isPreBreakout = _headroom > 50 && (t.velocity || 0) < Y_DIVIDER_VELOCITY;
         const { jx, jy } = _hashJitter(kw, _isPreBreakout);
         // Clamp jittered position inside the plot so bubbles don't escape.
-        let cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, x(t.saturation) + jx));
-        const cy = Math.max(pad.top + r,  Math.min(pad.top + plotH - r, y(t.velocity || 0) + jy));
+        const edgeNiche = (t.saturation || 0) < 8;
+        const edgeBiasX = edgeNiche
+          ? (x(t.saturation) - Math.abs(jx) - (_isPreBreakout ? 20 : 8))
+          : (x(t.saturation) + jx);
+        let cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, edgeBiasX));
+        let cy = Math.max(pad.top + r,  Math.min(pad.top + plotH - r, y(t.velocity || 0) + jy));
+        const clusterLensIndex = _activeClusterIndex.get(kw);
+        if (clusterLensIndex !== undefined && _activeClusterTotal > 1) {
+          const cols = Math.ceil(Math.sqrt(_activeClusterTotal));
+          const rows = Math.ceil(_activeClusterTotal / cols);
+          const col = clusterLensIndex % cols;
+          const row = Math.floor(clusterLensIndex / cols);
+          const cellX = _activeClusterTotal > 12 ? 34 : 42;
+          const cellY = _activeClusterTotal > 12 ? 28 : 36;
+          const ox = (col - (cols - 1) / 2) * cellX;
+          const oy = (row - (rows - 1) / 2) * cellY;
+          r = Math.max(7.5, r * (_activeClusterTotal > 12 ? 0.92 : 1.04));
+          cx = Math.max(pad.left + r, Math.min(pad.left + plotW - r, cx + ox));
+          cy = Math.max(pad.top + r,  Math.min(pad.top + plotH - r, cy + oy));
+        }
         // Divider nudge: a bubble straddling the X-divider belongs to no
         // quadrant. Push it 4px to the side picked deterministically by the
         // kw hash sign so it stably owns one quadrant across renders.
@@ -5958,9 +6439,79 @@ function renderBubbleFallback(el) {
         const labelAnchor = _bubbleXFrac < 0.5 ? 'start' : 'end';
         const labelX = labelAnchor === 'start' ? (cx + r + 6) : (cx - r - 6);
         const labelText = sel ? t.keyword : _truncLabel(t.keyword);
-        return { t, kw, sel, lit, r, color, cx, cy, rank, inTopN, labelX, labelY, labelAnchor, labelText };
+        return { t, kw, sel, lit, r, weight, color, zone, cx, cy, anchorCx: cx, anchorCy: cy, rank, inTopN, labelX, labelY, labelAnchor, labelText };
       });
   });
+
+  const _updateLabelGeometry = (g) => {
+    const rank = g.rank;
+    const inTopN = g.inTopN;
+    const spaceAbove = g.cy - pad.top;
+    const spaceBelow = (pad.top + plotH) - g.cy;
+    const stepPx = 18;
+    let labelY = spaceAbove >= spaceBelow
+      ? (g.cy - g.r - 10 - (inTopN ? rank * stepPx : 0))
+      : (g.cy + g.r + 18 + (inTopN ? rank * stepPx : 0));
+    if (labelY < pad.top + 4) labelY = g.cy + g.r + 18 + (inTopN ? rank * stepPx : 0);
+    if (labelY > pad.top + plotH - 4) labelY = g.cy - g.r - 10 - (inTopN ? rank * stepPx : 0);
+    const bubbleXFrac = (g.cx - pad.left) / plotW;
+    g.labelAnchor = bubbleXFrac < 0.5 ? 'start' : 'end';
+    g.labelX = g.labelAnchor === 'start' ? (g.cx + g.r + 7) : (g.cx - g.r - 7);
+    g.labelY = labelY;
+  };
+
+  const _clampBubble = (g) => {
+    const inset = state.activeCluster !== null ? 6 : 10;
+    g.cx = Math.max(pad.left + g.r + inset, Math.min(pad.left + plotW - g.r - inset, g.cx));
+    g.cy = Math.max(pad.top + g.r + 6, Math.min(pad.top + plotH - g.r - 6, g.cy));
+  };
+
+  // Gentle collision relaxation. It creates click targets for repeated
+  // coordinates, then springs points back toward their real/jittered data
+  // position so the map still reads like a scatterplot.
+  for (let iter = 0; iter < 24; iter++) {
+    let moved = false;
+    for (let i = 0; i < trendGeometry.length; i++) {
+      const a = trendGeometry[i];
+      if (!a.lit && state.activeCluster !== null) continue;
+      for (let j = i + 1; j < trendGeometry.length; j++) {
+        const b = trendGeometry[j];
+        if (!b.lit && state.activeCluster !== null) continue;
+        let dx = a.cx - b.cx;
+        let dy = a.cy - b.cy;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 0.01) {
+          const angle = ((i * 47 + j * 19) % 360) * Math.PI / 180;
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          dist = 1;
+        }
+        const gap = state.activeCluster !== null ? 5 : 4;
+        const target = Math.max(11, (a.r + b.r) * 0.78 + gap);
+        if (dist >= target) continue;
+        const push = (target - dist) * 0.36;
+        const ux = dx / dist;
+        const uy = dy / dist;
+        a.cx += ux * push;
+        a.cy += uy * push;
+        b.cx -= ux * push;
+        b.cy -= uy * push;
+        _clampBubble(a);
+        _clampBubble(b);
+        moved = true;
+      }
+    }
+    trendGeometry.forEach(g => {
+      g.cx += (g.anchorCx - g.cx) * 0.035;
+      g.cy += (g.anchorCy - g.cy) * 0.035;
+      _clampBubble(g);
+    });
+    if (!moved) break;
+  }
+
+  trendGeometry.forEach(_updateLabelGeometry);
+
+  const clusterFocusLabels = new Set();
 
   // Second pass: resolve top-N label collisions. Walk labels in rank order
   // (best first); if a label's bbox overlaps an already-placed bbox by more
@@ -5984,17 +6535,35 @@ function renderBubbleFallback(el) {
   };
   const _placedBoxes = [];
   const _topNVisible = new Set();
-  trendGeometry
-    .filter(g => g.inTopN && g.lit)
-    .sort((a, b) => a.rank - b.rank)
-    .forEach(g => {
-      const box = _approxLabelBox(g);
-      const overlap = _placedBoxes.some(b => _boxOverlapRatio(box, b) > 0.3);
-      if (!overlap) {
-        _placedBoxes.push(box);
-        _topNVisible.add(g.kw);
+  const _tryPlaceLabel = (g, threshold = 0.24) => {
+    const box = _approxLabelBox(g);
+    const overlap = _placedBoxes.some(b => _boxOverlapRatio(box, b) > threshold);
+    if (overlap && !g.sel) return false;
+    _placedBoxes.push(box);
+    return true;
+  };
+  if (state.showLabels && state.activeCluster === null) {
+    trendGeometry
+      .filter(g => g.inTopN && g.lit)
+      .sort((a, b) => a.rank - b.rank)
+      .forEach(g => {
+        if (_tryPlaceLabel(g, 0.3)) _topNVisible.add(g.kw);
+      });
+  }
+  if (state.activeCluster !== null) {
+    const maxFocusLabels = state.showLabels ? 7 : 4;
+    let focusLabelCount = 0;
+    for (const g of trendGeometry
+      .filter(g => g.t.cluster_id === state.activeCluster && g.lit)
+      .sort((a, b) => (b.t.tbts || 0) - (a.t.tbts || 0))
+    ) {
+      if (focusLabelCount >= maxFocusLabels && !g.sel) break;
+      if (_tryPlaceLabel(g, 0.14)) {
+        clusterFocusLabels.add(g.kw);
+        focusLabelCount++;
       }
-    });
+    }
+  }
 
   // Overlap shrink (#4b): any bubble whose circle intersects another's gets
   // its radius shrunk 20% so each remains individually visible inside the
@@ -6004,12 +6573,53 @@ function renderBubbleFallback(el) {
       if (other === g) continue;
       const dx = g.cx - other.cx;
       const dy = g.cy - other.cy;
-      if ((dx * dx + dy * dy) < (g.r + other.r) * (g.r + other.r)) {
+      if ((dx * dx + dy * dy) < Math.pow((g.r + other.r) * 0.62, 2)) {
         g.r = g.r * 0.8;
         break;
       }
     }
   });
+
+  const regionMarkup = state.showThemes ? (() => {
+    const byCluster = new Map();
+    trendGeometry.forEach(g => {
+      const id = g.t.cluster_id;
+      if (id === undefined || id === null || id < 0) return;
+      if (!state.stages.has(g.t.stage)) return;
+      if (!byCluster.has(id)) byCluster.set(id, []);
+      byCluster.get(id).push(g);
+    });
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    return [...byCluster.entries()].map(([id, geometries], fallbackIndex) => {
+      if (geometries.length < 1) return '';
+      const active = state.activeCluster === id;
+      const label = geometries[0].t.cluster_label || `cluster ${id}`;
+      const short = shortClusterLabel(label);
+      const code = _clusterCodes.get(id) || `C${fallbackIndex + 1}`;
+      const minX = Math.min(...geometries.map(g => g.cx - g.r));
+      const maxX = Math.max(...geometries.map(g => g.cx + g.r));
+      const minY = Math.min(...geometries.map(g => g.cy - g.r));
+      const maxY = Math.max(...geometries.map(g => g.cy + g.r));
+      const inset = active ? 18 : 12;
+      const x0 = clamp(minX - inset, pad.left + 2, pad.left + plotW - 12);
+      const y0 = clamp(minY - inset, pad.top + 2, pad.top + plotH - 12);
+      const x1 = clamp(maxX + inset, x0 + 36, pad.left + plotW - 2);
+      const y1 = clamp(maxY + inset, y0 + 28, pad.top + plotH - 2);
+      const markerText = active ? short : code;
+      const markerW = active ? Math.min(148, Math.max(46, markerText.length * 6.2 + 22)) : 34;
+      const markerH = 20;
+      const markerX = clamp((x0 + x1) / 2 - markerW / 2, pad.left + 6, pad.left + plotW - markerW - 6);
+      const markerY = clamp(y0 - markerH - 7, pad.top + 6, pad.top + plotH - markerH - 6);
+      return `
+        <rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" rx="14" class="fallback-cluster-boundary${active ? ' active' : ''}" />
+        <g class="fallback-cluster-marker${active ? ' active' : ''}" data-cluster="${id}">
+          <rect x="${markerX}" y="${markerY}" width="${markerW}" height="${markerH}" rx="10" />
+          <text x="${markerX + markerW / 2}" y="${markerY + 13.5}" text-anchor="middle">${escapeHtml(markerText)}</text>
+          <title>${escapeHtml(code)} · ${escapeHtml(label)} · ${geometries.length} visible trends · click to ${active ? 'clear' : 'focus'}</title>
+        </g>
+      `;
+    }).join('');
+  })() : '';
 
   // Empty-quadrant copy (#5): if a quadrant has zero visible bubbles, drop a
   // dimmed line in its center so the dead space reads as a signal ("nothing
@@ -6033,21 +6643,31 @@ function renderBubbleFallback(el) {
     return `<text x="${c.cx}" y="${c.cy}" text-anchor="middle" class="quad-empty-text">No trends here yet — check back in a week</text>`;
   }).join('');
 
+  const quadrantLabels = _renderQuadrantLabels();
+  const tooltipByKw = new Map(trendGeometry.map(g => {
+    const headline = (g.t.angles && g.t.angles.hook) || g.t.summary || 'Open trend detail';
+    const zoneLabel = (QUADRANT_STYLE[g.zone]?.label || g.zone || '').replace(' · whitespace', '');
+    return [g.kw, {
+      name: g.t.keyword,
+      headline,
+      kicker: zoneLabel,
+      meta: `TBTS ${g.t.tbts} · ${Math.round(g.weight * 100)} signal weight · ${Math.round(g.t.saturation)}% sat`,
+    }];
+  }));
+
   const points = trendGeometry.map(g => {
-    const showLabel = g.sel || _topNVisible.has(g.kw);
+    const showLabel = g.sel || (state.showLabels && _topNVisible.has(g.kw)) || clusterFocusLabels.has(g.kw);
     return `
-      <g class="fallback-point${g.sel ? ' selected' : ''}${g.lit ? '' : ' muted'}" data-bubble-kw="${escapeAttr(g.kw)}" style="--pt:${g.color}">
+      <g class="fallback-point${g.sel ? ' selected' : ''}${g.lit ? '' : ' muted'}" data-bubble-kw="${escapeAttr(g.kw)}" tabindex="0" role="button" aria-label="${escapeAttr(g.t.keyword)}" style="--pt:${g.color}">
         <ellipse cx="${g.cx + g.r * 0.42}" cy="${g.cy + g.r * 0.62}" rx="${g.r * 0.95}" ry="${g.r * 0.42}" class="fallback-contact" />
         <circle cx="${g.cx}" cy="${g.cy}" r="${g.r}" class="fallback-bubble" />
-        <circle cx="${g.cx - 1.4}" cy="${g.cy + 1.4}" r="${Math.max(3, g.r * 0.26)}" class="fallback-glint" />
         ${showLabel ? `<text x="${g.labelX}" y="${g.labelY}" class="fallback-label" text-anchor="${g.labelAnchor}">${escapeHtml(g.labelText)}</text>` : ''}
-        <title>${escapeHtml(g.t.keyword)} · velocity ${(g.t.velocity || 0).toFixed(2)}× · saturation ${Math.round(g.t.saturation)}%</title>
       </g>
     `;
   }).join('');
 
   el.innerHTML = `
-    <svg class="bubble-fallback-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Creator-strategy quadrant: headroom × velocity">
+    <svg class="bubble-fallback-svg${state.activeCluster !== null ? ' cluster-focus' : ''}${state.showLabels ? ' names-on' : ''}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Creator-strategy quadrant: headroom × velocity">
       <defs>
         <filter id="fallbackGlow" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="2.2" result="blur"/>
@@ -6071,10 +6691,50 @@ function renderBubbleFallback(el) {
       <text x="${pad.left + plotW / 2}" y="${height - 2}" class="fallback-axis-title" text-anchor="middle">← MAINSTREAM   ·   HEADROOM   ·   NICHE →</text>
       <text x="12" y="${pad.top + plotH / 2}" class="fallback-axis rotate">VELOCITY</text>
     </svg>
+    <div class="bubble-tooltip" id="bubbleTooltip" aria-hidden="true"></div>
   `;
 
+  const tooltip = el.querySelector('#bubbleTooltip');
+  const hideTooltip = () => {
+    if (!tooltip) return;
+    tooltip.classList.remove('visible');
+    tooltip.setAttribute('aria-hidden', 'true');
+  };
+  const showTooltip = (kw, clientX, clientY, target) => {
+    if (!tooltip) return;
+    const data = tooltipByKw.get(kw);
+    if (!data) return;
+    const hostRect = el.getBoundingClientRect();
+    let xPos;
+    let yPos;
+    if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
+      xPos = clientX - hostRect.left;
+      yPos = clientY - hostRect.top;
+    } else {
+      const targetRect = target.getBoundingClientRect();
+      xPos = targetRect.left + targetRect.width / 2 - hostRect.left;
+      yPos = targetRect.top - hostRect.top;
+    }
+    const minX = 132;
+    const maxX = Math.max(minX, hostRect.width - 132);
+    tooltip.style.left = `${Math.max(minX, Math.min(maxX, xPos))}px`;
+    tooltip.style.top = `${Math.max(58, yPos)}px`;
+    tooltip.innerHTML = `
+      <div class="bt-kicker">${escapeHtml(data.kicker)}</div>
+      <div class="bt-name">${escapeHtml(data.name)}</div>
+      <div class="bt-headline">${escapeHtml(data.headline)}</div>
+      <div class="bt-meta">${escapeHtml(data.meta)}</div>
+    `;
+    tooltip.classList.add('visible');
+    tooltip.setAttribute('aria-hidden', 'false');
+  };
   el.querySelectorAll('[data-bubble-kw]').forEach(node => {
     node.addEventListener('click', () => selectTrend(node.dataset.bubbleKw));
+    node.addEventListener('pointerenter', (e) => showTooltip(node.dataset.bubbleKw, e.clientX, e.clientY, node));
+    node.addEventListener('pointermove', (e) => showTooltip(node.dataset.bubbleKw, e.clientX, e.clientY, node));
+    node.addEventListener('pointerleave', hideTooltip);
+    node.addEventListener('focus', () => showTooltip(node.dataset.bubbleKw, NaN, NaN, node));
+    node.addEventListener('blur', hideTooltip);
   });
   el.querySelectorAll('[data-cluster]').forEach(node => {
     node.addEventListener('click', (e) => {
@@ -6086,11 +6746,14 @@ function renderBubbleFallback(el) {
 function renderStageLegend() {
   const host = document.getElementById('stageLegend');
   if (!host) return;
-  const order = ['whisper', 'builder', 'creator', 'hype', 'commodity'];
-  host.innerHTML = order.map(stage => {
-    const meta = STAGE_META[stage];
-    if (!meta) return '';
-    return `<span class="sl-item" style="color:${meta.color}"><span class="sl-swatch" style="background:${meta.color}"></span>${meta.label}</span>`;
+  const zones = [
+    { label: 'WHISPER', color: '#00bfae' },
+    { label: 'EXPLODING', color: '#f08a24' },
+    { label: 'PRE-BREAKOUT', color: '#4f8df7' },
+    { label: 'SATURATED', color: '#d6556f' },
+  ];
+  host.innerHTML = zones.map(zone => {
+    return `<span class="sl-item" style="color:${zone.color}"><span class="sl-swatch" style="background:${zone.color}"></span>${zone.label}</span>`;
   }).join('');
 }
 function renderBubble() {
@@ -6324,23 +6987,27 @@ function renderTodayPick(top) {
   }
 }
 function renderLeaderboard() {
-  const visible = TRENDS.filter(t =>
-    state.stages.has(t.stage) &&
-    trendVisibleBySource(t) &&
-    trendVisibleByWatchlist(t) &&
-    (state.activeCluster === null || t.cluster_id === state.activeCluster)
-  );
-  const sortKey = state.sort;
-  const sorted = visible.sort((a, b) => {
-    if (sortKey === 'velocity')   return (b.velocity || 0)   - (a.velocity || 0);
-    if (sortKey === 'hidden_gem') return (b.hidden_gem || 0) - (a.hidden_gem || 0);
-    return b.tbts - a.tbts;
-  }).slice(0, 20);
+  const visible = radarTrendCandidates();
+  const sorted = sortRadarTrends(visible).slice(0, 20);
   // Denominator matches the chart's "N tracked terms" so the two panels
   // tell the same story (see #9).
   const titleEl = document.getElementById('leaderboardTitle');
-  if (titleEl) titleEl.textContent = `Top ${Math.min(20, TRENDS.length)} of ${TRENDS.length} · TBTS Leaderboard`;
+  if (titleEl) {
+    titleEl.textContent = state.watchlistOnly
+      ? `Watchlist · ${visible.length} saved signals`
+      : `Top ${Math.min(20, visible.length)} of ${TRENDS.length} · TBTS Leaderboard`;
+  }
+  const metaEl = document.getElementById('leaderboardMeta');
+  if (metaEl) metaEl.textContent = state.watchlistOnly ? 'focused saved signals' : 'refreshed 06:00 UTC';
   renderTodayPick(sorted[0]);
+
+  const host = document.getElementById('leaderboard');
+  if (!sorted.length) {
+    host.innerHTML = `<div class="leaderboard-empty">${state.watchlistOnly
+      ? 'No saved trends match the active filters. Adjust Stage or Source, or star a trend from the full Radar.'
+      : 'No trends match the active filters.'}</div>`;
+    return;
+  }
 
   const html = sorted.map((t, i) => {
     const kw = t.canonical_form || t.keyword;
@@ -6377,7 +7044,6 @@ function renderLeaderboard() {
       </div>
     `;
   }).join('');
-  const host = document.getElementById('leaderboard');
   host.innerHTML = html;
   host.querySelectorAll('.lb-row').forEach(row => {
     row.addEventListener('click', (e) => {
