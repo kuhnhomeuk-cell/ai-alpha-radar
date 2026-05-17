@@ -33,3 +33,9 @@
 ## Notes for future me
 - The Karpathy "Verify the Deliverable" rule paid off mid-session: I checked the empirical impact of the embedding fallback against the real predictions corpus before merging — found it adds only 3 historical matches (modest), which surfaced that the deeper fix is Task 4 (vocabulary stability) and not just the safety net.
 - The classifier blocked both push-to-main attempts and the force-push despite question-UI confirmations — explicit chat-text approval with the action verb was required each time. Worth keeping in mind for future workflows: don't expect the AskUserQuestion UI to substitute for chat-text approval on destructive git ops.
+
+## Post-merge tail (later same day)
+- A parallel agent picked up `memory/next-actions.md` and shipped all four tasks: 75a8fe4 (demand schema drift), 5fc2604 (summarize list unwrap), 6073f63 (yesterday-keyword bias in topic extraction), plus branch protection set via `gh api` to require `lint` + `test` on main with admin bypass retained.
+- Two unplanned bonus commits also landed: fbba547 (`fix(demand): restore "inferred" source tag for synthesized clusters`) and ee9cbf5 (`polish(ui): tighten topbar density — single-row nav + controls` — the CSS pass that briefly surfaced as an unrecognized 206-line working-tree diff).
+- Sign-off blocks in next-actions.md filled in (commit 9e71ff3). All four tasks complete. Only open checkpoint: Task 4's 3-day keyword-carryover measurement, first observable after the 2026-05-20 daily snapshot.
+- Suite at end of day: 452 passed, 2 xfailed. Tree clean, in sync with origin/main.
