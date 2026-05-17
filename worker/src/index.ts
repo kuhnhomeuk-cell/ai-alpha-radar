@@ -67,6 +67,14 @@ async function getSpendCents(env: Env, day: string): Promise<number> {
 }
 
 async function addSpendCents(env: Env, day: string, delta: number): Promise<number> {
+  // SOFT CAP: this read-then-write is not atomic — KV has no CAS. Under a
+  // concurrent burst of N requests against a near-cap balance, all N can
+  // each read the pre-cap value and proceed, so the effective ceiling is
+  // (cap + N * delta - delta). For a solo-creator dashboard with 1-cent
+  // deltas and browser-tab-limited concurrency the worst-case overshoot is
+  // a few cents per day. If concurrency grows (multi-user, scripted
+  // callers), migrate the counter to a Durable Object for atomic counter
+  // semantics.
   const current = await getSpendCents(env, day);
   const next = current + delta;
   // 7-day TTL — spend rows are only useful for current-day decisions and
@@ -249,6 +257,11 @@ export default {
     if (req.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
+    // Intentional: requests with no Origin header (curl, server-side, direct
+    // navigation) bypass the CORS allowlist and reach all routes. This is a
+    // UI-level filter, not an API-level auth. Hard backstop for /api/deep-dive
+    // is the daily KV spend cap; if non-browser callers ever need to be
+    // blocked, gate behind an API token instead of widening this check.
     if (!isAllowedOrigin(origin) && origin !== null) {
       return jsonResponse({ error: "origin not allowed" }, { status: 403 }, origin);
     }
