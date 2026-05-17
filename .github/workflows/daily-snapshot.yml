@@ -5,6 +5,13 @@ on:
     - cron: '0 6 * * *'   # 06:00 UTC daily
   workflow_dispatch:        # manual trigger button
 
+# Prevent overlap: if a prior run is still going (rare given 30-min timeout),
+# queue rather than cancel — cancelling mid-batch-API could orphan an
+# in-flight Anthropic batch. BatchCache TTL handles dedupe across runs.
+concurrency:
+  group: daily-snapshot
+  cancel-in-progress: false
+
 jobs:
   snapshot:
     runs-on: ubuntu-latest

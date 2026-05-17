@@ -1,5 +1,7 @@
 # AI Alpha Radar — Audit & Roadmap
 
+> **Status: CLOSED — historical snapshot.** Waves 1-6 (the 38 audit items plus the two Wave 5 additions and Wave 6 xAI Grok X Search) all shipped to `origin/main` between 2026-05-14 and 2026-05-17. The current state of the project lives in [`CLAUDE.md`](../CLAUDE.md) section D and [`memory/decisions.md`](../memory/decisions.md). This document is preserved as the point-in-time audit it was — do not edit; do not treat its open-item lists as still-open. For new work, draft a fresh audit rather than annotating this one.
+
 **Date:** 2026-05-14
 **Method:** 10-agent fan-out (6 in-repo audits, 1 runtime stress test, 3 external research) → Opus 4.7 synthesis
 **Working tree:** `awesome-solomon-4781e8`

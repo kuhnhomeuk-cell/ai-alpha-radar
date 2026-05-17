@@ -35,6 +35,7 @@ from pipeline.models import HitRate, LifecycleStage, Prediction
 from pipeline.summarize import (
     HAIKU_MODEL,
     MAX_OUTPUT_TOKENS_CARD,
+    ClaudeParseError,
     _extract_json,
     _system_block,
 )
@@ -266,13 +267,20 @@ def generate_prediction(
         messages=[{"role": "user", "content": prompt}],
     )
     parsed = _extract_json(response.content[0].text)
-    target_date = date.fromisoformat(parsed["target_date"])
+    raw_target = parsed.get("target_date")
+    raw_text = parsed.get("prediction_text")
+    raw_target_lc = parsed.get("target_lifecycle")
+    if not (raw_target and raw_text and raw_target_lc):
+        raise ClaudeParseError(
+            f"prediction response missing required fields: "
+            f"target_date={raw_target!r} text={raw_text!r} target_lifecycle={raw_target_lc!r}"
+        )
     return Prediction(
         keyword=keyword,
-        text=parsed["prediction_text"],
+        text=raw_text,
         filed_at=today,
-        target_date=target_date,
+        target_date=date.fromisoformat(raw_target),
         verdict="pending",
         lifecycle_at_filing=current_lifecycle,
-        target_lifecycle=parsed["target_lifecycle"],
+        target_lifecycle=raw_target_lc,
     )

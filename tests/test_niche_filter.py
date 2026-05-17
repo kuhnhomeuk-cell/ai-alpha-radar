@@ -107,3 +107,24 @@ def test_hackernews_signal_terms_is_same_object_as_curated_terms() -> None:
     from pipeline.fetch import hackernews
 
     assert hackernews.AI_SIGNAL_TERMS is nf.CREATOR_NICHE_TERMS
+
+
+# ---------- word_boundary mode (false-positive prevention for HN comments) ----------
+
+
+def test_word_boundary_mode_rejects_ai_inside_unrelated_word() -> None:
+    """The 2026-05-16 live-HN inspection caught 'ai' substring matching
+    'failure' (contains 'ai').  word_boundary=True must reject that case
+    because 'ai' is not a standalone word token in 'failure'."""
+    assert nf.is_niche_relevant("This is a complete failure", word_boundary=True) is False
+
+
+def test_word_boundary_mode_accepts_standalone_ai_token() -> None:
+    """Standalone 'AI' at the start of a sentence must still match."""
+    assert nf.is_niche_relevant("AI video generation is trending", word_boundary=True) is True
+
+
+def test_word_boundary_mode_accepts_multi_word_phrase_via_substring() -> None:
+    """Multi-word phrases ('voice cloning') bypass the word-boundary rule
+    and use substring matching — they are long enough not to false-positive."""
+    assert nf.is_niche_relevant("Tutorial on voice cloning tools", word_boundary=True) is True

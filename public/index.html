@@ -172,6 +172,25 @@
   --stage-commodity: #6a5a48;
 }
 
+/* ========================================================
+   MOTION TOKENS — shared easing & duration vocabulary
+   ======================================================== */
+:root {
+  /* Emil-grade easing curves */
+  --ease-out-strong:   cubic-bezier(0.2, 0.8, 0.2, 1);   /* press, hover state changes, micro-feedback */
+  --ease-out-quart:    cubic-bezier(0.33, 1, 0.68, 1);   /* decorative reveals, hover lifts */
+  --ease-drawer:       cubic-bezier(0.32, 0.72, 0, 1);   /* drawers, modals, large surfaces */
+  --ease-in-fast:      cubic-bezier(0.4, 0, 1, 1);       /* exit animations only (snappy close) */
+
+  /* Duration scale */
+  --dur-instant:  100ms;   /* press feedback */
+  --dur-fast:     140ms;   /* hover state, color, border shifts */
+  --dur-base:     200ms;   /* tooltips, small popovers */
+  --dur-med:      280ms;   /* card lifts, list reveals */
+  --dur-slow:     400ms;   /* drawers, modals (enter) */
+  --dur-slow-exit:220ms;   /* drawers, modals (exit — always faster than enter) */
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -183,8 +202,8 @@ html, body {
   height: 100dvh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s cubic-bezier(0.32, 0.72, 0, 1),
-              color 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: background-color 0.4s var(--ease-drawer),
+              color 0.4s var(--ease-drawer);
 }
 
 /* Viewport-locked layout — fit everything on one screen, no page scroll */
@@ -212,7 +231,18 @@ main {
 .source-health { flex-shrink: 0; }
 /* Each page fills the remaining main area; inner content scrolls if needed */
 .page { display: none; flex: 1; min-height: 0; overflow-y: auto; }
-.page.active { display: flex; flex-direction: column; }
+.page.active {
+  display: flex;
+  flex-direction: column;
+  animation: aar-page-enter 240ms var(--ease-out-quart) backwards;
+}
+@keyframes aar-page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page.active { animation: none; }
+}
 /* Radar page: grid flexes to fill remaining space after briefing + filters.
    grid-template-rows:1fr makes the single grid row stretch to fill the
    grid's available height instead of collapsing to content-size. Combined
@@ -272,7 +302,7 @@ main {
   overflow: hidden;
   background: var(--surface-1);
   pointer-events: none;
-  transition: background-color 0.6s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: background-color 0.6s var(--ease-drawer);
 }
 .blob {
   position: absolute;
@@ -398,7 +428,7 @@ html::after {
   /* IMPORTANT: do NOT set backdrop-filter or background here — let .glass do it.
      Topbar relies on the .glass class above for its lensing + transparency. */
   color: var(--ink);
-  transition: border-color 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: border-color 0.4s var(--ease-drawer);
 }
 .brand {
   font-family: var(--serif);
@@ -455,7 +485,7 @@ html::after {
   letter-spacing: 0.02em;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: color 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: color 0.2s var(--ease-drawer);
 }
 .nav button:hover { color: var(--ink); }
 .nav button.active { color: var(--champagne); }
@@ -629,7 +659,8 @@ html::after {
   cursor: pointer;
   padding: 2px 4px;
   line-height: 1;
-  transition: color 0.2s, transform 0.2s;
+  transition: color var(--dur-fast) var(--ease-out-strong),
+              transform var(--dur-fast) var(--ease-out-strong);
   font-family: var(--mono);
   opacity: 0.55;
 }
@@ -646,10 +677,10 @@ html::after {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  transition: color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              background 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: color 0.25s var(--ease-drawer),
+              border-color 0.25s var(--ease-drawer),
+              background 0.25s var(--ease-drawer),
+              transform 0.2s var(--ease-drawer);
   box-shadow: 0 0 0 1px var(--line-bezel), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
 }
@@ -660,30 +691,53 @@ html::after {
 }
 .theme-toggle:active { transform: scale(0.96); }
 .theme-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+/* ========================================================
+   PRESS FEEDBACK — base transition + :active scale on every
+   clickable. Subtle scale dip on press, snap-back on release.
+   ======================================================== */
+.nav button,
+.chip,
+.watchlist-pill,
+.star-btn,
+.gem-card,
+.demand-card,
+.almanac-card,
+.outlier-card,
+.lb-row,
+.tp-cta,
+.cons-badge,
+.detail-panel .close,
+.conv-modal .close {
+  transition: transform var(--dur-instant) var(--ease-out-strong),
+              border-color var(--dur-fast) var(--ease-out-strong),
+              background var(--dur-fast) var(--ease-out-strong),
+              box-shadow var(--dur-med) var(--ease-out-strong);
+}
+.nav button:active            { transform: scale(0.97); }
+.chip:active                  { transform: scale(0.96); }
+.watchlist-pill:active        { transform: scale(0.97); filter: brightness(1.15); }
+.star-btn:active              { transform: scale(0.9) rotate(-8deg); }
+.gem-card:active              { transform: scale(0.994); border-color: var(--accent); }
+.demand-card:active           { transform: scale(0.994); border-color: var(--accent); }
+.almanac-card:active          { transform: scale(0.97); }
+.outlier-card:active          { transform: scale(0.97); }
+.lb-row:active                { transform: scale(0.992); background: var(--surface-3); }
+.tp-cta:active                { transform: scale(0.97); }
+.cons-badge:active            { transform: scale(0.95); }
+.detail-panel .close:active,
+.conv-modal .close:active     { transform: scale(0.92) rotate(90deg); }
 .theme-toggle .theme-icon {
   width: 16px; height: 16px;
   position: absolute;
-  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: opacity 0.3s var(--ease-drawer),
+              transform 0.4s var(--ease-drawer);
 }
-/* Dark mode: show moon (current state), sun is the next state we'd swap TO. */
-:root[data-theme="dark"] .theme-toggle .icon-sun {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.6);
+/* Theme-toggle icon-state rules (dark/light × sun/moon) live in the
+   "final usability polish" block further down — see ~line 5108. */
+@media (hover: hover) and (pointer: fine) {
+  .star-btn:hover { color: var(--ink); transform: scale(1.18); opacity: 1; }
 }
-:root[data-theme="dark"] .theme-toggle .icon-moon {
-  opacity: 1;
-  transform: rotate(0) scale(1);
-}
-:root[data-theme="light"] .theme-toggle .icon-sun {
-  opacity: 1;
-  transform: rotate(0) scale(1);
-}
-:root[data-theme="light"] .theme-toggle .icon-moon {
-  opacity: 0;
-  transform: rotate(90deg) scale(0.6);
-}
-.star-btn:hover { color: var(--ink); transform: scale(1.18); opacity: 1; }
 .star-btn.on { color: var(--accent); opacity: 1; }
 .star-btn.on:hover { color: var(--ink); }
 .star-btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
@@ -839,12 +893,135 @@ html::after {
   border-color: rgba(0, 240, 255, 0.3);
 }
 
-.gem-card.flash { animation: gem-flash 1.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.gem-card.flash { animation: gem-flash 1.4s var(--ease-out-quart); }
 @keyframes gem-flash {
   0%   { border-color: var(--line);   box-shadow: 0 0 0    rgba(0, 240, 255, 0); }
   20%  { border-color: var(--accent); box-shadow: 0 0 28px rgba(0, 240, 255, 0.55); }
   100% { border-color: var(--line);   box-shadow: 0 0 0    rgba(0, 240, 255, 0); }
 }
+
+/* ========================================================
+   ENTRY STAGGER — grid items fade-up in sequence using --i
+   ======================================================== */
+@keyframes aar-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.gems-grid > .gem-card,
+.demand-grid > .demand-card,
+.almanac-grid > .almanac-card,
+.outliers-grid > .outlier-card {
+  animation: aar-fade-up var(--dur-med) var(--ease-out-quart) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 40ms);
+}
+
+.filters .chip {
+  animation: aar-fade-up 220ms var(--ease-out-quart) backwards;
+  animation-delay: calc(min(var(--i, 0), 9) * 25ms);
+}
+
+.hit-rate .stats > .stat {
+  animation: aar-fade-up var(--dur-med) var(--ease-out-quart) backwards;
+  animation-delay: calc(min(var(--i, 0), 3) * 60ms);
+}
+.hit-rate-helper {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+/* ========================================================
+   COMETS — thumbnail shimmer skeleton while images load
+   ======================================================== */
+.outlier-thumb-wrap {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(110deg,
+    var(--surface-2) 8%,
+    var(--surface-3) 18%,
+    var(--surface-2) 33%);
+  background-size: 200% 100%;
+  animation: aar-shimmer 1.4s linear infinite;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.outlier-thumb-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.outlier-thumb-wrap img[data-loaded] {
+  animation: aar-fade-in 280ms var(--ease-out-quart) forwards;
+}
+.outlier-thumb-wrap:has(img[data-loaded]) {
+  animation: none;
+  background: transparent;
+}
+@keyframes aar-shimmer {
+  to { background-position: -200% 0; }
+}
+@keyframes aar-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .outlier-thumb-wrap { animation: none; background: var(--surface-2); }
+  .outlier-thumb-wrap img[data-loaded] { animation: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gems-grid > .gem-card,
+  .demand-grid > .demand-card,
+  .almanac-grid > .almanac-card,
+  .outliers-grid > .outlier-card,
+  .filters .chip,
+  .hit-rate .stats > .stat {
+    animation: none;
+  }
+}
+
+/* ========================================================
+   TOASTS — Sonner-style ephemeral confirmation
+   ======================================================== */
+#aar-toast-host {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  z-index: 100;
+  display: flex; flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+.aar-toast {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  box-shadow: 0 18px 36px -22px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  transition: opacity var(--dur-fast) var(--ease-out-strong),
+              transform var(--dur-med) var(--ease-out-strong);
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  max-width: 320px;
+}
+.aar-toast[data-leaving] {
+  opacity: 0;
+  transform: translateY(8px);
+}
+@starting-style {
+  .aar-toast {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.aar-toast .aar-toast-accent { color: var(--accent); }
 
 /* ========== PAGE BASE ========== */
 /* Page display rules are defined earlier (viewport-locked layout block) */
@@ -992,7 +1169,7 @@ html::after {
   color: var(--ink);
   border-color: rgba(44, 230, 255, 0.55);
   background: rgba(44, 230, 255, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(44, 230, 255, 0.18);
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 1px transparent;
 }
 :root[data-theme="light"] .chip.active {
   background: rgba(0, 122, 153, 0.14);
@@ -1092,8 +1269,8 @@ html::after {
     0 2px 6px rgba(0, 0, 0, 0.22),
     0 16px 40px -16px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  transition: border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              box-shadow 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: border-color 0.25s var(--ease-drawer),
+              box-shadow 0.3s var(--ease-drawer);
 }
 :root[data-theme="light"] .panel {
   box-shadow:
@@ -1182,12 +1359,18 @@ html::after {
   -webkit-backdrop-filter: blur(18px) saturate(1.4);
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, calc(-100% - 14px)) scale(0.98);
-  transition: opacity 120ms ease, transform 120ms ease;
+  transform-origin: bottom center;
+  transform: translate(-50%, calc(-100% - 14px)) scale(0.96) translateY(2px);
+  transition: opacity var(--dur-fast) var(--ease-out-strong),
+              transform var(--dur-fast) var(--ease-out-strong);
 }
 .bubble-tooltip.visible {
   opacity: 1;
-  transform: translate(-50%, calc(-100% - 18px)) scale(1);
+  transform: translate(-50%, calc(-100% - 18px)) scale(1) translateY(0);
+}
+/* Sonner-style skip-delay: instant after first tooltip is open */
+.bubble-tooltip[data-instant] {
+  transition-duration: 0ms !important;
 }
 .bubble-tooltip .bt-kicker {
   font-family: var(--mono);
@@ -1240,7 +1423,8 @@ html::after {
   cursor: pointer;
   gap: 12px;
   min-height: 76px;
-  transition: background 0.12s;
+  transition: background var(--dur-fast) var(--ease-out-strong),
+              transform var(--dur-fast) var(--ease-out-strong);
 }
 .lb-main { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .lb-consensus {
@@ -1458,9 +1642,9 @@ html::after {
   padding: 18px;
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
-  transition: border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              box-shadow 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: border-color 0.25s var(--ease-drawer),
+              transform 0.25s var(--ease-drawer),
+              box-shadow 0.3s var(--ease-drawer);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -1470,14 +1654,16 @@ html::after {
     0 14px 32px -16px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-.gem-card:hover {
-  border-color: var(--line-hi);
-  transform: translateY(-3px);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.10),
-    0 4px 12px rgba(0, 0, 0, 0.28),
-    0 24px 48px -16px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+@media (hover: hover) and (pointer: fine) {
+  .gem-card:hover {
+    border-color: var(--line-hi);
+    transform: translateY(-3px);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.10),
+      0 4px 12px rgba(0, 0, 0, 0.28),
+      0 24px 48px -16px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  }
 }
 :root[data-theme="light"] .gem-card {
   box-shadow:
@@ -1741,6 +1927,24 @@ html::after {
   margin: 0 auto;
   line-height: 1.5;
 }
+.empty-state .pulse-dot,
+.demand-empty .pulse-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+  animation: aar-pulse-dot 3s ease-in-out infinite;
+}
+@keyframes aar-pulse-dot {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .empty-state .pulse-dot,
+  .demand-empty .pulse-dot { animation: none; opacity: 0.75; }
+}
 .demand-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
@@ -1776,7 +1980,7 @@ html::after {
   line-height: 1.35;
   margin: 14px 0 22px;
 }
-.demand-card.flash { animation: demand-flash 1.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.demand-card.flash { animation: demand-flash 1.4s var(--ease-out-quart); }
 @keyframes demand-flash {
   0%   { border-color: var(--line);     box-shadow: 0 0 0    rgba(212, 175, 55, 0); }
   20%  { border-color: var(--champagne); box-shadow: 0 0 28px rgba(212, 175, 55, 0.55); }
@@ -1835,13 +2039,24 @@ html::after {
 .hit-rate .caption {
   font-family: var(--serif);
   font-style: italic;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--ink-2);
   max-width: 240px;
   line-height: 1.5;
   margin-left: auto;
   border-left: 1px solid var(--line);
   padding-left: 24px;
+  position: relative;
+}
+.hit-rate .caption::before {
+  content: '"';
+  position: absolute;
+  left: 8px;
+  top: -8px;
+  font-size: 32px;
+  color: var(--champagne);
+  font-style: normal;
+  line-height: 1;
 }
 
 .prediction-list { display: flex; flex-direction: column; }
@@ -1936,9 +2151,11 @@ html::after {
   font: inherit;
   color: inherit;
 }
-.outlier-card:hover {
-  border-color: var(--champagne);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .outlier-card:hover {
+    border-color: var(--champagne);
+    transform: translateY(-1px);
+  }
 }
 .outlier-thumb {
   width: 100%;
@@ -1984,6 +2201,8 @@ html::after {
   letter-spacing: 0.06em;
   font-weight: 600;
 }
+.outlier-breakout-num    { color: var(--accent); font-weight: 600; }
+.outlier-breakout-unit   { color: var(--ink-3); margin-left: 1px; }
 .outliers-empty {
   border: 1px dashed var(--line-hi);
   padding: 48px;
@@ -2102,8 +2321,8 @@ html::after {
   display: flex; align-items: flex-start; gap: 12px;
 }
 .almanac-row .title:hover { color: var(--champagne); }
-.almanac-row .title::before { content: '\201C'; color: var(--champagne); flex-shrink: 0; }
-.almanac-row .title::after  { content: '\201D'; color: var(--champagne); margin-left: -8px; flex-shrink: 0; }
+.almanac-row .title::before { content: '\201C'; color: var(--champagne); flex-shrink: 0; opacity: 0.5; }
+.almanac-row .title::after  { content: '\201D'; color: var(--champagne); margin-left: -8px; flex-shrink: 0; opacity: 0.5; }
 
 /* ====================================================
    DETAIL PANEL (slide-in from right) + selected row
@@ -2115,13 +2334,40 @@ html::after {
   background: rgba(7, 9, 12, 0.96);
   border-left: 1px solid var(--line-hi);
   transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform var(--dur-slow) var(--ease-drawer);
   z-index: 40;
   overflow-y: auto;
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);
 }
 .detail-panel.visible { transform: translateX(0); }
+/* Asymmetric exit: snap closed faster than it opens */
+.detail-panel:not(.visible) {
+  transition: transform var(--dur-slow-exit) var(--ease-in-fast);
+}
+/* Content sections reveal staggered while the panel slides in.
+   Panel slides 0–400ms; content arrives 240–520ms. */
+.detail-panel.visible .dp-head,
+.detail-panel.visible .stats,
+.detail-panel.visible .pred,
+.detail-panel.visible .audience-section,
+.detail-panel.visible .painpoints-section {
+  animation: aar-fade-up var(--dur-med) var(--ease-out-quart) backwards;
+}
+.detail-panel.visible .dp-head             { animation-delay: 240ms; }
+.detail-panel.visible .stats               { animation-delay: 280ms; }
+.detail-panel.visible .pred                { animation-delay: 320ms; }
+.detail-panel.visible .audience-section    { animation-delay: 360ms; }
+.detail-panel.visible .painpoints-section  { animation-delay: 400ms; }
+@media (prefers-reduced-motion: reduce) {
+  .detail-panel.visible .dp-head,
+  .detail-panel.visible .stats,
+  .detail-panel.visible .pred,
+  .detail-panel.visible .audience-section,
+  .detail-panel.visible .painpoints-section {
+    animation: none;
+  }
+}
 .detail-panel .dp-head {
   padding: 18px 20px;
   border-bottom: 1px solid var(--line);
@@ -2280,7 +2526,7 @@ html::after {
   background: rgba(7, 9, 12, 0.96);
   border-right: 1px solid var(--line-hi);
   transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s var(--ease-out-quart);
   z-index: 40;
   box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);
@@ -2550,7 +2796,7 @@ html::after {
   z-index: 61;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.2s, transform 0.2s var(--ease-out-quart);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
 }
@@ -2750,9 +2996,9 @@ footer .quote {
     inset 1px 0 0 rgba(255, 255, 255, 0.06),
     inset -1px 0 0 rgba(255, 255, 255, 0.06);
   isolation: isolate;
-  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+  transition: transform 0.4s var(--ease-drawer),
               border-color 0.3s ease,
-              box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+              box-shadow 0.4s var(--ease-drawer);
 }
 :root[data-theme="light"] .glass {
   background: rgba(255, 255, 255, 0.55);
@@ -3154,6 +3400,11 @@ main {
   background: rgba(255, 255, 255, 0.07);
 }
 
+.nav button:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .nav button.active {
   color: var(--ink);
   background:
@@ -3330,7 +3581,7 @@ main {
   z-index: 0;
   background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.14), transparent 62%);
   transform: translateX(-18%) rotate(8deg);
-  transition: transform 620ms cubic-bezier(.2, .8, .2, 1);
+  transition: transform 380ms var(--ease-out-quart);
 }
 
 .glass:hover::after,
@@ -3846,10 +4097,12 @@ main {
   padding: 18px;
 }
 
-.gem-card:hover,
-.outlier-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--line-hi);
+@media (hover: hover) and (pointer: fine) {
+  .gem-card:hover,
+  .outlier-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-hi);
+  }
 }
 
 .gem-card.convergence::after {
@@ -4605,7 +4858,7 @@ footer .quote {
     inset 0 -1px 0 var(--liquid-inner-shadow),
     0 8px 18px -12px var(--liquid-contact);
   transition:
-    transform 180ms cubic-bezier(.2,.8,.2,1),
+    transform 180ms var(--ease-out-strong),
     border-color 180ms ease,
     background 180ms ease,
     box-shadow 220ms ease,
@@ -5386,6 +5639,58 @@ footer .quote {
     margin-right: var(--sp-3);
   }
 }
+
+/* ========================================================
+   HOVER REFINEMENTS — only on real cursor devices
+   Touch-mode browsers should never trigger sticky hovers.
+   ======================================================== */
+@media (hover: hover) and (pointer: fine) {
+  .lb-row:hover {
+    transform: translateX(2px);
+  }
+  .tp-cta:hover {
+    transform: translateY(-1px);
+  }
+  .tp-cta:hover::after {
+    transform: translateX(2px);
+    transition: transform var(--dur-fast) var(--ease-out-strong);
+  }
+}
+
+/* ========================================================
+   FOCUS RINGS — universal keyboard-visible outline
+   The search/niche inputs already paint their own borders.
+   ======================================================== */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+.search-input:focus-visible,
+.niche-input:focus-visible {
+  outline: none;
+}
+/* 1px specifically for chips + lb-rows — matches the existing 1px
+   convention on nav button / theme-toggle / star-btn. Becomes
+   visible the moment either gains keyboard focus. */
+.chip:focus-visible,
+.lb-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ========================================================
+   REDUCED-MOTION GUARDS for decorative animations
+   twinkle (4s glyph) + liquid-pulse (2.4s status dot) + the
+   user-action search/jump flashes — all keep their visible
+   form but stop animating when the user asks for less motion.
+   ======================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .brand .star::before { animation: none; }
+  .panel-head .title::before { animation: none; }
+  .gem-card.flash,
+  .demand-card.flash { animation: none; }
+}
 </style>
 </head>
 <body>
@@ -5664,6 +5969,7 @@ footer .quote {
       <div>
         <div class="big"><span id="hitRateNum">—</span><span class="pct">%</span></div>
         <div class="meta-text" style="margin-top:8px;color:var(--ink-3)">all-time hit rate · 90-day window</div>
+        <div class="hit-rate-helper" id="hitRateHelper">(awaiting first verdict · ~7 days)</div>
       </div>
       <div class="stats">
         <div class="stat"><div class="v good" id="hitVerified">—</div><div class="l">Verified</div></div>
@@ -5816,6 +6122,21 @@ function announce(message) {
   _announceTimer = setTimeout(() => { el.textContent = message; }, 50);
 }
 
+/* Sonner-style ephemeral toast. msg accepts a trusted HTML fragment;
+   call sites must escape user data before composing the string. */
+function aarToast(msg, opts = {}) {
+  const host = document.getElementById('aar-toast-host');
+  if (!host) return;
+  const el = document.createElement('div');
+  el.className = 'aar-toast';
+  el.innerHTML = msg;
+  host.appendChild(el);
+  setTimeout(() => {
+    el.setAttribute('data-leaving', '');
+    setTimeout(() => el.remove(), 300);
+  }, opts.duration || 1500);
+}
+
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const _trapState = new WeakMap();
 function trapFocus(modal, trigger) {
@@ -5865,6 +6186,9 @@ function toggleTheme() { setTheme(getTheme() === 'dark' ? 'light' : 'dark'); }
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('themeToggle');
   if (btn) btn.addEventListener('click', toggleTheme);
+  // Stagger index for filter chips — one continuous sequence across all chip
+  // rows on the Radar page (Stage, Source, Sort, …). Static markup, so set once.
+  document.querySelectorAll('.filters .chip').forEach((node, i) => node.style.setProperty('--i', i));
 });
 
 /* ==========================================================
@@ -5905,6 +6229,10 @@ function toggleWatch(kw) {
   persistWatchlist();
   syncWatchlistViews();
   announce(`${wasIn ? 'Removed from' : 'Added to'} watchlist: ${kw}. Watchlist now has ${WATCHLIST.size} ${WATCHLIST.size === 1 ? 'item' : 'items'}.`);
+  const verb = wasIn ? 'Removed' : 'Saved';
+  // Both values are trusted: literal string + Number. Escape the
+  // count defensively anyway so this pattern is safe to copy.
+  aarToast(verb + ' · <span class="aar-toast-accent">' + escapeHtml(String(WATCHLIST.size)) + '/5</span>');
 }
 function syncWatchlistViews() {
   updateWatchlistUI();
@@ -6290,7 +6618,14 @@ function clearSearch() {
   if (input) input.value = '';
   if (card)  { card.classList.remove('visible'); card.innerHTML = ''; }
 }
-document.getElementById('searchInput').addEventListener('input', (e) => runSearch(e.target.value));
+// rAF debounce — keeps search feeling live (1 frame, ~16ms) while
+// coalescing the keystroke-per-character storm.
+let __searchRaf = 0;
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const value = e.target.value;
+  cancelAnimationFrame(__searchRaf);
+  __searchRaf = requestAnimationFrame(() => runSearch(value));
+});
 /* click outside the search box closes the results card */
 document.addEventListener('click', (e) => {
   const card = document.getElementById('searchResults');
@@ -6379,11 +6714,13 @@ function toggleActiveCluster(id) {
   applyState();
 }
 
-/* Esc dismisses (in order): search → convergence modal → selection → active cluster */
+/* Esc dismisses (in order): search → detail panel → convergence modal → selection → active cluster */
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const searchCard = document.getElementById('searchResults');
   if (searchCard && searchCard.classList.contains('visible')) { clearSearch(); return; }
+  const detailPanel = document.getElementById('detailPanel');
+  if (detailPanel && detailPanel.classList.contains('visible')) { closeDetailPanel(); return; }
   const convModal = document.getElementById('convModal');
   if (convModal && convModal.classList.contains('visible')) { closeConvergence(); return; }
   if (state.selectedKeyword) { clearSelection(); return; }
@@ -6857,7 +7194,7 @@ function renderBubbleFallback(el) {
       name: g.t.keyword,
       headline,
       kicker: zoneLabel,
-      meta: `TBTS ${g.t.tbts} · ${Math.round(g.weight * 100)} signal weight · ${Math.round(g.t.saturation)}% sat`,
+      meta: `TBTS ${(g.t.tbts || 0).toFixed(1)} · ${Math.round(g.weight * 100)} signal weight · ${Math.round(g.t.saturation)}% sat`,
     }];
   }));
 
@@ -6901,9 +7238,16 @@ function renderBubbleFallback(el) {
   `;
 
   const tooltip = el.querySelector('#bubbleTooltip');
+  // Sonner-style "hot" window: after one tooltip is shown, subsequent
+  // tooltips within 800ms appear instantly (no delay/animation). The
+  // timer resets on every hover so quickly scanning the chart never
+  // re-introduces the open-delay.
+  let __tooltipHotUntil = 0;
+  const isTooltipHot = () => Date.now() < __tooltipHotUntil;
   const hideTooltip = () => {
     if (!tooltip) return;
     tooltip.classList.remove('visible');
+    tooltip.removeAttribute('data-instant');
     tooltip.setAttribute('aria-hidden', 'true');
   };
   const showTooltip = (kw, clientX, clientY, target) => {
@@ -6931,8 +7275,11 @@ function renderBubbleFallback(el) {
       <div class="bt-headline">${escapeHtml(data.headline)}</div>
       <div class="bt-meta">${escapeHtml(data.meta)}</div>
     `;
+    if (isTooltipHot()) tooltip.setAttribute('data-instant', '');
+    else tooltip.removeAttribute('data-instant');
     tooltip.classList.add('visible');
     tooltip.setAttribute('aria-hidden', 'false');
+    __tooltipHotUntil = Date.now() + 800;
   };
   el.querySelectorAll('[data-bubble-kw]').forEach(node => {
     node.addEventListener('click', () => selectTrend(node.dataset.bubbleKw));
@@ -7244,7 +7591,7 @@ function renderLeaderboard() {
           ${mixBar ? `<div class="lb-mix">${mixBar}</div>` : ''}
         </div>
         ${spark}
-        <div class="tbts" title="Trend-Before-Trend Score">${t.tbts}</div>
+        <div class="tbts" title="Trend-Before-Trend Score">${(t.tbts || 0).toFixed(1)}</div>
         <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}" title="Velocity (× growth vs baseline)">${velArrow(t.velocity)}</div>
         <button class="star-btn${inWatch(kw) ? ' on' : ''}" data-kw="${escapeAttr(kw)}" aria-label="Toggle watchlist" title="Toggle watchlist">★</button>
       </div>
@@ -7488,7 +7835,7 @@ function openDetailPanel(kw) {
   document.getElementById('dpName').textContent    = t.keyword;
   document.getElementById('dpCluster').textContent = `cluster · ${t.cluster_label || '—'}`;
   document.getElementById('dpSummary').textContent = t.summary || '—';
-  document.getElementById('dpTbts').textContent    = t.tbts;
+  document.getElementById('dpTbts').textContent    = (t.tbts || 0).toFixed(1);
   document.getElementById('dpSat').textContent     = `${Math.round(t.saturation)}%`;
   document.getElementById('dpGem').textContent     = ((t.hidden_gem || 0) * 100).toFixed(0);
   document.getElementById('dpStage').textContent   = STAGE_META[t.stage]?.label || t.stage;
@@ -7635,12 +7982,17 @@ function renderOutliers() {
     card.dataset.index = String(idx);
 
     if (o.thumbnail_url) {
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'outlier-thumb-wrap';
       const img = document.createElement('img');
       img.className = 'outlier-thumb';
       img.loading = 'lazy';
       img.src = o.thumbnail_url;
       img.alt = '';
-      card.appendChild(img);
+      img.addEventListener('load', () => img.setAttribute('data-loaded', ''));
+      if (img.complete && img.naturalWidth) img.setAttribute('data-loaded', '');
+      thumbWrap.appendChild(img);
+      card.appendChild(thumbWrap);
     }
 
     const body = document.createElement('div');
@@ -7668,7 +8020,14 @@ function renderOutliers() {
     const badge = document.createElement('span');
     badge.className = 'outlier-badge';
     const multiple = (o.outlier_multiple || 0).toFixed(o.outlier_multiple < 10 ? 1 : 0);
-    badge.textContent = multiple + '× baseline';
+    const num = document.createElement('span');
+    num.className = 'outlier-breakout-num';
+    num.textContent = multiple + '×';
+    const unit = document.createElement('span');
+    unit.className = 'outlier-breakout-unit';
+    unit.textContent = ' baseline';
+    badge.appendChild(num);
+    badge.appendChild(unit);
     statsRow.appendChild(badge);
     body.appendChild(statsRow);
 
@@ -7677,6 +8036,8 @@ function renderOutliers() {
     grid.appendChild(card);
   });
   host.appendChild(grid);
+  // Stagger index — read by .outliers-grid > .outlier-card animation-delay
+  grid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
 }
 
 function openOutlierModal(idx) {
@@ -7735,6 +8096,8 @@ function openOutlierModal(idx) {
           copyBtn.classList.remove('copied');
           copyBtn.textContent = '📋 Use as topic seed';
         }, 1500);
+        const preview = text.length > 60 ? text.slice(0, 58).trim() + '…' : text;
+        aarToast('Copied: <em>' + escapeHtml(preview) + '</em>');
       });
     }
   };
@@ -7792,6 +8155,8 @@ function renderForecast(t) {
 }
 
 function forecastSVG(history, projection, brier, color) {
+  // color is the only forecastSVG arg interpolated raw into output — gate it to a hex token.
+  const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : '#8b9cb0';
   const w = 360, h = 120, pad = 4;
   const all = [...history, ...projection];
   if (!all.length) return '';
@@ -7811,10 +8176,10 @@ function forecastSVG(history, projection, brier, color) {
   }).map(p => p.join(',')).join(' ');
   const todayX = (pad + (history.length - 1) * stepX).toFixed(1);
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" aria-label="forecast curve">
-    <polygon points="${bandTop} ${bandBot}" fill="${color}" fill-opacity="0.12" />
-    <line x1="${todayX}" y1="${pad}" x2="${todayX}" y2="${h - pad}" stroke="${color}" stroke-opacity="0.35" stroke-dasharray="3,3"/>
-    <polyline points="${historyPts}" fill="none" stroke="${color}" stroke-width="1.8"/>
-    <polyline points="${projectionPts}" fill="none" stroke="${color}" stroke-width="1.4" stroke-dasharray="4,3" stroke-opacity="0.8"/>
+    <polygon points="${bandTop} ${bandBot}" fill="${safeColor}" fill-opacity="0.12" />
+    <line x1="${todayX}" y1="${pad}" x2="${todayX}" y2="${h - pad}" stroke="${safeColor}" stroke-opacity="0.35" stroke-dasharray="3,3"/>
+    <polyline points="${historyPts}" fill="none" stroke="${safeColor}" stroke-width="1.8"/>
+    <polyline points="${projectionPts}" fill="none" stroke="${safeColor}" stroke-width="1.4" stroke-dasharray="4,3" stroke-opacity="0.8"/>
   </svg>`;
 }
 
@@ -7970,7 +8335,7 @@ function renderDemand() {
   if (!DEMAND.length) {
     host.innerHTML = `
       <div class="demand-empty">
-        <div class="ph">◆ Awaiting prompt-tuning pass</div>
+        <div class="ph"><span class="pulse-dot"></span>Awaiting prompt-tuning pass</div>
         <div class="text">Demand clusters fire once Claude enrichment lands. Until then, the radar and predictions panels carry the v0.2 demo.</div>
       </div>`;
     return;
@@ -7986,6 +8351,8 @@ function renderDemand() {
       `;
     }).join('')
   }</div>`;
+  const _dgrid = host.querySelector('.demand-grid');
+  if (_dgrid) _dgrid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
 }
 
 /* ==========================================================
@@ -8037,7 +8404,7 @@ function renderGems() {
           <div class="gem-meta">
             <span class="badge"><span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage}</span>
             <span class="badge">SAT ${Math.round(t.saturation)}%</span>
-            <span class="badge">TBTS ${t.tbts}</span>
+            <span class="badge">TBTS ${(t.tbts || 0).toFixed(1)}</span>
             <span class="badge">${sourceBadge(t.sources || {})}</span>
           </div>
           ${channelMixBar(t.sources, 200) ? `<div class="gem-mix">${channelMixBar(t.sources, 200)}<div class="gem-mix-legend">${channelMixLegend(t.sources)}</div></div>` : ''}
@@ -8062,6 +8429,9 @@ function renderGems() {
       `;
     }).join('')
   }</div>`;
+
+  const _ggrid = host.querySelector('.gems-grid');
+  if (_ggrid) _ggrid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
 
   document.querySelectorAll('.gem-sparkline[data-spark]').forEach(el => {
     const data = JSON.parse(el.dataset.spark);
@@ -8098,6 +8468,12 @@ function renderLog() {
   document.getElementById('hitTracking').textContent = HIT_RATE.tracking || 0;
   document.getElementById('hitEarly').textContent    = HIT_RATE.verified_early || 0;
   document.getElementById('hitWrong').textContent    = HIT_RATE.wrong || 0;
+  // Helper line: hide once any verdict has been filed
+  const _hitTotal = (HIT_RATE.verified || 0) + (HIT_RATE.verified_early || 0) + (HIT_RATE.wrong || 0);
+  const _helper = document.getElementById('hitRateHelper');
+  if (_helper) _helper.hidden = _hitTotal > 0;
+  // Stagger index for hit-rate stats (Verified / Tracking / Early / Wrong)
+  document.querySelectorAll('.hit-rate .stats > .stat').forEach((node, i) => node.style.setProperty('--i', i));
 
   const verdictLabel = {
     verified: 'Verified',
@@ -8150,7 +8526,9 @@ function renderAlmanac() {
       </div>
     `;
   }).join('');
-  document.getElementById('almanacGrid').innerHTML = html;
+  const _aGrid = document.getElementById('almanacGrid');
+  _aGrid.innerHTML = html;
+  _aGrid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
 
   document.querySelectorAll('.almanac-row .title').forEach(t => {
     t.addEventListener('click', () => {
@@ -8159,6 +8537,8 @@ function renderAlmanac() {
       const original = t.innerHTML;
       t.innerHTML = `<em style="color:var(--champagne)">— copied to clipboard —</em>`;
       setTimeout(() => { t.innerHTML = original; }, 1100);
+      const preview = text.length > 60 ? text.slice(0, 58).trim() + '…' : text;
+      aarToast('Copied: <em>' + escapeHtml(preview) + '</em>');
     });
   });
 }
@@ -8265,5 +8645,6 @@ window.addEventListener('load', async () => {
   tickFooter();
 });
 </script>
+<div id="aar-toast-host" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>

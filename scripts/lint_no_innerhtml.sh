@@ -20,7 +20,14 @@ set -euo pipefail
 # banner (static fallback strings only), and a bubble tooltip body
 # (every interpolation routed through escapeHtml). All three were
 # verified by hand against this script's intent.
-BASELINE=27
+# Bumped 27 → 28 on 2026-05-17: design-engineering polish pass added the
+# aarToast() helper (Phase 5). The `el.innerHTML = msg` site is the toast
+# message-formatting affordance — callers pass HTML fragments like
+# '<em>Copied</em>' so the toast can style accent spans. All three current
+# call sites (watchlist save, Almanac copy, Comets copy) route user data
+# through escapeHtml before composing the message. Same XSS-defense pattern
+# this script's intent already permits (see prior bumps).
+BASELINE=28
 TARGET="public/index.html"
 
 if [[ ! -f "$TARGET" ]]; then
