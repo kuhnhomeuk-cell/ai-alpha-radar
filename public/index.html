@@ -231,7 +231,18 @@ main {
 .source-health { flex-shrink: 0; }
 /* Each page fills the remaining main area; inner content scrolls if needed */
 .page { display: none; flex: 1; min-height: 0; overflow-y: auto; }
-.page.active { display: flex; flex-direction: column; }
+.page.active {
+  display: flex;
+  flex-direction: column;
+  animation: aar-page-enter 240ms var(--ease-out-quart) backwards;
+}
+@keyframes aar-page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page.active { animation: none; }
+}
 /* Radar page: grid flexes to fill remaining space after briefing + filters.
    grid-template-rows:1fr makes the single grid row stretch to fill the
    grid's available height instead of collapsing to content-size. Combined
