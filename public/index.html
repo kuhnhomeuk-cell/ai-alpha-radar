@@ -887,6 +887,43 @@ html::after {
   100% { border-color: var(--line);   box-shadow: 0 0 0    rgba(0, 240, 255, 0); }
 }
 
+/* ========================================================
+   ENTRY STAGGER — grid items fade-up in sequence using --i
+   ======================================================== */
+@keyframes aar-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.gems-grid > .gem-card,
+.demand-grid > .demand-card,
+.almanac-grid > .almanac-card,
+.outliers-grid > .outlier-card {
+  animation: aar-fade-up var(--dur-med) var(--ease-out-quart) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 40ms);
+}
+
+.filters .chip {
+  animation: aar-fade-up 220ms var(--ease-out-quart) backwards;
+  animation-delay: calc(min(var(--i, 0), 9) * 25ms);
+}
+
+.hit-rate .stats > .stat {
+  animation: aar-fade-up var(--dur-med) var(--ease-out-quart) backwards;
+  animation-delay: calc(min(var(--i, 0), 3) * 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gems-grid > .gem-card,
+  .demand-grid > .demand-card,
+  .almanac-grid > .almanac-card,
+  .outliers-grid > .outlier-card,
+  .filters .chip,
+  .hit-rate .stats > .stat {
+    animation: none;
+  }
+}
+
 /* ========== PAGE BASE ========== */
 /* Page display rules are defined earlier (viewport-locked layout block) */
 
@@ -5922,6 +5959,9 @@ function toggleTheme() { setTheme(getTheme() === 'dark' ? 'light' : 'dark'); }
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('themeToggle');
   if (btn) btn.addEventListener('click', toggleTheme);
+  // Stagger index for filter chips — one continuous sequence across all chip
+  // rows on the Radar page (Stage, Source, Sort, …). Static markup, so set once.
+  document.querySelectorAll('.filters .chip').forEach((node, i) => node.style.setProperty('--i', i));
 });
 
 /* ==========================================================
@@ -7743,6 +7783,8 @@ function renderOutliers() {
     grid.appendChild(card);
   });
   host.appendChild(grid);
+  // Stagger index — read by .outliers-grid > .outlier-card animation-delay
+  grid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
 }
 
 function openOutlierModal(idx) {
@@ -8054,6 +8096,8 @@ function renderDemand() {
       `;
     }).join('')
   }</div>`;
+  const _dgrid = host.querySelector('.demand-grid');
+  if (_dgrid) _dgrid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
 }
 
 /* ==========================================================
@@ -8131,6 +8175,9 @@ function renderGems() {
     }).join('')
   }</div>`;
 
+  const _ggrid = host.querySelector('.gems-grid');
+  if (_ggrid) _ggrid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
+
   document.querySelectorAll('.gem-sparkline[data-spark]').forEach(el => {
     const data = JSON.parse(el.dataset.spark);
     const color = el.dataset.color;
@@ -8166,6 +8213,8 @@ function renderLog() {
   document.getElementById('hitTracking').textContent = HIT_RATE.tracking || 0;
   document.getElementById('hitEarly').textContent    = HIT_RATE.verified_early || 0;
   document.getElementById('hitWrong').textContent    = HIT_RATE.wrong || 0;
+  // Stagger index for hit-rate stats (Verified / Tracking / Early / Wrong)
+  document.querySelectorAll('.hit-rate .stats > .stat').forEach((node, i) => node.style.setProperty('--i', i));
 
   const verdictLabel = {
     verified: 'Verified',
@@ -8218,7 +8267,9 @@ function renderAlmanac() {
       </div>
     `;
   }).join('');
-  document.getElementById('almanacGrid').innerHTML = html;
+  const _aGrid = document.getElementById('almanacGrid');
+  _aGrid.innerHTML = html;
+  _aGrid.querySelectorAll(':scope > *').forEach((node, i) => node.style.setProperty('--i', i));
 
   document.querySelectorAll('.almanac-row .title').forEach(t => {
     t.addEventListener('click', () => {
