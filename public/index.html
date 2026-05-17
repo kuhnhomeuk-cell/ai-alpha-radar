@@ -666,23 +666,8 @@ html::after {
   transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
               transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
-/* Dark mode: show moon (current state), sun is the next state we'd swap TO. */
-:root[data-theme="dark"] .theme-toggle .icon-sun {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.6);
-}
-:root[data-theme="dark"] .theme-toggle .icon-moon {
-  opacity: 1;
-  transform: rotate(0) scale(1);
-}
-:root[data-theme="light"] .theme-toggle .icon-sun {
-  opacity: 1;
-  transform: rotate(0) scale(1);
-}
-:root[data-theme="light"] .theme-toggle .icon-moon {
-  opacity: 0;
-  transform: rotate(90deg) scale(0.6);
-}
+/* Theme-toggle icon-state rules (dark/light × sun/moon) live in the
+   "final usability polish" block further down — see ~line 5108. */
 .star-btn:hover { color: var(--ink); transform: scale(1.18); opacity: 1; }
 .star-btn.on { color: var(--accent); opacity: 1; }
 .star-btn.on:hover { color: var(--ink); }
@@ -3152,6 +3137,11 @@ main {
 .nav button:hover {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.07);
+}
+
+.nav button:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .nav button.active {
@@ -7792,6 +7782,8 @@ function renderForecast(t) {
 }
 
 function forecastSVG(history, projection, brier, color) {
+  // color is the only forecastSVG arg interpolated raw into output — gate it to a hex token.
+  const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : '#8b9cb0';
   const w = 360, h = 120, pad = 4;
   const all = [...history, ...projection];
   if (!all.length) return '';
@@ -7811,10 +7803,10 @@ function forecastSVG(history, projection, brier, color) {
   }).map(p => p.join(',')).join(' ');
   const todayX = (pad + (history.length - 1) * stepX).toFixed(1);
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" aria-label="forecast curve">
-    <polygon points="${bandTop} ${bandBot}" fill="${color}" fill-opacity="0.12" />
-    <line x1="${todayX}" y1="${pad}" x2="${todayX}" y2="${h - pad}" stroke="${color}" stroke-opacity="0.35" stroke-dasharray="3,3"/>
-    <polyline points="${historyPts}" fill="none" stroke="${color}" stroke-width="1.8"/>
-    <polyline points="${projectionPts}" fill="none" stroke="${color}" stroke-width="1.4" stroke-dasharray="4,3" stroke-opacity="0.8"/>
+    <polygon points="${bandTop} ${bandBot}" fill="${safeColor}" fill-opacity="0.12" />
+    <line x1="${todayX}" y1="${pad}" x2="${todayX}" y2="${h - pad}" stroke="${safeColor}" stroke-opacity="0.35" stroke-dasharray="3,3"/>
+    <polyline points="${historyPts}" fill="none" stroke="${safeColor}" stroke-width="1.8"/>
+    <polyline points="${projectionPts}" fill="none" stroke="${safeColor}" stroke-width="1.4" stroke-dasharray="4,3" stroke-opacity="0.8"/>
   </svg>`;
 }
 
