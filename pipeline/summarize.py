@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import time
 from datetime import datetime, timezone
 from typing import Any, Iterable, Literal, Optional
@@ -327,8 +328,6 @@ def _submit_and_collect_batch(
         time.sleep(BATCH_POLL_INTERVAL_SECONDS)
         batch = batches.retrieve(batch.id, **extra_kwargs)
 
-    import sys
-
     out: dict[str, dict[str, Any]] = {}
     for entry in batches.results(batch.id, **extra_kwargs):
         result = getattr(entry, "result", None)
@@ -528,7 +527,6 @@ def daily_briefing(
     try:
         parsed = _extract_json(raw_text)
     except ClaudeParseError as exc:
-        import sys
         print(
             f"daily_briefing: Sonnet returned unparseable JSON, shipping "
             f"fallback briefing. Error: {exc}",
@@ -545,7 +543,6 @@ def daily_briefing(
             generated_at=datetime.now(tz=timezone.utc),
         )
     if not isinstance(parsed, dict):
-        import sys
         print(
             f"daily_briefing: Sonnet returned a {type(parsed).__name__}, "
             f"expected dict. Shipping fallback briefing.",
