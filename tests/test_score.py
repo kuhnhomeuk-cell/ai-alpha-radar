@@ -36,8 +36,28 @@ def test_velocity_zero_7d_returns_zero() -> None:
 
 
 def test_velocity_denominator_floor_at_one() -> None:
-    # mentions_7d=5, mentions_30d=0 → floored=10 → expected=2.333
-    assert score.velocity(5, 0) == pytest.approx(5 / (10 / 30 * 7))
+    # Cold-start clamp at score.py:117: when mentions_30d=0 and mentions_7d=5,
+    # cold_floor = min(10, max(5,1)) = 5, floored_30d = max(0, 5) = 5,
+    # expected_7d = 5/30*7 ≈ 1.167, denom floors at 1.0 (no effect here),
+    # velocity = 5 / 1.167 ≈ 4.286. The 1.0-denominator clip is still tested
+    # by test_velocity_cold_start_single_mention below.
+    assert score.velocity(5, 0) == pytest.approx(5 / (5 / 30 * 7))
+
+
+def test_velocity_cold_start_single_mention() -> None:
+    # mentions_7d=1, mentions_30d=0 — fresh topic with no history.
+    # cold_floor = min(10, max(1,1)) = 1, floored_30d = max(0, 1) = 1,
+    # expected_7d = 1/30*7 ≈ 0.233, denom floors at 1.0, velocity = 1/1 = 1.0.
+    # Before the cold-start clamp this returned 0.43 (over-suppressed by the
+    # MENTIONS_30D_FLOOR=10), making fresh topics look dead.
+    assert score.velocity(1, 0) == pytest.approx(1.0)
+
+
+def test_velocity_established_topic_keeps_original_floor() -> None:
+    # mentions_7d=15, mentions_30d=5 — established topic, mentions_7d above
+    # the configured floor. cold_floor = min(10, max(15,1)) = 10. The clamp
+    # collapses to the original behavior: floored_30d = max(5, 10) = 10.
+    assert score.velocity(15, 5) == pytest.approx(15 / (10 / 30 * 7))
 
 
 # -------- saturation ------------------------------------------------------
@@ -175,33 +195,33 @@ def test_lifecycle_default_whisper_when_no_rule_matches() -> None:
 # -------- tbts ------------------------------------------------------------
 
 
-def test_tbts_builder_with_convergence_returns_64() -> None:
+def test_tbts_builder_with_convergence_returns_63_5() -> None:
     # vnorm = min(5,10)/10 = 0.5
     # hg = 0.7
     # lifecycle_weight (builder) = 0.50
     # conv = 1.0
     # raw = 0.35*0.5 + 0.30*0.7 + 0.20*0.50 + 0.15*1.0 = 0.175 + 0.21 + 0.10 + 0.15 = 0.635
-    # tbts = round(63.5) = 64
-    score_int = score.tbts(
+    # tbts = 63.5 (float — no int rounding so near-tied trends still separate)
+    val = score.tbts(
         velocity_score=5,
         hidden_gem_score=0.7,
         lifecycle="builder",
         convergence_detected=True,
     )
-    assert score_int == 64
+    assert val == pytest.approx(63.5)
 
 
 def test_tbts_whisper_no_convergence() -> None:
     # vnorm=0.3, hg=0.5, lc_w=0.20, conv=0
     # raw = 0.35*0.3 + 0.30*0.5 + 0.20*0.20 + 0.15*0 = 0.105 + 0.15 + 0.04 + 0 = 0.295
-    # tbts = 30 (Python's banker's rounding: round(29.5)=30)
+    # tbts = 29.5 (float)
     val = score.tbts(
         velocity_score=3,
         hidden_gem_score=0.5,
         lifecycle="whisper",
         convergence_detected=False,
     )
-    assert val == 30
+    assert val == pytest.approx(29.5)
 
 
 def test_tbts_clipped_velocity() -> None:
@@ -213,7 +233,7 @@ def test_tbts_clipped_velocity() -> None:
         convergence_detected=True,
     )
     # raw = 0.35*1 + 0.30*1 + 0.20*0.40 + 0.15*1 = 0.35 + 0.30 + 0.08 + 0.15 = 0.88
-    assert val == 88
+    assert val == pytest.approx(88.0)
 
 
 # -------- detect_convergence ----------------------------------------------
@@ -311,8 +331,9 @@ def test_velocity_from_topic_docs_counts_7d_and_30d_windows() -> None:
     )
     assert m7 == 2
     assert m30 == 3
-    # floored_30d=max(3,10)=10; expected=10/30*7≈2.333; v=2/2.333≈0.857
-    assert v == pytest.approx(2 / (10 / 30 * 7))
+    # Cold-start clamp: cold_floor = min(10, max(2,1)) = 2; floored_30d = max(3,2) = 3;
+    # expected_7d = 3/30*7 = 0.7; denom floors at 1.0; v = 2/1.0 = 2.0.
+    assert v == pytest.approx(2.0)
 
 
 def test_velocity_from_topic_docs_aggregates_across_sources() -> None:

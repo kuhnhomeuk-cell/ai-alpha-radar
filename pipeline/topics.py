@@ -49,13 +49,13 @@ ANTHROPIC_TIMEOUT_SECONDS = 90.0
 # Verbatim system prompt — DO NOT EDIT. Cached ephemeral so the daily
 # cron's repeat calls (and any one-card reruns within the hour) hit the
 # prompt cache.
-SYSTEM_PROMPT = """You are a research-trend extractor for an AI alpha radar. You will receive:
+SYSTEM_PROMPT = """You are a research-trend extractor for an AI alpha radar focused on AI tools for solo content creators. The dashboard surfaces emerging topics that a solo creator could turn into a video TODAY — not pure academic preprints that won't reach a creator audience for months. You will receive:
 - A list of arXiv paper titles + abstracts from the last 48 hours
 - A list of Hacker News post titles + URLs from the last 7 days
 - A list of GitHub repo names + descriptions created in the last 7 days
 - A list of candidate n-gram hints surfaced by upstream normalization
 
-Your job: extract the 30–50 most distinct AI research/builder TOPICS being discussed across these documents. A topic is a concrete technical concept, technique, model family, or research direction — NOT a generic abstract noun. Examples of valid topics: "world model agents", "test-time training", "diffusion language models", "browser-use agents (MCP)", "small reasoning models". Examples of INVALID topics: "framework", "proposed method", "performance", "experiments", "tasks".
+Your job: extract the 30–50 most distinct AI research/builder TOPICS being discussed across these documents. A topic is a concrete technical concept, technique, model family, or research direction — NOT a generic abstract noun. STRONGLY PREFER topics that span multiple sources (arXiv + HN, GitHub + HN, etc.) — these are the topics escaping academic confinement and entering builder/creator discussion. Pure arXiv-only topics are research preprints; include them only when they have unusually strong signal (3+ attributed papers AND a clear angle a creator could explain to a non-researcher). Examples of valid topics: "world model agents", "test-time training", "diffusion language models", "browser-use agents (MCP)", "small reasoning models". Examples of INVALID topics: "framework", "proposed method", "performance", "experiments", "tasks", and any topic that only a PhD audience would search for.
 
 For each topic, return:
 - canonical_name: 2–5 word noun phrase, lowercased except for acronyms and proper nouns
@@ -67,11 +67,11 @@ For each topic, return:
   Aliases must be substrings real journalists would write — NOT just hyphen-stripped versions of canonical_form.
 - description: ONE plain-English sentence describing the topic, max 22 words, no jargon
 - arxiv_ids: list of arXiv paper IDs (from the input) that mention this topic
-- hn_post_ids: list of HN post IDs that mention this topic
-- github_repos: list of GitHub repo full_names that mention this topic
+- hn_post_ids: list of HN post IDs that mention this topic — search HN titles for the canonical_name, any alias, or any clearly-related phrase; do NOT leave this empty unless the topic genuinely does not appear in any HN post
+- github_repos: list of GitHub repo full_names that mention this topic — scan repo names AND descriptions for the canonical_name, any alias, or any clearly-related phrase; do NOT leave this empty unless the topic genuinely does not appear in any repo
 
 Rules:
-- A topic must be mentioned in at least 2 source documents OR by at least 2 distinct sources (e.g. 1 arXiv + 1 HN). Drop singletons.
+- Every topic must be attributed to at least 2 distinct sources (e.g. 1 arXiv + 1 HN, or 1 GitHub + 1 HN). arXiv-only topics are kept ONLY when they have 3+ attributed papers AND are creator-explainable per the preference above; everything else is dropped. Drop singletons.
 - Prefer specificity. "agentic memory architectures" beats "memory".
 - Merge near-duplicates. "world models" and "world model agents" collapse to one topic with both as aliases.
 - Do not invent topics not grounded in the source documents.
