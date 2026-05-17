@@ -25,9 +25,10 @@ from __future__ import annotations
 import json
 from datetime import date
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Iterable, Optional
 
 import anthropic
+import numpy as np
 from pydantic import TypeAdapter
 
 from pipeline.models import HitRate, LifecycleStage, Prediction
@@ -39,6 +40,12 @@ from pipeline.summarize import (
 )
 
 PREDICTIONS_LOG_DEFAULT = Path("data") / "predictions.jsonl"
+
+# Cosine distance ceiling for accepting an embedding-similarity match in
+# build_lifecycle_lookup. More permissive than cluster_identity's 0.2: there
+# we compare averaged cluster centroids (high internal coherence); here we
+# compare individual keyword pairs that drift more under Claude paraphrasing.
+LIFECYCLE_LOOKUP_THRESHOLD = 0.4
 
 # Linear lifecycle progression — index reflects "maturity"
 LIFECYCLE_INDEX: dict[LifecycleStage, int] = {
@@ -131,6 +138,67 @@ def update_verdict(
     if today > prediction.target_date:
         return prediction.model_copy(update={"verdict": "wrong"})
     return prediction.model_copy(update={"verdict": "tracking"})
+
+
+def _cosine_distance_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Pairwise cosine distance between rows of a (M×D) and rows of b (N×D)."""
+    an = a / (np.linalg.norm(a, axis=1, keepdims=True) + 1e-12)
+    bn = b / (np.linalg.norm(b, axis=1, keepdims=True) + 1e-12)
+    return 1.0 - an @ bn.T
+
+
+def build_lifecycle_lookup(
+    predictions: Iterable[Prediction],
+    current_trends: list[Any],  # list[Trend] but avoiding circular import
+    *,
+    similarity_threshold: float = LIFECYCLE_LOOKUP_THRESHOLD,
+    encode_fn: Optional[Callable[[list[str]], np.ndarray]] = None,
+) -> dict[str, LifecycleStage]:
+    """Map prediction.keyword → today's lifecycle stage.
+
+    Bridges Claude's daily topic-name drift: the Haiku topic extraction
+    paraphrases topics each run, so 'test-time compute scaling' yesterday
+    may surface as 'inference-time compute scaling' today. Without a fuzzy
+    fallback every stored prediction stays 'pending' forever and
+    past_predictions in the snapshot is empty (the Star Log regression
+    surfaced in the 2026-05-17 run).
+
+    Strategy per prediction:
+    1. Exact keyword match against today's trends (cheap, day-1 behavior).
+    2. Embedding cosine-similarity match below similarity_threshold.
+    3. No match → keyword stays out of the lookup, so update_all_verdicts
+       leaves the prediction as 'pending' (legacy semantics for orphans).
+
+    `encode_fn` is injectable so tests don't load MiniLM. Default uses the
+    same sentence-transformers model the clustering step already runs on.
+    """
+    lookup: dict[str, LifecycleStage] = {
+        t.keyword: t.lifecycle_stage for t in current_trends
+    }
+    candidates = [
+        p.keyword for p in predictions
+        if p.keyword and p.keyword not in lookup
+    ]
+    if not candidates or not current_trends:
+        return lookup
+
+    if encode_fn is None:
+        from pipeline import cluster as cluster_mod
+
+        def encode_fn(texts: list[str]) -> np.ndarray:  # type: ignore[misc]
+            model = cluster_mod._get_model()
+            return np.asarray(model.encode(texts, show_progress_bar=False))
+
+    trend_keywords = [t.keyword for t in current_trends]
+    trend_vecs = np.asarray(encode_fn(trend_keywords))
+    pred_vecs = np.asarray(encode_fn(candidates))
+    dists = _cosine_distance_matrix(pred_vecs, trend_vecs)
+    best_idx = np.argmin(dists, axis=1)
+    best_dist = dists[np.arange(len(candidates)), best_idx]
+    for kw, idx, dist in zip(candidates, best_idx, best_dist):
+        if dist < similarity_threshold:
+            lookup[kw] = current_trends[int(idx)].lifecycle_stage
+    return lookup
 
 
 def update_all_verdicts(

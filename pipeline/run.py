@@ -1509,7 +1509,12 @@ def main(
 
     # ---- 10. Predictions update ----
     preds = predict.load_predictions(predictions_log)
-    current_lifecycles = {t.keyword: t.lifecycle_stage for t in trends}
+    # build_lifecycle_lookup augments the exact-keyword map with an
+    # embedding-similarity fallback so predictions filed under yesterday's
+    # phrasing still match today's paraphrased topic. Without it,
+    # past_predictions empties out whenever Claude rewrites the topic
+    # vocabulary — the Star Log regression observed on 2026-05-17.
+    current_lifecycles = predict.build_lifecycle_lookup(preds, trends)
     updated_preds = predict.update_all_verdicts(
         preds, current_lifecycles_by_keyword=current_lifecycles, today=today_d
     )

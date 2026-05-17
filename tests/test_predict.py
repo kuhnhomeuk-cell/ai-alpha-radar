@@ -192,6 +192,120 @@ def test_already_filed_returns_true_when_same_keyword_target_lifecycle_exists() 
     assert not predict.already_filed(existing, keyword="beta", target_lifecycle="builder")
 
 
+# ---------- build_lifecycle_lookup (embedding-fallback for verdicts) ----------
+
+
+class _FakeTrend:
+    """Minimal Trend stand-in for build_lifecycle_lookup.
+
+    The real Trend model has 30+ fields; only keyword and lifecycle_stage are
+    consulted here, so the tests assert behavior without instantiating the
+    full Pydantic schema (which would also pull in the embedding model).
+    """
+
+    def __init__(self, keyword: str, lifecycle_stage: str) -> None:
+        self.keyword = keyword
+        self.lifecycle_stage = lifecycle_stage
+
+
+def _stub_encoder(vectors_by_text: dict[str, list[float]]):
+    """Return an encoder fn that maps texts → preset vectors. Raises on unknown
+    input so a test that produces an unexpected lookup fails loudly."""
+    import numpy as np
+
+    def _encode(texts: list[str]) -> np.ndarray:
+        return np.asarray([vectors_by_text[t] for t in texts], dtype=float)
+
+    return _encode
+
+
+def test_build_lifecycle_lookup_exact_match_populates_directly() -> None:
+    preds = [_pred("alpha", filed=date(2026, 5, 1), target=date(2026, 6, 1))]
+    trends = [_FakeTrend("alpha", "builder"), _FakeTrend("beta", "creator")]
+    # encode_fn must NOT be called when every prediction has an exact match.
+    def boom(_texts):  # pragma: no cover - if invoked, test fails
+        raise AssertionError("encoder should not run for exact matches")
+
+    lookup = predict.build_lifecycle_lookup(preds, trends, encode_fn=boom)
+    assert lookup["alpha"] == "builder"
+    assert lookup["beta"] == "creator"
+
+
+def test_build_lifecycle_lookup_fuzzy_match_below_threshold() -> None:
+    """Structural fix: Claude paraphrases topics each day, so the prediction
+    keyword 'test-time compute scaling' may never literally match today's
+    trend 'inference-time compute scaling'. The embedding-similarity fallback
+    must bridge that drift."""
+    preds = [_pred("test-time compute scaling", filed=date(2026, 5, 1), target=date(2026, 6, 1))]
+    trends = [
+        _FakeTrend("inference-time compute scaling", "builder"),
+        _FakeTrend("crystal structure generation", "whisper"),
+    ]
+    # Near-aligned vectors for the paraphrase, orthogonal for the unrelated one.
+    encoder = _stub_encoder({
+        "test-time compute scaling":      [1.0, 0.0, 0.0],
+        "inference-time compute scaling": [0.95, 0.05, 0.0],
+        "crystal structure generation":   [0.0, 0.0, 1.0],
+    })
+    lookup = predict.build_lifecycle_lookup(
+        preds, trends, encode_fn=encoder, similarity_threshold=0.4
+    )
+    assert lookup["test-time compute scaling"] == "builder"
+
+
+def test_build_lifecycle_lookup_omits_when_nothing_close() -> None:
+    """Unrelated keyword above threshold MUST stay out of the lookup so
+    update_all_verdicts leaves it as 'pending' (legacy semantics)."""
+    preds = [_pred("alpha", filed=date(2026, 5, 1), target=date(2026, 6, 1))]
+    trends = [_FakeTrend("zeta", "builder")]
+    encoder = _stub_encoder({
+        "alpha": [1.0, 0.0, 0.0],
+        "zeta":  [0.0, 1.0, 0.0],  # orthogonal → distance ≈ 1.0
+    })
+    lookup = predict.build_lifecycle_lookup(
+        preds, trends, encode_fn=encoder, similarity_threshold=0.4
+    )
+    assert "alpha" not in lookup
+    assert lookup["zeta"] == "builder"
+
+
+def test_build_lifecycle_lookup_skips_predictions_with_no_keyword() -> None:
+    """Legacy predictions filed before the keyword field existed have
+    keyword=None; they must not trigger encoding."""
+    p = Prediction(
+        text="x", filed_at=date(2026, 5, 1), target_date=date(2026, 6, 1),
+        verdict="pending", keyword=None, target_lifecycle=None,
+    )
+    trends = [_FakeTrend("alpha", "builder")]
+    def boom(_texts):  # pragma: no cover - keyword=None must short-circuit
+        raise AssertionError("encoder must not run for keyword=None preds")
+    lookup = predict.build_lifecycle_lookup([p], trends, encode_fn=boom)
+    assert lookup == {"alpha": "builder"}
+
+
+def test_update_all_verdicts_uses_lookup_from_build_lifecycle_lookup() -> None:
+    """End-to-end: pipeline composes build_lifecycle_lookup → update_all_verdicts.
+    The fuzzy-matched prediction must reach 'verified_early' instead of staying
+    'pending', which is the whole point of the fix."""
+    preds = [
+        _pred(
+            "test-time compute scaling",
+            filed=date(2026, 5, 1),
+            target=date(2026, 6, 1),
+            target_lc="builder",
+            filing_lc="whisper",
+        ),
+    ]
+    trends = [_FakeTrend("inference-time compute scaling", "builder")]
+    encoder = _stub_encoder({
+        "test-time compute scaling":      [1.0, 0.0, 0.0],
+        "inference-time compute scaling": [0.95, 0.05, 0.0],
+    })
+    lookup = predict.build_lifecycle_lookup(preds, trends, encode_fn=encoder)
+    updated = predict.update_all_verdicts(preds, current_lifecycles_by_keyword=lookup, today=date(2026, 5, 20))
+    assert updated[0].verdict == "verified_early"
+
+
 # ---------- generate_prediction (Claude-mocked) ----------
 
 
