@@ -298,6 +298,17 @@ def _build_request_params(
     }
 
 
+# Required keys per custom_id prefix. Used to validate single-element list
+# unwraps in _submit_and_collect_batch so we only accept Haiku's `[{...}]`
+# drift when the wrapped dict actually matches the slot's card schema.
+_CARD_SCHEMA_KEYS: dict[str, frozenset[str]] = {
+    "a": frozenset({"summary", "confidence"}),
+    "b": frozenset({"hook", "contrarian", "tutorial"}),
+    "c": frozenset({"breakout_likelihood", "risk_flag", "rationale"}),
+    "d": frozenset({"eli_creator"}),
+}
+
+
 def _submit_and_collect_batch(
     client: anthropic.Anthropic, requests: list[dict[str, Any]]
 ) -> dict[str, dict[str, Any]]:
@@ -333,6 +344,23 @@ def _submit_and_collect_batch(
                 file=sys.stderr,
             )
             continue
+        if isinstance(parsed, list):
+            # Haiku occasionally wraps the card dict in a single-element array
+            # under structured-output drift. When the wrapped element matches
+            # the slot's expected schema we unwrap; otherwise the entry is
+            # dropped by the isinstance(..., dict) guard below.
+            schema_keys = _CARD_SCHEMA_KEYS.get(entry.custom_id.split("_", 1)[0])
+            if (
+                len(parsed) == 1
+                and isinstance(parsed[0], dict)
+                and schema_keys is not None
+                and schema_keys.issubset(parsed[0].keys())
+            ):
+                print(
+                    f"summarize: unwrapped {entry.custom_id} list-shaped response",
+                    file=sys.stderr,
+                )
+                parsed = parsed[0]
         if not isinstance(parsed, dict):
             # Card prompts (A/B/C/D) all specify a `{...}` schema. Haiku
             # occasionally drops to a top-level JSON array; downstream code

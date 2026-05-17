@@ -415,16 +415,17 @@ def test_enrich_cards_batch_empty_list_returns_empty_dict() -> None:
     assert summarize.enrich_cards_batch([], client=fake) == {}
 
 
-def test_enrich_cards_batch_skips_non_dict_json_responses() -> None:
-    """Haiku sometimes drops to a top-level JSON array under structured-output drift.
-    The batch parser must skip that entry rather than crash on b["hook"]."""
+def test_summarize_unwraps_single_dict_list_response(capsys) -> None:
+    """Haiku sometimes wraps the card dict in a single-element array under
+    structured-output drift. When the list has exactly one dict that matches
+    the expected card schema, unwrap it rather than dropping the card."""
     cards = [_make_card(keyword="alpha")]
     fake = FakeBatchClient(
         {
             "Write a single-sentence summary": json.dumps(
                 {"summary": "S", "confidence": "high"}
             ),
-            # Prompt B returns an *array* instead of a dict — the drift case.
+            # Prompt B returns a single-element *array* instead of a dict.
             "Generate three YouTube Shorts angles": json.dumps(
                 [{"hook": "H", "contrarian": "C", "tutorial": "T"}]
             ),
@@ -440,8 +441,70 @@ def test_enrich_cards_batch_skips_non_dict_json_responses() -> None:
         }
     )
     outputs = summarize.enrich_cards_batch(cards, client=fake)
-    # The malformed B drops the card from the result, but no crash.
-    assert outputs == {}
+    # The card survives — the unwrapped dict feeds CardOutput as usual.
+    assert set(outputs.keys()) == {0}
+    assert outputs[0].angles.hook == "H"
+    assert outputs[0].angles.contrarian == "C"
+    assert outputs[0].angles.tutorial == "T"
+    # Prompt drift stays visible via an info-level note on stderr.
+    err = capsys.readouterr().err
+    assert "unwrapped" in err and "b_0" in err
+
+
+def test_summarize_drops_multi_element_list() -> None:
+    """Multi-element lists and lists whose first element isn't a valid card
+    are still dropped — only the unambiguous len==1+valid-dict case unwraps."""
+    summary_payload = json.dumps({"summary": "S", "confidence": "high"})
+    risk_payload = json.dumps(
+        {
+            "breakout_likelihood": "medium",
+            "peak_estimate_days": 30,
+            "risk_flag": "none",
+            "rationale": "r",
+        }
+    )
+    eli_payload = json.dumps({"eli_creator": "E"})
+
+    # Case 1: multi-element list — must drop.
+    fake_multi = FakeBatchClient(
+        {
+            "Write a single-sentence summary": summary_payload,
+            "Generate three YouTube Shorts angles": json.dumps(
+                [
+                    {"hook": "H1", "contrarian": "C1", "tutorial": "T1"},
+                    {"hook": "H2", "contrarian": "C2", "tutorial": "T2"},
+                ]
+            ),
+            "Estimate:": risk_payload,
+            "Explain this trend using one analogy": eli_payload,
+        }
+    )
+    assert summarize.enrich_cards_batch([_make_card(keyword="alpha")], client=fake_multi) == {}
+
+    # Case 2: single-element list, but first element is a primitive — must drop.
+    fake_bad_inner = FakeBatchClient(
+        {
+            "Write a single-sentence summary": summary_payload,
+            "Generate three YouTube Shorts angles": json.dumps(["just a string"]),
+            "Estimate:": risk_payload,
+            "Explain this trend using one analogy": eli_payload,
+        }
+    )
+    assert summarize.enrich_cards_batch([_make_card(keyword="beta")], client=fake_bad_inner) == {}
+
+    # Case 3: single-element list, dict missing required schema keys — must drop.
+    fake_missing_key = FakeBatchClient(
+        {
+            "Write a single-sentence summary": summary_payload,
+            # Missing `contrarian` — schema guard should reject the unwrap.
+            "Generate three YouTube Shorts angles": json.dumps(
+                [{"hook": "H", "tutorial": "T"}]
+            ),
+            "Estimate:": risk_payload,
+            "Explain this trend using one analogy": eli_payload,
+        }
+    )
+    assert summarize.enrich_cards_batch([_make_card(keyword="gamma")], client=fake_missing_key) == {}
 
 
 def test_extract_json_returns_list_for_list_responses() -> None:
