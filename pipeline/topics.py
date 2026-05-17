@@ -170,6 +170,21 @@ def _format_hints_block(hints: list[str]) -> str:
     return ", ".join(hints)
 
 
+def _format_previous_keywords_block(previous_keywords: list[str]) -> str:
+    """Bias Claude toward yesterday's vocabulary so day-over-day labels
+    are reused verbatim when the underlying concept overlaps. Keeps
+    predict.build_lifecycle_lookup's exact-match path covering more
+    trends (the fuzzy fallback at 34802e1 stays as a safety net only).
+    """
+    labels = ", ".join(previous_keywords)
+    return (
+        "Yesterday's snapshot used these topic labels. If any of today's "
+        "topics describe the same concept as one of these existing labels, "
+        "REUSE the existing label verbatim instead of rephrasing. Otherwise "
+        f"mint a fresh label. Existing labels: {labels}"
+    )
+
+
 def _dedupe_nonempty(values: list[str], *, limit: int) -> tuple[list[str], int]:
     seen: set[str] = set()
     out: list[str] = []
@@ -198,6 +213,7 @@ def _build_user_prompt(
     posts: list[HNPost],
     repos: list[RepoStat],
     candidate_hints: list[str],
+    previous_keywords: Optional[list[str]] = None,
 ) -> str:
     prompt_papers = papers[:MAX_ARXIV_PAPERS_IN_PROMPT]
     prompt_posts = posts[:MAX_HN_POSTS_IN_PROMPT]
@@ -224,8 +240,10 @@ def _build_user_prompt(
         f"{_format_github_block(prompt_repos)}\n\n"
         "Candidate n-gram hints from upstream normalization:\n"
         f"{_format_hints_block(prompt_hints)}\n\n"
-        f"{budget_note}"
     )
+    if previous_keywords:
+        prompt += f"{_format_previous_keywords_block(previous_keywords)}\n\n"
+    prompt += budget_note
     return _truncate_prompt(prompt)
 
 
@@ -265,12 +283,20 @@ def extract_topics(
     repos: list[RepoStat],
     candidate_hints: list[str],
     *,
+    previous_keywords: Optional[list[str]] = None,
     client: Optional[anthropic.Anthropic] = None,
 ) -> list[Topic]:
     """One Claude call → 30–50 named topics with source-doc attribution.
 
     Short-circuits on empty inputs (no documents AND no hints) — saves a
     pointless Claude call when the day's fetchers all bailed.
+
+    ``previous_keywords`` (yesterday's snapshot's trends[].keyword labels)
+    is folded into the user prompt with a reuse-verbatim instruction.
+    This biases day-over-day vocabulary stability so
+    predict.build_lifecycle_lookup's exact-match path covers more trends
+    and its fuzzy-match fallback (commit 34802e1) becomes less load-bearing.
+    Default None preserves backwards compatibility.
     """
     if not papers and not posts and not repos and not candidate_hints:
         return []
@@ -278,7 +304,9 @@ def extract_topics(
     if client is None:
         client = anthropic.Anthropic(timeout=ANTHROPIC_TIMEOUT_SECONDS)
 
-    user_prompt = _build_user_prompt(papers, posts, repos, candidate_hints)
+    user_prompt = _build_user_prompt(
+        papers, posts, repos, candidate_hints, previous_keywords
+    )
     log(
         "topic_extraction_start",
         model=HAIKU_MODEL,

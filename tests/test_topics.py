@@ -334,3 +334,48 @@ def test_extract_topics_short_circuits_on_empty_inputs() -> None:
     )
     assert result == []
     assert fake.calls == []
+
+
+# ---------- vocabulary stability across days ----------
+
+
+def test_extract_topics_prefers_previous_keyword_when_concept_overlaps() -> None:
+    """Previous-snapshot keywords get forwarded into the user prompt with a
+    reuse-verbatim instruction, so Claude stops rephrasing the same concept
+    day-over-day (which broke predict.build_lifecycle_lookup's exact match).
+    """
+    fake = FakeAnthropic('{"topics": []}')
+    topics.extract_topics(
+        papers=[_paper("arx/1", "Evaluating LLMs at scale")],
+        posts=[],
+        repos=[],
+        candidate_hints=[],
+        previous_keywords=["LLM evals", "world model agents", "test-time training"],
+        client=fake,
+    )
+    user_prompt = fake.calls[0]["messages"][0]["content"]
+    assert "LLM evals" in user_prompt
+    assert "world model agents" in user_prompt
+    assert "test-time training" in user_prompt
+    # The instruction must tell Claude to REUSE the label verbatim, not
+    # merely list yesterday's vocabulary as context.
+    assert "REUSE" in user_prompt
+    assert "verbatim" in user_prompt
+
+
+def test_extract_topics_omits_previous_keywords_block_when_none_or_empty() -> None:
+    """Backwards compat: a None or empty previous_keywords list must not
+    inject the reuse-verbatim block (it would confuse the first-ever run)."""
+    fake = FakeAnthropic('{"topics": []}')
+    topics.extract_topics(
+        papers=[_paper("arx/1", "X")], posts=[], repos=[],
+        candidate_hints=[], client=fake,
+    )
+    assert "REUSE" not in fake.calls[0]["messages"][0]["content"]
+
+    fake2 = FakeAnthropic('{"topics": []}')
+    topics.extract_topics(
+        papers=[_paper("arx/1", "X")], posts=[], repos=[],
+        candidate_hints=[], previous_keywords=[], client=fake2,
+    )
+    assert "REUSE" not in fake2.calls[0]["messages"][0]["content"]

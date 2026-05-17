@@ -1097,10 +1097,24 @@ def main(
     candidate_hints = [h for h in candidate_hints if h]
 
     # ---- 4. Topic extraction (v0.1.1 — the new primitive) ----
+    # Pre-load yesterday's snapshot so we can bias today's topic labels
+    # toward yesterday's vocabulary. Same load is reused for cluster-id
+    # stabilization (prior_snapshot_for_clusters) below — single read.
+    prior_snapshot_for_clusters = snapshot.read_prior_snapshot(
+        today_d - timedelta(days=1), public_dir=public_dir
+    )
+    previous_keywords = (
+        [t.keyword for t in prior_snapshot_for_clusters.trends]
+        if prior_snapshot_for_clusters is not None
+        else None
+    )
     if extract_topics_fn is not None:
         topic_list = extract_topics_fn(papers, posts, repos, candidate_hints)
     elif use_claude:
-        topic_list = topics.extract_topics(papers, posts, repos, candidate_hints)
+        topic_list = topics.extract_topics(
+            papers, posts, repos, candidate_hints,
+            previous_keywords=previous_keywords,
+        )
     else:
         raise RuntimeError(
             "v0.1.1: topic extraction requires --claude (one haiku-4-5 call "
@@ -1141,7 +1155,9 @@ def main(
     import numpy as np
 
     new_centroids_np = {cid: np.asarray(v) for cid, v in raw_centroids.items()}
-    prior_snapshot_for_clusters = history.get(today_d - timedelta(days=1)) if history else None
+    # prior_snapshot_for_clusters was loaded once at the top of step 4 so
+    # topic extraction could bias toward yesterday's vocabulary. Reused
+    # here rather than re-reading from `history`.
     prior_centroids_np: dict[int, "np.ndarray"] = {}
     if prior_snapshot_for_clusters is not None:
         prior_centroids_np = {
