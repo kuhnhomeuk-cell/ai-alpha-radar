@@ -912,6 +912,51 @@ html::after {
   animation: aar-fade-up var(--dur-med) var(--ease-out-quart) backwards;
   animation-delay: calc(min(var(--i, 0), 3) * 60ms);
 }
+.hit-rate-helper {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+/* ========================================================
+   COMETS — thumbnail shimmer skeleton while images load
+   ======================================================== */
+.outlier-thumb-wrap {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(110deg,
+    var(--surface-2) 8%,
+    var(--surface-3) 18%,
+    var(--surface-2) 33%);
+  background-size: 200% 100%;
+  animation: aar-shimmer 1.4s linear infinite;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.outlier-thumb-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.outlier-thumb-wrap img[data-loaded] {
+  animation: aar-fade-in 280ms var(--ease-out-quart) forwards;
+}
+.outlier-thumb-wrap:has(img[data-loaded]) {
+  animation: none;
+  background: transparent;
+}
+@keyframes aar-shimmer {
+  to { background-position: -200% 0; }
+}
+@keyframes aar-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .outlier-thumb-wrap { animation: none; background: var(--surface-2); }
+  .outlier-thumb-wrap img[data-loaded] { animation: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .gems-grid > .gem-card,
@@ -1866,6 +1911,24 @@ html::after {
   max-width: 560px;
   margin: 0 auto;
   line-height: 1.5;
+}
+.empty-state .pulse-dot,
+.demand-empty .pulse-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+  animation: aar-pulse-dot 3s ease-in-out infinite;
+}
+@keyframes aar-pulse-dot {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .empty-state .pulse-dot,
+  .demand-empty .pulse-dot { animation: none; opacity: 0.75; }
 }
 .demand-grid {
   display: grid;
@@ -5799,6 +5862,7 @@ footer .quote {
       <div>
         <div class="big"><span id="hitRateNum">—</span><span class="pct">%</span></div>
         <div class="meta-text" style="margin-top:8px;color:var(--ink-3)">all-time hit rate · 90-day window</div>
+        <div class="hit-rate-helper" id="hitRateHelper">(awaiting first verdict · ~7 days)</div>
       </div>
       <div class="stats">
         <div class="stat"><div class="v good" id="hitVerified">—</div><div class="l">Verified</div></div>
@@ -7799,12 +7863,17 @@ function renderOutliers() {
     card.dataset.index = String(idx);
 
     if (o.thumbnail_url) {
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'outlier-thumb-wrap';
       const img = document.createElement('img');
       img.className = 'outlier-thumb';
       img.loading = 'lazy';
       img.src = o.thumbnail_url;
       img.alt = '';
-      card.appendChild(img);
+      img.addEventListener('load', () => img.setAttribute('data-loaded', ''));
+      if (img.complete && img.naturalWidth) img.setAttribute('data-loaded', '');
+      thumbWrap.appendChild(img);
+      card.appendChild(thumbWrap);
     }
 
     const body = document.createElement('div');
@@ -8140,7 +8209,7 @@ function renderDemand() {
   if (!DEMAND.length) {
     host.innerHTML = `
       <div class="demand-empty">
-        <div class="ph">◆ Awaiting prompt-tuning pass</div>
+        <div class="ph"><span class="pulse-dot"></span>Awaiting prompt-tuning pass</div>
         <div class="text">Demand clusters fire once Claude enrichment lands. Until then, the radar and predictions panels carry the v0.2 demo.</div>
       </div>`;
     return;
@@ -8273,6 +8342,10 @@ function renderLog() {
   document.getElementById('hitTracking').textContent = HIT_RATE.tracking || 0;
   document.getElementById('hitEarly').textContent    = HIT_RATE.verified_early || 0;
   document.getElementById('hitWrong').textContent    = HIT_RATE.wrong || 0;
+  // Helper line: hide once any verdict has been filed
+  const _hitTotal = (HIT_RATE.verified || 0) + (HIT_RATE.verified_early || 0) + (HIT_RATE.wrong || 0);
+  const _helper = document.getElementById('hitRateHelper');
+  if (_helper) _helper.hidden = _hitTotal > 0;
   // Stagger index for hit-rate stats (Verified / Tracking / Early / Wrong)
   document.querySelectorAll('.hit-rate .stats > .stat').forEach((node, i) => node.style.setProperty('--i', i));
 
