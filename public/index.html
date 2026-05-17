@@ -6608,7 +6608,14 @@ function clearSearch() {
   if (input) input.value = '';
   if (card)  { card.classList.remove('visible'); card.innerHTML = ''; }
 }
-document.getElementById('searchInput').addEventListener('input', (e) => runSearch(e.target.value));
+// rAF debounce — keeps search feeling live (1 frame, ~16ms) while
+// coalescing the keystroke-per-character storm.
+let __searchRaf = 0;
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const value = e.target.value;
+  cancelAnimationFrame(__searchRaf);
+  __searchRaf = requestAnimationFrame(() => runSearch(value));
+});
 /* click outside the search box closes the results card */
 document.addEventListener('click', (e) => {
   const card = document.getElementById('searchResults');
