@@ -172,6 +172,25 @@
   --stage-commodity: #6a5a48;
 }
 
+/* ========================================================
+   MOTION TOKENS — shared easing & duration vocabulary
+   ======================================================== */
+:root {
+  /* Emil-grade easing curves */
+  --ease-out-strong:   cubic-bezier(0.2, 0.8, 0.2, 1);   /* press, hover state changes, micro-feedback */
+  --ease-out-quart:    cubic-bezier(0.33, 1, 0.68, 1);   /* decorative reveals, hover lifts */
+  --ease-drawer:       cubic-bezier(0.32, 0.72, 0, 1);   /* drawers, modals, large surfaces */
+  --ease-in-fast:      cubic-bezier(0.4, 0, 1, 1);       /* exit animations only (snappy close) */
+
+  /* Duration scale */
+  --dur-instant:  100ms;   /* press feedback */
+  --dur-fast:     140ms;   /* hover state, color, border shifts */
+  --dur-base:     200ms;   /* tooltips, small popovers */
+  --dur-med:      280ms;   /* card lifts, list reveals */
+  --dur-slow:     400ms;   /* drawers, modals (enter) */
+  --dur-slow-exit:220ms;   /* drawers, modals (exit — always faster than enter) */
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -183,8 +202,8 @@ html, body {
   height: 100dvh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s cubic-bezier(0.32, 0.72, 0, 1),
-              color 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: background-color 0.4s var(--ease-drawer),
+              color 0.4s var(--ease-drawer);
 }
 
 /* Viewport-locked layout — fit everything on one screen, no page scroll */
@@ -272,7 +291,7 @@ main {
   overflow: hidden;
   background: var(--surface-1);
   pointer-events: none;
-  transition: background-color 0.6s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: background-color 0.6s var(--ease-drawer);
 }
 .blob {
   position: absolute;
@@ -398,7 +417,7 @@ html::after {
   /* IMPORTANT: do NOT set backdrop-filter or background here — let .glass do it.
      Topbar relies on the .glass class above for its lensing + transparency. */
   color: var(--ink);
-  transition: border-color 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: border-color 0.4s var(--ease-drawer);
 }
 .brand {
   font-family: var(--serif);
@@ -455,7 +474,7 @@ html::after {
   letter-spacing: 0.02em;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: color 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: color 0.2s var(--ease-drawer);
 }
 .nav button:hover { color: var(--ink); }
 .nav button.active { color: var(--champagne); }
@@ -646,10 +665,10 @@ html::after {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  transition: color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              background 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: color 0.25s var(--ease-drawer),
+              border-color 0.25s var(--ease-drawer),
+              background 0.25s var(--ease-drawer),
+              transform 0.2s var(--ease-drawer);
   box-shadow: 0 0 0 1px var(--line-bezel), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
 }
@@ -663,8 +682,8 @@ html::after {
 .theme-toggle .theme-icon {
   width: 16px; height: 16px;
   position: absolute;
-  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: opacity 0.3s var(--ease-drawer),
+              transform 0.4s var(--ease-drawer);
 }
 /* Theme-toggle icon-state rules (dark/light × sun/moon) live in the
    "final usability polish" block further down — see ~line 5108. */
@@ -824,7 +843,7 @@ html::after {
   border-color: rgba(0, 240, 255, 0.3);
 }
 
-.gem-card.flash { animation: gem-flash 1.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.gem-card.flash { animation: gem-flash 1.4s var(--ease-out-quart); }
 @keyframes gem-flash {
   0%   { border-color: var(--line);   box-shadow: 0 0 0    rgba(0, 240, 255, 0); }
   20%  { border-color: var(--accent); box-shadow: 0 0 28px rgba(0, 240, 255, 0.55); }
@@ -1077,8 +1096,8 @@ html::after {
     0 2px 6px rgba(0, 0, 0, 0.22),
     0 16px 40px -16px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  transition: border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              box-shadow 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: border-color 0.25s var(--ease-drawer),
+              box-shadow 0.3s var(--ease-drawer);
 }
 :root[data-theme="light"] .panel {
   box-shadow:
@@ -1443,9 +1462,9 @@ html::after {
   padding: 18px;
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
-  transition: border-color 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
-              box-shadow 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: border-color 0.25s var(--ease-drawer),
+              transform 0.25s var(--ease-drawer),
+              box-shadow 0.3s var(--ease-drawer);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -1761,7 +1780,7 @@ html::after {
   line-height: 1.35;
   margin: 14px 0 22px;
 }
-.demand-card.flash { animation: demand-flash 1.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.demand-card.flash { animation: demand-flash 1.4s var(--ease-out-quart); }
 @keyframes demand-flash {
   0%   { border-color: var(--line);     box-shadow: 0 0 0    rgba(212, 175, 55, 0); }
   20%  { border-color: var(--champagne); box-shadow: 0 0 28px rgba(212, 175, 55, 0.55); }
@@ -2100,7 +2119,7 @@ html::after {
   background: rgba(7, 9, 12, 0.96);
   border-left: 1px solid var(--line-hi);
   transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s var(--ease-out-quart);
   z-index: 40;
   overflow-y: auto;
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
@@ -2265,7 +2284,7 @@ html::after {
   background: rgba(7, 9, 12, 0.96);
   border-right: 1px solid var(--line-hi);
   transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s var(--ease-out-quart);
   z-index: 40;
   box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);
@@ -2535,7 +2554,7 @@ html::after {
   z-index: 61;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.2s, transform 0.2s var(--ease-out-quart);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
 }
@@ -2735,9 +2754,9 @@ footer .quote {
     inset 1px 0 0 rgba(255, 255, 255, 0.06),
     inset -1px 0 0 rgba(255, 255, 255, 0.06);
   isolation: isolate;
-  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+  transition: transform 0.4s var(--ease-drawer),
               border-color 0.3s ease,
-              box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+              box-shadow 0.4s var(--ease-drawer);
 }
 :root[data-theme="light"] .glass {
   background: rgba(255, 255, 255, 0.55);
@@ -4595,7 +4614,7 @@ footer .quote {
     inset 0 -1px 0 var(--liquid-inner-shadow),
     0 8px 18px -12px var(--liquid-contact);
   transition:
-    transform 180ms cubic-bezier(.2,.8,.2,1),
+    transform 180ms var(--ease-out-strong),
     border-color 180ms ease,
     background 180ms ease,
     box-shadow 220ms ease,
@@ -6847,7 +6866,7 @@ function renderBubbleFallback(el) {
       name: g.t.keyword,
       headline,
       kicker: zoneLabel,
-      meta: `TBTS ${g.t.tbts} · ${Math.round(g.weight * 100)} signal weight · ${Math.round(g.t.saturation)}% sat`,
+      meta: `TBTS ${(g.t.tbts || 0).toFixed(1)} · ${Math.round(g.weight * 100)} signal weight · ${Math.round(g.t.saturation)}% sat`,
     }];
   }));
 
@@ -7234,7 +7253,7 @@ function renderLeaderboard() {
           ${mixBar ? `<div class="lb-mix">${mixBar}</div>` : ''}
         </div>
         ${spark}
-        <div class="tbts" title="Trend-Before-Trend Score">${t.tbts}</div>
+        <div class="tbts" title="Trend-Before-Trend Score">${(t.tbts || 0).toFixed(1)}</div>
         <div class="vel ${t.velocity > 1 ? 'up' : (t.velocity > 0 && t.velocity < 1) ? 'down' : ''}" title="Velocity (× growth vs baseline)">${velArrow(t.velocity)}</div>
         <button class="star-btn${inWatch(kw) ? ' on' : ''}" data-kw="${escapeAttr(kw)}" aria-label="Toggle watchlist" title="Toggle watchlist">★</button>
       </div>
@@ -7478,7 +7497,7 @@ function openDetailPanel(kw) {
   document.getElementById('dpName').textContent    = t.keyword;
   document.getElementById('dpCluster').textContent = `cluster · ${t.cluster_label || '—'}`;
   document.getElementById('dpSummary').textContent = t.summary || '—';
-  document.getElementById('dpTbts').textContent    = t.tbts;
+  document.getElementById('dpTbts').textContent    = (t.tbts || 0).toFixed(1);
   document.getElementById('dpSat').textContent     = `${Math.round(t.saturation)}%`;
   document.getElementById('dpGem').textContent     = ((t.hidden_gem || 0) * 100).toFixed(0);
   document.getElementById('dpStage').textContent   = STAGE_META[t.stage]?.label || t.stage;
@@ -8029,7 +8048,7 @@ function renderGems() {
           <div class="gem-meta">
             <span class="badge"><span class="stage-dot ${t.stage}"></span> ${STAGE_META[t.stage]?.label || t.stage}</span>
             <span class="badge">SAT ${Math.round(t.saturation)}%</span>
-            <span class="badge">TBTS ${t.tbts}</span>
+            <span class="badge">TBTS ${(t.tbts || 0).toFixed(1)}</span>
             <span class="badge">${sourceBadge(t.sources || {})}</span>
           </div>
           ${channelMixBar(t.sources, 200) ? `<div class="gem-mix">${channelMixBar(t.sources, 200)}<div class="gem-mix-legend">${channelMixLegend(t.sources)}</div></div>` : ''}
