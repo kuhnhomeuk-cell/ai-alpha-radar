@@ -5609,6 +5609,20 @@ footer .quote {
     transition: transform var(--dur-fast) var(--ease-out-strong);
   }
 }
+
+/* ========================================================
+   FOCUS RINGS — universal keyboard-visible outline
+   The search/niche inputs already paint their own borders.
+   ======================================================== */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+.search-input:focus-visible,
+.niche-input:focus-visible {
+  outline: none;
+}
 </style>
 </head>
 <body>
@@ -6623,11 +6637,13 @@ function toggleActiveCluster(id) {
   applyState();
 }
 
-/* Esc dismisses (in order): search → convergence modal → selection → active cluster */
+/* Esc dismisses (in order): search → detail panel → convergence modal → selection → active cluster */
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const searchCard = document.getElementById('searchResults');
   if (searchCard && searchCard.classList.contains('visible')) { clearSearch(); return; }
+  const detailPanel = document.getElementById('detailPanel');
+  if (detailPanel && detailPanel.classList.contains('visible')) { closeDetailPanel(); return; }
   const convModal = document.getElementById('convModal');
   if (convModal && convModal.classList.contains('visible')) { closeConvergence(); return; }
   if (state.selectedKeyword) { clearSelection(); return; }
