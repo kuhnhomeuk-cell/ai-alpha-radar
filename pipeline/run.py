@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 import anthropic
+import numpy as np
 from dotenv import load_dotenv
 
 from pipeline import burst, calibration, changepoint, cluster as cluster_mod, cluster_identity
@@ -103,6 +104,17 @@ def _percentile_ranks(values: list[int]) -> list[float]:
     if not values:
         return []
     sorted_vals = sorted(set(values))
+    if len(sorted_vals) == 1:
+        # All values identical (e.g., day-1 or total fetcher outage) → ranks
+        # collapse to 0 for every entry, which forces saturation=0 downstream
+        # and prevents any topic from reaching the creator-stage band. Log it
+        # so the operator can distinguish sparse-data days from a bug.
+        log(
+            "percentile_ranks_compressed",
+            level="warning",
+            count=len(values),
+            single_value=sorted_vals[0],
+        )
     rank_by_value = {
         v: i / (len(sorted_vals) - 1) * 100 if len(sorted_vals) > 1 else 0.0
         for i, v in enumerate(sorted_vals)
@@ -1152,8 +1164,6 @@ def main(
 
     # Audit 2.6 — map this run's HDBSCAN-assigned cluster ids back onto
     # yesterday's stable ids when centroids are within threshold.
-    import numpy as np
-
     new_centroids_np = {cid: np.asarray(v) for cid, v in raw_centroids.items()}
     # prior_snapshot_for_clusters was loaded once at the top of step 4 so
     # topic extraction could bias toward yesterday's vocabulary. Reused
@@ -1474,13 +1484,19 @@ def main(
         trends = _maybe_enrich_with_claude(trends, niche=niche)
 
         # ---- 9c. Grok X-mention enrichment (Wave 6) ----
-        # Same cost-cap pool. Remaining budget after Claude + Perplexity is
-        # what's left for Grok. Per-trend failures degrade silently — X
-        # mentions are an enrichment signal, not a hard input.
+        # Same cost-cap pool. Remaining budget after Claude + Perplexity, with
+        # the demand-batch reservation carried through so Grok can't overspend
+        # into demand's allocation (demand fires last, at step 9e).
         grok_budget_cents = (
             None
             if max_cost_cents is None
-            else max(0.0, max_cost_cents - estimated_cents - perplexity_spent_cents)
+            else max(
+                0.0,
+                max_cost_cents
+                - estimated_cents
+                - perplexity_spent_cents
+                - demand_estimated_cents,
+            )
         )
         trends, grok_spent_cents = _maybe_enrich_with_grok(
             trends, budget_cents=grok_budget_cents
