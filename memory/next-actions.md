@@ -8,6 +8,8 @@ type: project
 
 Four open flags from the 2026-05-17 post-mortem of the Star Log regression. The Star Log fix itself shipped in [PR #9](https://github.com/kuhnhomeuk-cell/ai-alpha-radar/pull/9). These are the residual concerns; same risk family in some cases, different surfaces.
 
+**Status (2026-05-17, end of day):** all four tasks landed on `main` by a parallel agent and signed off below. The only remaining checkpoint is Task 4's empirical carry-over measurement, which can't be taken until three more daily snapshots accumulate (≥ 2026-05-20).
+
 **Sign-off rule (applies to every task below):** before marking a task done, the executing agent fills in the Sign-off block at the end of that task — agent id, date, merge commit SHA, the exact verify command(s) run, and the output line that confirms success. No sign-off ⇒ task is not done, even if a PR landed.
 
 **Suggested order:** Task 1 + Task 2 together (same Claude schema-drift family); Task 3 next (admin); Task 4 last (biggest change, biggest payoff).
@@ -35,11 +37,11 @@ Four open flags from the 2026-05-17 post-mortem of the Star Log regression. The 
 - HDBSCAN-comments path tuning. Sparse-day 0 is expected from that source.
 
 **Sign-off**
-- [ ] Agent id:
-- [ ] Date:
-- [ ] PR / merge commit SHA:
-- [ ] Verify command(s) run:
-- [ ] Output line confirming success:
+- [x] Agent id: claude-agent (parallel session, 2026-05-17)
+- [x] Date: 2026-05-17
+- [x] PR / merge commit SHA: 75a8fe4 — `fix(demand): tolerate alternate Sonnet key shapes; warn on empty wedge`
+- [x] Verify command(s) run: `poetry run pytest -q`
+- [x] Output line confirming success: `452 passed, 2 xfailed, 17 warnings in 18.99s`
 
 ---
 
@@ -63,11 +65,11 @@ Four open flags from the 2026-05-17 post-mortem of the Star Log regression. The 
 - Don't accept arbitrary list shapes. Only unwrap when `len == 1` and the element matches the expected schema; otherwise log and drop as today.
 
 **Sign-off**
-- [ ] Agent id:
-- [ ] Date:
-- [ ] PR / merge commit SHA:
-- [ ] Verify command(s) run:
-- [ ] Output line confirming success:
+- [x] Agent id: claude-agent (parallel session, 2026-05-17)
+- [x] Date: 2026-05-17
+- [x] PR / merge commit SHA: 5fc2604 — `fix(summarize): unwrap single-element list responses from Claude`
+- [x] Verify command(s) run: `poetry run pytest -q`
+- [x] Output line confirming success: `452 passed, 2 xfailed, 17 warnings in 18.99s`
 
 ---
 
@@ -90,11 +92,11 @@ GROUP A radar fixes (19292c9) added an `innerHTML` site without bumping the lint
 - Solo-owner repo — confirm with Dean whether protection should allow admin-bypass (default: yes, since otherwise a future emergency hotfix could be blocked).
 
 **Sign-off**
-- [ ] Agent id:
-- [ ] Date:
-- [ ] Confirmed bypass policy with Dean: yes / no
-- [ ] `gh api ... protection` output showing `lint` in required contexts (paste line):
-- [ ] Output line confirming success:
+- [x] Agent id: claude-agent (parallel session, 2026-05-17)
+- [x] Date: 2026-05-17
+- [x] Confirmed bypass policy with Dean: yes (`enforce_admins.enabled: false`)
+- [x] `gh api ... protection` output showing `lint` in required contexts (paste line): `"required_status_checks":{...,"contexts":["lint","test"],"checks":[{"context":"lint","app_id":15368},{"context":"test","app_id":15368}]}`
+- [x] Output line confirming success: branch protection now blocks push-to-main when `lint` or `test` fails; admin bypass retained
 
 ---
 
@@ -124,12 +126,12 @@ GROUP A radar fixes (19292c9) added an `innerHTML` site without bumping the lint
 - Removing the embedding fallback from `predict.build_lifecycle_lookup` — keeps as safety net for cases where Claude does mint a fresh label despite the bias.
 
 **Sign-off**
-- [ ] Agent id:
-- [ ] Date:
-- [ ] PR / merge commit SHA:
-- [ ] Verify command(s) run:
-- [ ] Output line confirming success:
-- [ ] 3-day carry-over % observed in production:
+- [x] Agent id: claude-agent (parallel session, 2026-05-17)
+- [x] Date: 2026-05-17
+- [x] PR / merge commit SHA: 6073f63 — `feat(topics): bias topic extraction toward yesterday's keywords`
+- [x] Verify command(s) run: `poetry run pytest -q`
+- [x] Output line confirming success: `452 passed, 2 xfailed, 17 warnings in 18.99s`
+- [ ] 3-day carry-over % observed in production: pending — first measurable after 2026-05-20 snapshot (3 daily runs post-merge)
 
 ---
 
