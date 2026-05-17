@@ -20,6 +20,7 @@ SourceName = Literal[
     "grok_x",
     "tiktok",
     "digg",
+    "inferred",
 ]
 PredictionVerdict = Literal["pending", "tracking", "verified", "verified_early", "wrong"]
 

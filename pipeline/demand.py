@@ -842,14 +842,7 @@ def synthesize_demand_from_trends(
                     question_shape=row["question_shape"],
                     askers_estimate=int(row.get("askers_estimate") or 0),
                     quotes=[],  # synthetic — no source quotes
-                    # NOTE: "inferred" was the original intent here (these
-                    # clusters are generated from the trend list, not mined
-                    # from any one source) but it isn't in the SourceName
-                    # Literal, so Pydantic rejected every cluster silently
-                    # and the wedge shipped empty. Use "hackernews" for parity
-                    # with the legacy mine path until the schema gains an
-                    # explicit "inferred" tag.
-                    sources=["hackernews"],
+                    sources=["inferred"],
                     weekly_growth_pct=float(row.get("weekly_growth_pct") or 0),
                     open_window_days=int(row.get("open_window_days") or 14),
                     creator_brief=row.get("creator_brief", ""),

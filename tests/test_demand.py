@@ -682,6 +682,28 @@ def test_synthesize_logs_count_and_keys_on_exit(
     assert "question" in diag[0]["first_row_keys"]
 
 
+def test_synthesize_tags_clusters_with_inferred_source() -> None:
+    """Synthesized clusters are generated from the trend list, not mined from any
+    single source — their `sources` must be `["inferred"]` so the dashboard can
+    visually distinguish them from HN-mined clusters."""
+    response = json.dumps(
+        [
+            {
+                "question_shape": "How do solo creators run Claude Desktop locally?",
+                "askers_estimate": 7,
+                "weekly_growth_pct": 12,
+                "open_window_days": 14,
+                "creator_brief": "Tutorial: Claude Desktop local config.",
+                "related_trends": ["claude"],
+            }
+        ]
+    )
+    fake = FakeAnthropic(response)
+    clusters = demand.synthesize_demand_from_trends([_trend_stub("claude")], client=fake)
+    assert len(clusters) == 1
+    assert clusters[0].sources == ["inferred"]
+
+
 # ---- cost estimation ----
 
 
