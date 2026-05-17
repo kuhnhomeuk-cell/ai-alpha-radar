@@ -924,6 +924,47 @@ html::after {
   }
 }
 
+/* ========================================================
+   TOASTS — Sonner-style ephemeral confirmation
+   ======================================================== */
+#aar-toast-host {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  z-index: 100;
+  display: flex; flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+.aar-toast {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  box-shadow: 0 18px 36px -22px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  transition: opacity var(--dur-fast) var(--ease-out-strong),
+              transform var(--dur-med) var(--ease-out-strong);
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  max-width: 320px;
+}
+.aar-toast[data-leaving] {
+  opacity: 0;
+  transform: translateY(8px);
+}
+@starting-style {
+  .aar-toast {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.aar-toast .aar-toast-accent { color: var(--accent); }
+
 /* ========== PAGE BASE ========== */
 /* Page display rules are defined earlier (viewport-locked layout block) */
 
@@ -5910,6 +5951,21 @@ function announce(message) {
   _announceTimer = setTimeout(() => { el.textContent = message; }, 50);
 }
 
+/* Sonner-style ephemeral toast. msg accepts a trusted HTML fragment;
+   call sites must escape user data before composing the string. */
+function aarToast(msg, opts = {}) {
+  const host = document.getElementById('aar-toast-host');
+  if (!host) return;
+  const el = document.createElement('div');
+  el.className = 'aar-toast';
+  el.innerHTML = msg;
+  host.appendChild(el);
+  setTimeout(() => {
+    el.setAttribute('data-leaving', '');
+    setTimeout(() => el.remove(), 300);
+  }, opts.duration || 1500);
+}
+
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const _trapState = new WeakMap();
 function trapFocus(modal, trigger) {
@@ -6002,6 +6058,8 @@ function toggleWatch(kw) {
   persistWatchlist();
   syncWatchlistViews();
   announce(`${wasIn ? 'Removed from' : 'Added to'} watchlist: ${kw}. Watchlist now has ${WATCHLIST.size} ${WATCHLIST.size === 1 ? 'item' : 'items'}.`);
+  const verb = wasIn ? 'Removed' : 'Saved';
+  aarToast(verb + ' · <span class="aar-toast-accent">' + WATCHLIST.size + '/5</span>');
 }
 function syncWatchlistViews() {
   updateWatchlistUI();
@@ -7843,6 +7901,8 @@ function openOutlierModal(idx) {
           copyBtn.classList.remove('copied');
           copyBtn.textContent = '📋 Use as topic seed';
         }, 1500);
+        const preview = text.length > 60 ? text.slice(0, 58).trim() + '…' : text;
+        aarToast('Copied: <em>' + escapeHtml(preview) + '</em>');
       });
     }
   };
@@ -8278,6 +8338,8 @@ function renderAlmanac() {
       const original = t.innerHTML;
       t.innerHTML = `<em style="color:var(--champagne)">— copied to clipboard —</em>`;
       setTimeout(() => { t.innerHTML = original; }, 1100);
+      const preview = text.length > 60 ? text.slice(0, 58).trim() + '…' : text;
+      aarToast('Copied: <em>' + escapeHtml(preview) + '</em>');
     });
   });
 }
@@ -8384,5 +8446,6 @@ window.addEventListener('load', async () => {
   tickFooter();
 });
 </script>
+<div id="aar-toast-host" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>
