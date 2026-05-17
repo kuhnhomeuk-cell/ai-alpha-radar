@@ -5623,6 +5623,19 @@ footer .quote {
 .niche-input:focus-visible {
   outline: none;
 }
+
+/* ========================================================
+   REDUCED-MOTION GUARDS for decorative animations
+   twinkle (4s glyph) + liquid-pulse (2.4s status dot) + the
+   user-action search/jump flashes — all keep their visible
+   form but stop animating when the user asks for less motion.
+   ======================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .brand .star::before { animation: none; }
+  .panel-head .title::before { animation: none; }
+  .gem-card.flash,
+  .demand-card.flash { animation: none; }
+}
 </style>
 </head>
 <body>
